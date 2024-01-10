@@ -1,0 +1,100 @@
+import time
+from typing import List, Optional
+
+import click
+
+from zs4procext.extractor import ActionExtractorFromText
+from zs4procext.prompt import TEMPLATE_REGISTRY
+
+
+@click.command()
+@click.argument("text_file_path", type=str)
+@click.argument("output_file_path", type=str)
+@click.option(
+    "--actions_type",
+    default="All",
+    help="Type of actions to considered. Options: All or pistachio.",
+)
+@click.option(
+    "--action_prompt_structure_path",
+    default=None,
+    help="Path to the file containing the structure of the action prompt",
+)
+@click.option(
+    "--chemical_prompt_structure_path",
+    default=None,
+    help="Path to the file containing the structure of the chemical prompt",
+)
+@click.option(
+    "--action_prompt_schema_path",
+    default=None,
+    help="Path to the file containing the schema of the action prompt",
+)
+@click.option(
+    "--chemical_prompt_schema_path",
+    default=None,
+    help="Path to the file containing the schema of the chemical prompt",
+)
+@click.option(
+    "--llm_model_name",
+    default=None,
+    help="Name of the LLM used to get the actions",
+)
+@click.option(
+    "--llm_model_parameters_path",
+    default=None,
+    help="Parameters of the LLM used to get the actions",
+)
+def text2actions(
+    text_file_path: str,
+    output_file_path: str,
+    actions_type: str,
+    action_prompt_structure_path: Optional[str],
+    chemical_prompt_structure_path: Optional[str],
+    action_prompt_schema_path: Optional[str],
+    chemical_prompt_schema_path: Optional[str],
+    llm_model_name: str,
+    llm_model_parameters_path: Optional[str],
+):
+    start_time = time.time()
+    if action_prompt_structure_path is None:
+        try:
+            action_prompt_structure_path = TEMPLATE_REGISTRY[llm_model_name]
+        except KeyError:
+            pass
+    if chemical_prompt_structure_path is None:
+        try:
+            chemical_prompt_structure_path = TEMPLATE_REGISTRY[llm_model_name]
+        except KeyError:
+            pass
+    extractor: ActionExtractorFromText = ActionExtractorFromText(
+        actions_type=actions_type,
+        action_prompt_structure_path=action_prompt_structure_path,
+        chemical_prompt_structure_path=chemical_prompt_structure_path,
+        action_prompt_schema_path=action_prompt_schema_path,
+        chemical_prompt_schema_path=chemical_prompt_schema_path,
+        llm_model_name=llm_model_name,
+        llm_model_parameters_path=llm_model_parameters_path,
+    )
+    extractor.model_post_init(None)
+    with open(text_file_path, "r") as f:
+        text_lines: List[str] = f.readlines()
+    size = len(text_lines)
+    count = 1
+    for text in text_lines:
+        print(f"text processed: {count}/{size}")
+        results: str = str(
+            extractor.retrieve_actions_from_text(text, ["notes", "note"])
+        )
+        with open(output_file_path, "a") as f:
+            f.write(str(results) + "\n")
+        count = count + 1
+    print(f"{(time.time() - start_time) / 60} minutes")
+
+
+def main():
+    text2actions()
+
+
+if __name__ == "__main__":
+    main()

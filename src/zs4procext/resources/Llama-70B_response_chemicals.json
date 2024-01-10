@@ -1,0 +1,279 @@
+{
+    "prompt1": [
+        {
+            "actions": "MakeSolution",
+            "context": "MakeSolution (1-(4-isopropyl-phenyl)-5-oxo-pyrrolidine-3-carboxylic acid ethyl ester, 0.7 g, 2.65 mmol) in ethanol (N/A) at 10-15\u00b0C.",
+            "response": "Here's the JSON schema for the compounds/chemicals found in the given paragraph:\n\n[\n{\n\"chemical\": \"1-(4-isopropyl-phenyl)-5-oxo-pyrrolidine-3-carboxylic acid ethyl ester\",\n\"amount\": [0.7 g, 2.65 mmol],\n\"dropwise\": False\n},\n{\n\"chemical\": \"ethanol\",\n\"amount\": [N/A],\n\"dropwise\": N/A\n}\n]\n\nNote: The amount of ethanol is not provided in the given paragraph, so it is marked as N/A. Also, the dropwise attribute is set to False for both compounds since they are not added dropwise.\n"
+        },
+        {
+            "actions": "Add",
+            "context": "Add (portion wise) sodium borohydride (0.25 g, 6.6 mmol) over 20 min.",
+            "response": "Sure! Here's the information extracted from the given paragraph:\n\n{\n\"chemical\": \"sodium borohydride\",\n\"amount\": [0.25 g, 6.6 mmol],\n\"dropwise\": True\n}\n\nNote:\n\n    The chemical name is \"sodium borohydride\" (NaBH4).\n    The amount added is 0.25 g, which is equivalent to 6.6 mmol.\n    The addition is done dropwise over a period of 20 minutes.\n\n"
+        },
+        {
+            "actions": "Extract",
+            "context": "'Extract (ethyl acetate)'",
+            "response": "Sure, here's the paragraph you provided:\n\n\"Extract (ethyl acetate)\"\n\nHere are the compounds found in the paragraph along with their amounts and whether they were added dropwise or not:\n\n[\n{\n\"chemical\": \"ethyl acetate\",\n\"amount\": N/A,\n\"dropwise\": False\n}\n]\n\nNote: Since the paragraph only mentions \"Extract (ethyl acetate)\", it's not clear how much ethyl acetate was used or whether it was added dropwise. Therefore, the amount and dropwise fields are left blank for this compound.\n"
+        },
+        {
+            "actions": "DrySolution",
+            "context": "'DrySolution (Na2SO4)'",
+            "response": "Sure, I can help you with that!\n\nBased on the provided context, the only compound mentioned is Na2SO4, which is also known as sodium sulfate.\n\nHere's the JSON schema for sodium sulfate:\n\n{\n\"chemical\": \"Na2SO4\",\n\"amount\": [N/A],\n\"dropwise\": False\n}\n\nSince the amount of sodium sulfate in DrySolution (Na2SO4) is not specified, I left the \"amount\" field blank. Additionally, since it's not mentioned that the sodium sulfate is added drop by drop, I set \"dropwise\" to False.\n\nPlease let me know if there's anything else I can help you with!\n"
+        }
+    ],
+    "prompt2": [
+        {
+            "actions": "MakeSolution",
+            "context": "'(20, 390.9 g, 1.11 mol, anhydrous dichloromethane, 2.27 L)'",
+            "response": "{\n'chemical': 'anhydrous dichloromethane',\n'amount': [2.27, 'L'],\n'dropwise': False\n},\n{'chemical': 'N/A', 'amount': [N/A, N/A], 'dropwise': N/A}\n"
+        },
+        {
+            "actions": "Add",
+            "context": "'(SbCl3, 7.62 g, 0.0334 mol, -15\u00b0C)'",
+            "response": "Based on the provided context, there is only one compound mentioned:\n\n{'chemical': 'SbCl3', 'amount': [7.62 g, 0.0334 mol], 'dropwise': False}\n"
+        },
+        {
+            "actions": "Add",
+            "context": "(diethylamino sulfurtrifluoride (DAST), 258 ml, 2.0 mol, -15\u00b0C)",
+            "response": "Based on the provided context, there is only one compound mentioned:\n\n{'chemical': 'diethylamino sulfurtrifluoride (DAST)', 'amount': [258 ml, 2.0 mol], 'dropwise': False}\n"
+        },
+        {
+            "actions": "Quench",
+            "context": "(1N NaOH solution, pH=3-4, -20\u00b0C)",
+            "response": "Based on the provided context, the only compound mentioned is NaOH. Here is the JSON schema for it:\n{'chemical': 'NaOH', 'amount': ['N/A', 'N/A', 'N/A'], 'dropwise': True}\nPlease note that the amounts for NaOH are not provided in the context, and therefore, they are marked as 'N/A'."
+        },
+        {
+            "actions": "Add",
+            "context": "(solid NaHCO3, pH=8)",
+            "response": "Based on the provided context, the only compound mentioned is NaHCO3. Here is the JSON schema for it:\n{'chemical': 'NaHCO3', 'amount': ['N/A', 'N/A', 'N/A'], 'dropwise': True}\nPlease note that the amounts for NaHCO3 are not provided in the context, and therefore, they are marked as 'N/A'."
+        },
+        {
+            "actions": "Extract",
+            "context": "'(dichloromethane)'",
+            "response": "Based on the provided context, the only compound mentioned is dichloromethane. Here is the JSON schema for it:\n{'chemical': 'dichloromethane', 'amount': ['N/A', 'N/A', 'N/A'], 'dropwise': True}\nPlease note that the amounts for dichloromethane are not provided in the context, and therefore, they are marked as 'N/A'."
+        },
+        {
+            "actions": "Wash",
+            "context": "'(water, brine)'",
+            "response": "{\n'water': {\n'chemical': 'H2O',\n'amount': [{'mass': 'N/A', 'moles': 'N/A', 'volume': 'N/A'}],\n'dropwise': False\n},\n'brine': {\n'chemical': 'NaCl',\n'amount': [{'mass': 'N/A', 'moles': 'N/A', 'volume': 'N/A'}],\n'dropwise': False\n}\n}"
+        },
+        {
+            "actions": "DrySolution",
+            "context": "'(Na2SO4)'",
+            "response": "Based on the provided context, the only compound mentioned is Na2SO4. Here is the JSON schema for it:\n{'chemical': 'Na2SO4', 'amount': ['N/A', 'N/A', 'N/A'], 'dropwise': True}\nPlease note that the amounts for Na2SO4 are not provided in the context, and therefore, they are marked as 'N/A'."
+        }
+    ],
+    "prompt3": [
+        {
+            "actions": "MakeSolution",
+            "context": "'(3-aminothiophene-2-carboxamide, 11.8 g, 83.1 mmol, triethylamine, 35 mL, toluene, 250 mL)'",
+            "response": "Sure, I can help you with that!\n\nFrom the given paragraph, the following compounds/chemicals can be identified:\n\n    3-aminothiophene-2-carboxamide\n    Triethylamine\n    Toluene\n\nHere's the JSON schema for each compound/chemical:\n\n    {\n    \"chemical\": \"3-aminothiophene-2-carboxamide\",\n    \"amount\": [11.8 g, 83.1 mmol],\n    \"dropwise\": False\n    }\n    {\n    \"chemical\": \"triethylamine\",\n    \"amount\": [35 mL],\n    \"dropwise\": False\n    }\n    {\n    \"chemical\": \"toluene\",\n    \"amount\": [250 mL],\n    \"dropwise\": False\n    }\n\nNote that the amount of triethylamine is given in volume (mL) and not in mass (g) or moles (mmol), so it's difficult to provide an exact amount in the JSON schema. However, it's clear that triethylamine is used as a solvent in this reaction, and its volume is given as 35 mL.\n\nAlso, the amount of toluene is given in volume (mL) and not in mass (g) or moles (mmol), so it's difficult to provide an exact amount in the JSON schema. However, it's clear that toluene is used as a solvent in this reaction, and its volume is given as 250 mL.\n\nI hope this helps! Let me know if you have any further questions.\n"
+        },
+        {
+            "actions": "Add",
+            "context": "'(acetic anhydride, 9.5 mL)'",
+            "response": "Sure, I can help you with that!\n\nFrom the given paragraph, the following compound/chemical can be identified:\n\n    Acetic anhydride\n\nHere's the JSON schema for the compound/chemical:\n\n{\n\"chemical\": \"acetic anhydride\",\n\"amount\": [9.5 mL],\n\"dropwise\": False\n}\n\nNote that the amount of acetic anhydride is given in volume (mL) and not in mass (g) or moles (mmol). Therefore, it's difficult to provide an exact amount in the JSON schema. However, it's clear that acetic anhydride is used as a solvent in this reaction, and its volume is given as 9.5 mL.\n\nI hope this helps! Let me know if you have any further questions.\n"
+        },
+        {
+            "actions": "Reflux",
+            "context": "'(2 h)'",
+            "response": "Since the provided context does not contain any chemical compounds, the JSON schema would be empty."
+        },
+        {
+            "actions": "Wash",
+            "context": "'(1:1 petroleum ether/ethyl acetate)'",
+            "response": "{'chemical': 'petroleum ether', 'amount': ['N/A'], 'dropwise': 'False'}\n{'chemical': 'ethyl acetate', 'amount': ['N/A'], 'dropwise': 'False'}"
+        }
+    ],
+    "prompt4": [
+        {
+            "actions": "MakeSolution",
+            "context": "'(0.14 g (S)-3-(4-cyano-3-fluoro-phenoxy)-2-methyl-propionic acid methyl ester, 20 mL anhydrous methanol)'",
+            "response": "The compound mentioned in the given text is (S)-3-(4-cyano-3-fluoro-phenoxy)-2-methyl-propionic acid methyl ester. Based on the provided information, the amount is 0.14 g, and the solvent used is 20 mL of anhydrous methanol.\n\nHere's the JSON schema for the compound and solvent:\n\n{\n  \"chemical\": \"(S)-3-(4-cyano-3-fluoro-phenoxy)-2-methyl-propionic acid methyl ester\",\n  \"amount\": [\"0.14 g\"],\n  \"dropwise\": false\n}\n{\n  \"chemical\": \"anhydrous methanol\",\n  \"amount\": [\"20 mL\"],\n  \"dropwise\": false\n}\n\nPlease let me know if there's anything else I can assist you with."
+        },
+        {
+            "actions": "Add",
+            "context": "'(0.01 g, 30% Pd by wt palladium hydroxide on carbon)'",
+            "response": "The compound mentioned in the provided context is palladium hydroxide on carbon. The chemical and the corresponding information in the JSON schema format would be as follows:\n\n{\n  \"chemical\": \"palladium hydroxide on carbon\",\n  \"amount\": [\"0.01 g\"],\n  \"dropwise\": false\n}\n\nThis JSON schema reflects the compound, the amount provided (0.01 g), and specifies that it is not added dropwise.\n\nIf you have any further questions or need additional assistance, feel free to ask!"
+        },
+        {
+            "actions": "Add",
+            "context": "'(0.5 mL concentrated hydrochloric acid)'",
+            "response": "The compound mentioned in the provided context is concentrated hydrochloric acid. The chemical and the corresponding information in the JSON schema format would be as follows:\n\n{\n  \"chemical\": \"concentrated hydrochloric acid\",\n  \"amount\": [\"0.5 mL\"],\n  \"dropwise\": false\n}\n\nThis JSON schema reflects the compound, the amount provided (0.5 mL), and specifies that it is not added dropwise.\n\nIf you have any further questions or need additional assistance, feel free to ask!"
+        }
+    ],
+    "prompt5": [
+        {
+            "actions": "MakeSolution",
+            "context": "'(2-[(2R)-3-cyclopentyl-2-({formyl[(phenylmethyl)oxy]amino}methyl)propanoyl]-1-{[(phenylmethyl)oxy]carbonyl}-3-pyrazolidinecarboxylic acid (300 mg, 0.558 mmol) in dichloromethane (5 ml))'",
+            "response": "From the provided paragraph, I can identify the following compounds:\n\n    (2-[(2R)-3-cyclopentyl-2-({formyl[(phenylmethyl)oxy]amino}methyl)propanoyl]-1-{[(phenylmethyl)oxy]carbonyl}-3-pyrazolidinecarboxylic acid (300 mg, 0.558 mmol)\n    dichloromethane (5 ml)\n\nHere are the Json schemas for each compound:\n\nCompound 1:\n{'chemical': '(2-[(2R)-3-cyclopentyl-2-({formyl[(phenylmethyl)oxy]amino}methyl)propanoyl]-1-{[(phenylmethyl)oxy]carbonyl}-3-pyrazolidinecarboxylic acid', 'amount': '300 mg (0.558 mmol)', 'dropwise': False}\n\nCompound 2:\n{'chemical': 'dichloromethane', 'amount': '5 ml', 'dropwise': False}\n"
+        },
+        {
+            "actions": "Add",
+            "context": "'(1-methylimidazole (133 \u03bcl, 1.674 mmol))'",
+            "response": "From the provided paragraph, I can identify the following compound:\n\n    1-methylimidazole (133 \u03bcl, 1.674 mmol)\n\nHere is the Json schema for the compound:\n\n{'chemical': '1-methylimidazole', 'amount': '133 \u03bcl(1.674 mmol)', 'dropwise': False}\n"
+        },
+        {
+            "actions": "Add",
+            "context": "'(2-amino-6-chloropyridine (86 mg, 0.67 mmol))'",
+            "response": "From the provided paragraph, I can identify the following compound:\n\n    2-amino-6-chloropyridine (86 mg, 0.67 mmol)\n\nHere is the Json schema for the compound:\n\n{'chemical': '2-amino-6-chloropyridine', 'amount': '86 mg (0.67 mmol)', 'dropwise': False}\n"
+        },
+        {
+            "actions": "DrySolution",
+            "context": "'\n'",
+            "response": "The provided paragraph does not contain any information about the compounds or chemicals. It seems to be an empty paragraph. Please provide more information or context so that I can help you identify and extract the compounds."
+        },
+        {
+            "actions": "Wash",
+            "context": "'(with MeOH)'",
+            "response": "{\n'chemical': 'MeOH',\n'amount': ['N/A'],\n'dropwise': False\n}"
+        }
+    ],
+    "prompt6": [
+        {
+            "actions": "MakeSolution",
+            "context": "'(3-(p-cyclopentylbenzoyl)propionic acid, 4.9 g, ethanol, 50 ml)'",
+            "response": "The Json schema for the compounds found in the provided paragraph is:\n[ {'chemical': '3-(p-cyclopentylbenzoyl)propionic acid', 'amount': ['4.9 g'], 'dropwise': False}, {'chemical': 'ethanol', 'amount': ['50 ml'], 'dropwise': False} ]"
+        },
+        {
+            "actions": "Add",
+            "context": "'(hydrazine hydrate, 1.1 g)'",
+            "response": "The Json schema for the compounds found in the provided paragraph is:\n[ {'chemical': 'hydrazine hydrate', 'amount': ['1.1 g'], 'dropwise': False} ]"
+        },
+        {
+            "actions": "Recrystallize",
+            "context": "'(ethanol, 4.2 g, large, colorless needles, m.p. 191\u00b0-192\u00b0 C.)'",
+            "response": "The Json schema for the compounds found in the provided paragraph is:\n[ {'chemical': 'ethanol', 'amount': ['4.2 g'], 'dropwise': False} ]"
+        }
+    ],
+    "prompt7": [
+        {
+            "actions": "MakeSolution",
+            "context": "'(1-hexyne, 1.72 mL, 15 mmol, THF, 20 mL)'",
+            "response": "[{'chemical': '1-hexyne', 'amount': ['1.72 mL', '15 mmol'], 'dropwise': False}, {'chemical': 'THF', 'amount': ['20 mL'], 'dropwise': False}]"
+        },
+        {
+            "actions": "Add",
+            "context": "'(ethyl 4-iodobenzoate, 1.38 g, 5 mmol)'",
+            "response": "{'chemical': 'ethyl 4-iodobenzoate', 'amount': ['1.38 g', '5 mmol']}"
+        },
+        {
+            "actions": "Add",
+            "context": "'(triethylamine, 1.05 mL, 7.5 mmol)'",
+            "response": "{'chemical': 'triethylamine', 'amount': ['1.05 mL', '7.5 mmol']}"
+        },
+        {
+            "actions": "Add",
+            "context": "'(bis(triphenylphosphine)palladium(II) chloride, 17.5 mg, 0.25 mmol)",
+            "response": "{'chemical': 'bis(triphenylphosphine)palladium(II) chloride', 'amount': ['17.5 mg', '0.25 mmol']}"
+        },
+        {
+            "actions": "Add",
+            "context": "'(copper iodide, 11.4 mg, 0.06 mg)'",
+            "response": "{'chemical': 'copper iodide', 'amount': ['11.4 mg', '0.06 mg']}"
+        }
+    ],
+    "prompt8": [
+        {
+            "actions": "MakeSolution",
+            "context": "'(4-((5-(4-(oxiran-2-ylmethoxy)phenyl)-1H-pyrazol-1-yl)methyl)phenyl)(pyrrolidin-1-yl)methanone (201 mg, 0.5 mmol) in absolute ethanol (5 mL)'",
+            "response": "Based on the given context, there is one chemical compound mentioned and a solvent used. The chemical compound is '(4-((5-(4-(oxiran-2-ylmethoxy)phenyl)-1H-pyrazol-1-yl)methyl)phenyl)(pyrrolidin-1-yl)methanone' and the solvent is 'absolute ethanol'. Here are the required json schemas:\n\n    For '(4-((5-(4-(oxiran-2-ylmethoxy)phenyl)-1H-pyrazol-1-yl)methyl)phenyl)(pyrrolidin-1-yl)methanone':\n    {'chemical': '(4-((5-(4-(oxiran-2-ylmethoxy)phenyl)-1H-pyrazol-1-yl)methyl)phenyl)(pyrrolidin-1-yl)methanone', 'amount': ['201 mg', '0.5 mmol'], 'dropwise': False}\n\n    For 'absolute ethanol':\n    {'chemical': 'absolute ethanol', 'amount': ['5 mL'], 'dropwise': False}\n\n"
+        },
+        {
+            "actions": "Add",
+            "context": "'1,2,3,4-tetrahydroisoquinoline (133 mg, 1 mmol)'",
+            "response": "Based on the given context, there is one chemical compound mentioned which is '1,2,3,4-tetrahydroisoquinoline'. Here is the required json schema:\n\nFor '1,2,3,4-tetrahydroisoquinoline':\n{'chemical': '1,2,3,4-tetrahydroisoquinoline', 'amount': ['133 mg', '1 mmol'], 'dropwise': False}\n"
+        }
+    ],
+    "prompt9": [
+        {
+            "actions": "MakeSolution",
+            "context": "'(5.0 g methyl 4'-bromomethylbiphenyl-2-carboxylate, 16.4 mmol, 40 ml DMF)'",
+            "response": "{\n'chemical': 'methyl 4'-bromomethylbiphenyl-2-carboxylate',\n'amount': ['5.0 g', '16.4 mmol'],\n'dropwise': False\n},\n{\n'chemical': 'DMF',\n'amount': ['40 ml'],\n'dropwise': False\n}"
+        },
+        {
+            "actions": "Add",
+            "context": "'(sodium azide, 2.7 g, 41 mmol)'",
+            "response": "{\n'chemical': 'sodium azide',\n'amount': ['2.7 g', '41 mmol'],\n'dropwise': False\n}"
+        },
+        {
+            "actions": "Partition",
+            "context": "'(between water and ethyl acetate, 100 ml)'",
+            "response": "{\n'chemical': 'water',\n'amount': ['100 ml'],\n'dropwise': False\n},\n{\n'chemical': 'ethyl acetate',\n'amount': ['100 ml'],\n'dropwise': False\n}"
+        },
+        {
+            "actions": "Extract",
+            "context": "'(with ethyl acetate, 100 ml)'",
+            "response": "{\n'chemical': 'ethyl acetate',\n'amount': ['100 ml'],\n'dropwise': False\n}"
+        },
+        {
+            "actions": "Wash",
+            "context": "'(3\u00d7100 ml water, 100 ml saturated aqueous sodium chloride)'",
+            "response": "{\n'chemical': 'water',\n'amount': ['3\u00d7100 ml'],\n'dropwise': False\n},\n{\n'chemical': 'saturated aqueous sodium chloride',\n'amount': ['100 ml'],\n'dropwise': False\n}"
+        },
+        {
+            "actions": "DrySolution",
+            "context": "'(MgSO4)'",
+            "response": "{\n'chemical': 'MgSO4',\n'amount': [N/A],\n'dropwise': False\n}"
+        }
+    ],
+    "prompt10": [
+        {
+            "actions": "MakeSolution",
+            "context": "'(isoquinoline-5-sulfonic acid {2-[2-(4-bromo-phenylsulfanyl)-ethylamino]-ethyl}-amide, 73.0 mg, 0.157 mmol, CH3OH, 5 mL, H2O, 1.3 mL)'",
+            "response": "The compounds mentioned in the provided paragraph are:\n\n    isoquinoline-5-sulfonic acid {2-[2-(4-bromo-phenylsulfanyl)-ethylamino]-ethyl}-amide\n    CH3OH (Methanol)\n    H2O (Water)\n\nHere are the Json schemas for each compound and solvent:\n\n    isoquinoline-5-sulfonic acid {2-[2-(4-bromo-phenylsulfanyl)-ethylamino]-ethyl}-amide:\n    {'chemical': 'isoquinoline-5-sulfonic acid {2-[2-(4-bromo-phenylsulfanyl)-ethylamino]-ethyl}-amide', 'amount': [73.0 mg, 0.157 mmol], 'dropwise': False}\n\n    CH3OH (Methanol):\n    {'chemical': 'Methanol', 'amount': [5 mL], 'dropwise': False}\n\n    H2O (Water):\n    {'chemical': 'Water', 'amount': [1.3 mL], 'dropwise': False}\n\nI have assumed 'dropwise' as False since the paragraph does not specify any dropwise addition. If you need further information or assistance, feel free to ask!\n"
+        },
+        {
+            "actions": "Add",
+            "context": "'(oxone, 289 mg, 0.470 mmol)'",
+            "response": "The compound mentioned in the provided paragraph is:\n\n    oxone\n\nHere is the Json schema for the compound:\n\n    oxone:\n    {'chemical': 'oxone', 'amount': [289 mg, 0.470 mmol], 'dropwise': False}\n\nI have assumed 'dropwise' as False since the paragraph does not specify any dropwise addition. If you need further information or assistance, feel free to ask!\n"
+        },
+        {
+            "actions": "Wash",
+            "context": "'(H2O, 10 mL)'",
+            "response": "The compound mentioned in the provided paragraph is:\n\n    H2O (Water)\n\nHere is the Json schema for the compound:\n\n    H2O (Water):\n    {'chemical': 'Water', 'amount': [10 mL], 'dropwise': False}\n\nI have assumed 'dropwise' as False since the paragraph does not specify any dropwise addition. If you need further information or assistance, feel free to ask!\n"
+        }
+    ],
+    "prompt11": [
+        {
+            "actions": "MakeSolution",
+            "context": "'(6-methoxy-1,2,3,4-tetrahydro-isoquinoline-5-carbaldehyde hydrochloride, 82 mg, 0.36 mmol, anhydrous dimethylformamide, 5 mL)'",
+            "response": "{'chemical': '6-methoxy-1,2,3,4-tetrahydro-isoquinoline-5-carbaldehyde hydrochloride', 'amount': ['82 mg', '0.36 mmol'], 'dropwise': False}, {'chemical': 'anhydrous dimethylformamide', 'amount': ['5 mL'], 'dropwise': False}"
+        },
+        {
+            "actions": "Add",
+            "context": "'(2-chloro-4-methyl-thiazol-5-yl)-morpholin-4-yl-methanone, 89 mg, 0.36 mmol)'",
+            "response": "{'chemical': '(2-chloro-4-methyl-thiazol-5-yl)-morpholin-4-yl-methanone', 'amount': ['89 mg', '0.36 mmol'], 'dropwise': False}"
+        },
+        {
+            "actions": "Add",
+            "context": "'(freshly dried potassium carbonate, 149 mg, 1.08 mmol)'",
+            "response": "The compound mentioned in the paragraph is potassium carbonate.\n\nHere is the Json schema for the compound:\n{'chemical': 'potassium carbonate', 'amount': [149 mg, 1.08 mmol], 'dropwise': False}\n\nThe \"dropwise\" attribute is set to False as the paragraph does not provide information on the manner in which the compound was added. If you have any more questions or need further assistance, feel free to ask!\n"
+        },
+        {
+            "actions": "Add",
+            "context": "'(water, 20 mL)'",
+            "response": "{'chemical': 'water', 'amount': ['20 mL'], 'dropwise': False}"
+        },
+        {
+            "actions": "Extract",
+            "context": "'(diethyl ether, 5\u00d710 mL)'",
+            "response": "{'chemical': 'diethyl ether', 'amount': ['5\u00d710 mL'], 'dropwise': False}"
+        },
+        {
+            "actions": "Wash",
+            "context": "'(water, 2\u00d710 mL)'",
+            "response": "The compound mentioned in the paragraph is water.\n\nHere is the Json schema for the compound:\n{'chemical': 'water', 'amount': [2\u00d710 mL], 'dropwise': False}\n\nThe notation \"2\u00d710 mL\" could potentially mean 2 aliquots of 10 mL each, but without further context, it's difficult to ascertain the exact meaning. Therefore, the \"dropwise\" attribute is set to False as the paragraph does not provide information on the manner in which the compound was added. If you have any more questions or need further assistance, feel free to ask!\n"
+        },
+        {
+            "actions": "DrySolution",
+            "context": "'(residue)'",
+            "response": "The term \"residue\" in organic synthesis typically refers to the remaining solid or liquid material left behind after a process, such as evaporation or filtration. It does not specifically refer to a compound, chemical, molecule, or solvent in the traditional sense.\n\nAs a result, a Json schema for the term \"residue\" in the context of compounds, chemicals, molecules, or solvents cannot be created as it does not provide specific information about a particular substance.\n\nIf you have any more questions or need further assistance, feel free to ask!\n"
+        },
+        {
+            "actions": "Triturate",
+            "context": "'(diisopropyl ether)'",
+            "response": "The compound mentioned in the paragraph is diisopropyl ether.\n\nHere is the Json schema for the compound:\n{'chemical': 'diisopropyl ether', 'amount': 'N/A', 'dropwise': False}\n\nThe paragraph does not provide specific amounts or units for diisopropyl ether, so the \"amount\" attribute is listed as 'N/A'. The \"dropwise\" attribute is set to False as the paragraph does not provide information on the manner in which the compound was added.\n\nIf you have any more questions or need further assistance, feel free to ask!\n"
+        }
+    ]
+}

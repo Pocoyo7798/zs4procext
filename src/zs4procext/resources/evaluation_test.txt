@@ -1,0 +1,1 @@
+[{'action': 'InvalidAction', 'content': {'error': 'Cannot handle the Pistachio action "Synthesize" resulting from "Prepared analogously to Example 10 from 4\'-[[2-n-butyl-4-methyl-6-(1-methylbenzimidazol-2-yl)-benzimidazol-1-yl]methyl]-2-cyano-biphenyl and sodium azide in dimethylformamide"'}}]

@@ -1,0 +1,11 @@
+{
+  "expertise": "You are an expert on organic synthesis.",
+  "initialization": "Take your time and extract information as truthfully as possible using the provided context. If any information is not provided or you are unsure, use 'N/A'.",
+  "objective":"Get all the compounds",
+  "actions": {},
+  "answer_schema": {
+                    "Initialization" : "For each compound/chemical/molecule/solvent found, create a Json schema with the following format:",
+                    "Fomat" : "{'chemical': <chemical name>, 'amount': <List of amounts coupled with units>, 'dropwise': <True or False>}"
+                  },
+  "conclusion":  "Assume 'dropwise' as False if you are unsure and amounts can contains, mass, moles or volume."
+}
