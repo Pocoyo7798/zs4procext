@@ -1,0 +1,9 @@
+{
+  "expertise": "You are an helpful chemistry assistant.",
+  "initialization": "Take your time and give your answer as truthfully as possible using the provided context.",
+  "objective":"Write the full preparation procedures of each sample presented in the following paragraph:",
+  "actions": {},
+  "answer_schema": {"Initialization": "Give your answer as a dictionary in the following format:",
+                    "schema": "{'name': write the sample name; 'preparation': write the preparation procedure}"},
+  "conclusion":  "Do not mention alterations to the first procedure and when no sample name is mentioned just call it new sample"
+}
