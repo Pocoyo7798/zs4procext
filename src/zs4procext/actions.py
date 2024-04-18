@@ -192,6 +192,7 @@ class ActionsWithChemicalAndConditions(Actions):
             if new_value != []:
                 setattr(self, atribute, new_value)
 
+### Actions for Organic Synthesis
 
 class PH(ActionsWithChemicalAndConditions):
     ph: Optional[str] = None
@@ -807,6 +808,57 @@ class Yield(ActionsWithchemicals):
             )
         return [action.transform_into_pistachio()]
 
+### Actions for Heterogeneous Catalysts
+
+class AddMaterials(ActionsWithChemicalAndConditions):
+    material: Optional[Chemical] = None
+    dropwise: bool = False
+    atmosphere: Optional[str] = None
+    duration: Optional[str] = None
+
+class NewSolution(Actions):
+    name: Optional[str] = None
+
+class Crystallization(ActionsWithConditons):
+    temperature: Optional[str] = None
+    duration: Optional[str] = None
+    pressure: Optional[str] = None
+
+class WashMaterial(ActionsWithchemicals):
+    material: Optional[Chemical] = None
+
+class DryMaterial(ActionsWithConditons):
+    temperature: Optional[str] = None
+    duration: Optional[str] = None
+    atmosphere: Optional[str] = None
+
+class ThermalTreatment(ActionsWithConditons):
+    temperature: Optional[str] = None
+    duration: Optional[str] = None
+    ramp: Optional[str] = None
+    gas: Optional[List[str]] = None
+    flow_rate: Optional[str] = None
+
+class StirMaterial(ActionsWithConditons):
+    duration: Optional[str] = None
+    type: Optional[str] = None
+    speed: Optional[str] = None
+
+class IonExachange(ActionsWithConditons):
+    solution: Optional[List[Chemical]] = None
+    temperature: Optional[str] = None
+    duration: Optional[str] = None
+
+class Repeat(Actions):
+    def generate_action(self):
+        pass
+
+class ChangeTemperature(ActionsWithConditons):
+    temperature: Optional[str] = None
+    microwave: bool = False
+
+class MicrowaveMaterial(ActionsWithConditons):
+    temperature: Optional[str] = None
 
 ACTION_REGISTRY: Dict[str, Any] = {
     "add": Add,
