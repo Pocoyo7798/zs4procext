@@ -72,7 +72,7 @@ class PromptFormatter(BaseModel):
         answer_schema_list: List[str] = []
         if action_intialization_key not in self.answer_schema:
             (
-                "Warning: The answer schema was provided without a valid action_initializatio_key"
+                "Warning: The answer schema was provided without a valid action_initialization_key"
             )
         else:
             answer_schema_list.append(

@@ -256,3 +256,61 @@ class ActionExtractorFromText(BaseModel):
                 action_list.extend(new_action)
             i = i + 1
         return ActionExtractorFromText.eliminate_empty_sequence(action_list, 5)
+
+class SamplesExtractorFromText(BaseModel):
+    prompt_structure_path: Optional[str] = None
+    prompt_schema_path: Optional[str] = None
+    llm_model_name: Optional[str] = None
+    llm_model_parameters_path: Optional[str] = None
+    _schema_parser: Optional[SchemaParser] = PrivateAttr(default=None)
+
+    def model_post_init(self, __context: Any) -> None:
+        if self.prompt_schema_path is None:
+            self.prompt_schema_path = str(
+                importlib_resources.files("zs4procext")
+                / "resources"
+                / "find_samples_procedures_schema.json"
+            )
+        with open(self.prompt_schema_path, "r") as f:
+            prompt_dict = json.load(f)
+        self._prompt = PromptFormatter(**prompt_dict)
+        self._prompt.model_post_init(self.prompt_structure_path)
+        if self.llm_model_parameters_path is None:
+            llm_param_path = str(
+                importlib_resources.files("zs4procext")
+                / "resources"
+                / "vllm_default_params.json"
+            )
+        else:
+            llm_param_path = self.llm_model_parameters_path
+        if self.llm_model_name is None:
+            self._llm_model = ModelLLM(model_name="Llama2-70B-chat-hf")
+        else:
+            self._llm_model = ModelLLM(model_name=self.llm_model_name)
+        self._llm_model.load_model_parameters(llm_param_path)
+        self._llm_model.vllm_load_model()
+        atributes = ["name", "preparation"]
+        self._schema_parser = SchemaParser(atributes_list=atributes)
+        self._schema_parser.model_post_init(None)
+    
+    def retrieve_samples_from_text(self, paragraph: str) -> List[Any]:
+        prompt: str = self._prompt.format_prompt(paragraph)
+        response: str = self._llm_model.run_single_prompt(prompt)
+        schemas: List[str] = self._schema_parser.parse_schema(response)
+        samples_list: List[Any] = []
+        i = 1
+        for schema in schemas:
+            sample_dict = {}
+            name_list = self._schema_parser.get_atribute_value(schema, "name")
+            procedure_list = self._schema_parser.get_atribute_value(schema, "preparation")
+            if len(name_list) > 0:
+                sample_dict["sample"] = name_list[0]
+            else:
+                sample_dict["sample"] = f"sample {i}"
+                i += 1
+            if len(procedure_list) > 0:
+                sample_dict["procedure"] = procedure_list[0]
+            else:
+                sample_dict["procedure"] = None
+            samples_list.append(sample_dict)
+        return samples_list
