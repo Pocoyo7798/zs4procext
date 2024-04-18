@@ -29,7 +29,7 @@ from zs4procext.prompt import TEMPLATE_REGISTRY
     default=None,
     help="Parameters of the LLM used to get the actions",
 )
-def text2actions(
+def text2samples(
     text_file_path: str,
     output_file_path: str,
     prompt_structure_path: Optional[str],
@@ -63,3 +63,11 @@ def text2actions(
             f.write(str(results) + "\n")
         count = count + 1
     print(f"{(time.time() - start_time) / 60} minutes")
+
+
+def main():
+    text2samples()
+
+
+if __name__ == "__main__":
+    main()
