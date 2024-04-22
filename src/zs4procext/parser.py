@@ -21,6 +21,7 @@ class Conditions(BaseModel):
     pressure: List[str] = []
     atmosphere: List[str] = []
     amount: Dict[str, List[Any]] = {}
+    concentration : List[str]
     other: List[str] = []
 
 
