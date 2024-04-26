@@ -4,6 +4,7 @@ from pydantic import BaseModel, validator
 
 from zs4procext.parser import (
     Conditions,
+    ComplexParametersParser,
     DimensionlessParser,
     KeywordSearching,
     ParametersParser,
@@ -24,7 +25,7 @@ class Chemical(BaseModel):
         Returns:
             True if the chemical was added dropwise or Flase otherwise
         """
-        chemical_list = schema_parser.get_atribute_value(schema, "chemical")
+        chemical_list = schema_parser.get_atribute_value(schema, "name")
         dropwise_list = schema_parser.get_atribute_value(schema, "dropwise")
         if len(chemical_list) == 0:
             pass
@@ -47,7 +48,8 @@ class Chemical(BaseModel):
             new_dropwise = False
         return new_dropwise
 
-    def get_quantity(self, text: str, amount_parser: ParametersParser) -> int:
+
+    def get_quantity(self, text: str, amount_parser: ParametersParser, get_concentration: bool=False) -> Any:
         """get the amount of a chemical inside a string
 
         Args:
@@ -57,22 +59,47 @@ class Chemical(BaseModel):
             AttributeError: If the theres no ParameterParser loaded
 
         Returns:
-            the amount of adding repetions of a chemical
+            the amount of adding repetions of a chemical and concentration if asked for
         """
         amount: Conditions = amount_parser.get_parameters(text)
         amount_dict = amount.amount
         self.quantity = amount_dict["value"]  # type: ignore
         if len(amount_dict["repetitions"]) == 0:  # type: ignore
-            return 1
+            max_repetitions: int = 1
         else:
-            max_repetitions: int = int(max(amount_dict["repetitions"]))  # type: ignore
+            max_repetitions = int(max(amount_dict["repetitions"]))  # type: ignore
+        if get_concentration is True:
+            return amount.concentration, max_repetitions
+        else:
             return max_repetitions
 
+
+class ChemicalsMaterials(Chemical):
+    chemical_type: str = "reactant"
+    concentration: Optional[List[str]] = None
+    def get_chemical_materials(self, schema: str, schema_parser: SchemaParser) -> bool:
+        dropwise = self.get_chemical(schema, schema_parser)
+        print(schema_parser.get_atribute_value(schema, "type"))
+        if schema_parser.get_atribute_value(schema, "type")[0].lower() == "final solution":
+            self.chemical_type = "final solution"
+        concentration_list: List[str] = schema_parser.get_atribute_value(schema, "concentration")
+        if len(concentration_list) == 0:
+            pass
+        elif concentration_list[0].replace(",", "").strip().lower() == "n/a":
+            pass
+        else:
+            self.concentration = concentration_list
+        return dropwise
 
 class ChemicalInfo(BaseModel):
     chemical_list: list[Chemical] = []
     dropwise: list[bool] = []
+    final_solution: Optional[Chemical] = None
     repetitions: int = 1
+
+class ChemicalInfoMaterials(ChemicalInfo):
+    chemical_list: list[ChemicalsMaterials] = []
+    final_solution: Optional[ChemicalsMaterials] = None
 
 
 class Actions(BaseModel):
@@ -83,15 +110,26 @@ class Actions(BaseModel):
     def transform_into_pistachio(self) -> Dict[str, Any]:
         action_name: str = self.action_name
         if type(self) is SetTemperature:
-            action_dict = self.dict(
+            action_dict = self.model_dump(
                 exclude={"action_name", "action_context", "duration", "pressure"}
             )
         else:
-            action_dict = self.dict(
+            action_dict = self.model_dump(
                 exclude={"action_name", "action_context", "pressure"}
             )
         return {"action": action_name, "content": action_dict}
-
+    
+    def zeolite_dict(self) -> Dict[str, Any]:
+        action_name: str = self.action_name
+        if type(self) is Add:
+            action_dict = self.model_dump(
+                exclude={"action_name", "action_context", "temperature"}
+            )
+        else:
+            action_dict = self.model_dump(
+                exclude={"action_name", "action_context"}
+            )
+        return {"action": action_name, "content": action_dict}
 
 class ActionsWithchemicals(Actions):
     type: ClassVar[Optional[str]] = "onlychemicals"
@@ -126,13 +164,49 @@ class ActionsWithchemicals(Actions):
         else:
             chemical_info.repetitions = max(repetitions_list)
         return chemical_info
-
+    
+    @classmethod
+    def validate_chemicals_materials(
+        cls,
+        schemas: List[str],
+        schema_parser: SchemaParser,
+        amount_parser: ParametersParser,
+        context: str,
+    ) -> ChemicalInfo:
+        chemical_info = ChemicalInfoMaterials()
+        repetitions_list: List[int] = []
+        for schema in schemas:
+            new_chemical: ChemicalsMaterials = ChemicalsMaterials()
+            dropwise = new_chemical.get_chemical_materials(schema, schema_parser)
+            if len(schemas) > 1:
+                repetitions = new_chemical.get_quantity(schema, amount_parser)
+            else:
+                repetitions = new_chemical.get_quantity(context, amount_parser)
+            if new_chemical.name == "":
+                pass
+            elif new_chemical.name.strip().lower() == "n/a":
+                pass
+            elif new_chemical.chemical_type == "final solution":
+                chemical_info.final_solution = new_chemical
+            else:
+                chemical_info.chemical_list.append(new_chemical)
+                chemical_info.dropwise.append(dropwise)
+                repetitions_list.append(repetitions)
+        if len(repetitions_list) == 0:
+            chemical_info.repetitions = 1
+        else:
+            chemical_info.repetitions = max(repetitions_list)
+        return chemical_info
 
 class ActionsWithConditons(Actions):
     type: ClassVar[Optional[str]] = "onlyconditions"
 
-    def validate_conditions(self, conditions_parser: ParametersParser) -> None:
+    def validate_conditions(self, conditions_parser: ParametersParser, complex_conditions_parser: Optional[ComplexParametersParser]=None) -> None:
         conditions: Dict[str, Any] = conditions_parser.get_parameters(
+            self.action_context
+        ).__dict__
+        if complex_conditions_parser is not None:
+            complex_conditions = complex_conditions_parser.get_parameters(
             self.action_context
         ).__dict__
         for atribute in self.__dict__.keys():
@@ -140,6 +214,11 @@ class ActionsWithConditons(Actions):
                 new_value = conditions[atribute][0]
             except Exception:
                 new_value = self.__dict__[atribute]
+            if complex_conditions_parser is not None:
+                try:
+                    new_value = complex_conditions[atribute][0]
+                except Exception:
+                    pass
             setattr(self, atribute, new_value)
 
 
@@ -178,19 +257,58 @@ class ActionsWithChemicalAndConditions(Actions):
             chemical_info.repetitions = max(repetitions_list)
         return chemical_info
 
-    def validate_conditions(self, conditions_parser: ParametersParser) -> None:
+    def validate_conditions(self, conditions_parser: ParametersParser, complex_conditions_parser: Optional[ComplexParametersParser]=None) -> None:
         conditions: Dict[str, Any] = conditions_parser.get_parameters(
+            self.action_context
+        ).__dict__
+        if complex_conditions_parser is not None:
+            complex_conditions = complex_conditions_parser.get_parameters(
             self.action_context
         ).__dict__
         for atribute in self.__dict__.keys():
             try:
-                new_value: list[str] | dict[str, list[str] | list[int]] = conditions[
-                    atribute
-                ]
-            except KeyError:
-                new_value = []
-            if new_value != []:
-                setattr(self, atribute, new_value)
+                new_value = conditions[atribute][0]
+            except Exception:
+                new_value = self.__dict__[atribute]
+            if complex_conditions_parser is not None:
+                try:
+                    new_value = complex_conditions[atribute][0]
+                except Exception:
+                    pass
+            setattr(self, atribute, new_value)
+    
+    @classmethod
+    def validate_chemicals_materials(
+        cls,
+        schemas: List[str],
+        schema_parser: SchemaParser,
+        amount_parser: ParametersParser,
+        context: str,
+    ) -> ChemicalInfo:
+        chemical_info = ChemicalInfoMaterials()
+        repetitions_list: List[int] = []
+        for schema in schemas:
+            new_chemical: ChemicalsMaterials = ChemicalsMaterials()
+            dropwise = new_chemical.get_chemical_materials(schema, schema_parser)
+            if len(schemas) > 1:
+                repetitions = new_chemical.get_quantity(schema, amount_parser)
+            else:
+                repetitions = new_chemical.get_quantity(context, amount_parser)
+            if new_chemical.name == "":
+                pass
+            elif new_chemical.name.strip().lower() == "n/a":
+                pass
+            elif new_chemical.chemical_type == "final solution":
+                chemical_info.final_solution = new_chemical
+            else:
+                chemical_info.chemical_list.append(new_chemical)
+                chemical_info.dropwise.append(dropwise)
+                repetitions_list.append(repetitions)
+        if len(repetitions_list) == 0:
+            chemical_info.repetitions = 1
+        else:
+            chemical_info.repetitions = max(repetitions_list)
+        return chemical_info
 
 ### Actions for Organic Synthesis
 
@@ -467,7 +585,6 @@ class MakeSolution(ActionsWithChemicalAndConditions):
                 f"MakeSolution requires at least two components (actual: {len(materials)}"
             )
         return materials
-
     @classmethod
     def generate_action(
         cls,
@@ -811,51 +928,227 @@ class Yield(ActionsWithchemicals):
 ### Actions for Heterogeneous Catalysts
 
 class AddMaterials(ActionsWithChemicalAndConditions):
-    material: Optional[Chemical] = None
+    material: Optional[ChemicalsMaterials] = None
     dropwise: bool = False
     atmosphere: Optional[str] = None
+    temperature: Optional[str] = None
     duration: Optional[str] = None
+    ph: Optional[str] = None
+    
+    @classmethod
+    def generate_action(
+        cls,
+        context: str,
+        schemas: List[str],
+        schema_parser: SchemaParser,
+        amount_parser: ParametersParser,
+        conditions_parser: ParametersParser,
+        ph_parser: KeywordSearching,
+    ) -> List[Dict[str, Any]]:
+        action: AddMaterials = cls(action_name="Add", action_context=context)
+        action.validate_conditions(conditions_parser)
+        chemicals_info: ChemicalInfoMaterials = action.validate_chemicals_materials(
+            schemas, schema_parser, amount_parser, action.action_context
+        )
+        if len(ph_parser.find_keywords(context)) > 0:
+            dimensionless_values = DimensionlessParser.get_dimensionless_numbers(context)
+            if len(dimensionless_values) == 0:
+                pass
+            elif len(dimensionless_values) == 1:
+                action.ph = dimensionless_values[0]
+            else:
+                action.ph = dimensionless_values[0]
+                print(
+                    "Warning: More than one dimentionless value was found for the pH, only the first one was considered"
+                )
+        list_of_actions: List[Dict[str, Any]] = []
+        if len(chemicals_info.chemical_list) == 0:
+            list_of_actions.append(action.zeolite_dict())
+        elif len(chemicals_info.chemical_list) == 1:
+            action.material = chemicals_info.chemical_list[0]
+            action.dropwise = chemicals_info.dropwise[0]
+            list_of_actions.append(action.zeolite_dict())
+        else:
+            i = 0
+            for chemical in chemicals_info.chemical_list:
+                action.material = chemical
+                action.dropwise = chemicals_info.dropwise[i]
+                list_of_actions.append(action.zeolite_dict())
+                i += 1
+        return list_of_actions
 
-class NewSolution(Actions):
-    name: Optional[str] = None
+class NewSolution(ActionsWithChemicalAndConditions):
+    solution: Optional[ChemicalsMaterials] = None
+
+    @classmethod
+    def generate_action(
+        cls,
+        context: str,
+        schemas: List[str],
+        schema_parser: SchemaParser,
+        amount_parser: ParametersParser,
+        conditions_parser: ParametersParser,
+        ph_parser: KeywordSearching,
+    ) -> List[Dict[str, Any]]:
+        action: NewSolution = cls(action_name="NewSolution", action_context=context)
+        chemicals_info: ChemicalInfoMaterials = action.validate_chemicals_materials(
+            schemas, schema_parser, amount_parser, action.action_context
+        )
+        print(chemicals_info)
+        if chemicals_info.final_solution is not None:
+            action.solution = chemicals_info.final_solution
+        list_of_actions: List[Dict[str, Any]] = []
+        list_of_actions.append(action.zeolite_dict())
+        add_actions = AddMaterials.generate_action(
+                context, schemas, schema_parser, amount_parser, conditions_parser, ph_parser
+            )
+        list_of_actions += add_actions
+        return list_of_actions
 
 class Crystallization(ActionsWithConditons):
     temperature: Optional[str] = None
     duration: Optional[str] = None
     pressure: Optional[str] = None
 
+    @classmethod
+    def generate_action(
+        cls, context: str, conditions_parser: ParametersParser
+    ) -> List[Dict[str, Any]]:
+        action: Crystallization = cls(action_name="Crystallization", action_context=context)
+        action.validate_conditions(conditions_parser)
+        return [action.zeolite_dict()]
+
 class WashMaterial(ActionsWithchemicals):
-    material: Optional[Chemical] = None
+    material: Optional[ChemicalsMaterials] = None
+    repetitions: int = 1
+
+    @classmethod
+    def generate_action(
+        cls,
+        context: str,
+        schemas: List[str],
+        schema_parser: SchemaParser,
+        amount_parser: ParametersParser,
+    ) -> List[Dict[str, Any]]:
+        action: WashMaterial = cls(action_name="Wash", action_context=context)
+        chemicals_info: ChemicalInfoMaterials = action.validate_chemicals_materials(
+            schemas, schema_parser, amount_parser, action.action_context
+        )
+        if len(chemicals_info.chemical_list) == 0:
+            pass
+        elif len(schemas) == 1:
+            action.material = chemicals_info.chemical_list[0]
+            action.repetitions = chemicals_info.repetitions
+        else:
+            action.material = chemicals_info.chemical_list[0]
+            action.repetitions = chemicals_info.repetitions
+            print(
+                "Warning: More than one Material found on Wash object, only the first one was considered"
+            )
+        return [action.zeolite_dict()]
 
 class DryMaterial(ActionsWithConditons):
     temperature: Optional[str] = None
     duration: Optional[str] = None
     atmosphere: Optional[str] = None
 
+    @classmethod
+    def generate_action(
+        cls, context: str, conditions_parser: ParametersParser
+    ) -> List[Dict[str, Any]]:
+        action: DryMaterial = cls(action_name="Dry", action_context=context)
+        action.validate_conditions(conditions_parser)
+        return [action.zeolite_dict()]
+
 class ThermalTreatment(ActionsWithConditons):
     temperature: Optional[str] = None
     duration: Optional[str] = None
-    ramp: Optional[str] = None
-    gas: Optional[List[str]] = None
+    heat_ramp: Optional[str] = None
+    atmosphere: Optional[List[str]] = None
     flow_rate: Optional[str] = None
+    @classmethod
+    def generate_action(
+        cls, context: str, conditions_parser: ParametersParser, complex_conditions_parser: ComplexParametersParser
+    ) -> List[Dict[str, Any]]:
+        action: ThermalTreatment = cls(action_name="ThermalTreatment", action_context=context)
+        action.validate_conditions(conditions_parser, complex_conditions_parser=complex_conditions_parser)
+        return [action.zeolite_dict()]
 
 class StirMaterial(ActionsWithConditons):
     duration: Optional[str] = None
-    type: Optional[str] = None
-    speed: Optional[str] = None
+    stirring_speed: Optional[str] = None
+    
+    @classmethod
+    def generate_action(
+        cls, context: str, conditions_parser: ParametersParser, complex_conditions_parser: ComplexParametersParser
+    ) -> List[Dict[str, Any]]:
+        action: StirMaterial = cls(action_name="Stir", action_context=context)
+        action.validate_conditions(conditions_parser, complex_conditions_parser=complex_conditions_parser)
+        return [action.zeolite_dict()]
 
-class IonExachange(ActionsWithConditons):
-    solution: Optional[List[Chemical]] = None
+class IonExchange(ActionsWithChemicalAndConditions):
+    solution: Optional[Chemical] = None
     temperature: Optional[str] = None
     duration: Optional[str] = None
+    repetitions: int = 1
+    
+    @classmethod
+    def generate_action(
+        cls,
+        context: str,
+        schemas: List[str],
+        schema_parser: SchemaParser,
+        amount_parser: ParametersParser,
+        conditions_parser: ParametersParser,
+    ) -> List[Dict[str, Any]]:
+        action: IonExchange = cls(action_name="IonExchange", action_context=context)
+        action.validate_conditions(conditions_parser)
+        chemicals_info: ChemicalInfo = action.validate_chemicals(
+            schemas, schema_parser, amount_parser, action.action_context
+        )
+        if len(chemicals_info.chemical_list) == 0:
+            pass
+        elif len(schemas) == 1:
+            action.solution = chemicals_info.chemical_list[0]
+            action.repetitions = chemicals_info.repetitions
+        else:
+            action.solution = chemicals_info.chemical_list[0]
+            action.repetitions = chemicals_info.repetitions
+            print(
+                "Warning: More than one Material found on Wash object, only the first one was considered"
+            )
+        return [action.zeolite_dict()]
 
 class Repeat(Actions):
-    def generate_action(self):
-        pass
+    amount: str = 1
+    
+    @classmethod
+    def generate_action(cls, context: str, parser: DimensionlessParser):
+        action: Repeat = cls(action_name="Repeat", action_context=context)
+        number_list: List[str] = parser.get_dimensionless_numbers(context)
+        if len(number_list) == 0:
+            pass
+        elif len(number_list) == 1:
+            action.amount = number_list[0]
+        else :
+            action.amount = number_list[0]
+            print(
+                "Warning: More than one adimensional number was found, only the first one was considered"
+                )
+        return [action.zeolite_dict()]
+
 
 class ChangeTemperature(ActionsWithConditons):
     temperature: Optional[str] = None
     microwave: bool = False
+
+    @classmethod
+    def generate_action(
+        cls, context: str, conditions_parser: ParametersParser
+    ) -> List[Dict[str, Any]]:
+        action = cls(action_name="ChangeTemperature", action_context=context)
+        action.validate_conditions(conditions_parser)
+        return [action.zeolite_dict()]
 
 class MicrowaveMaterial(ActionsWithConditons):
     temperature: Optional[str] = None
