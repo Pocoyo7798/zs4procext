@@ -107,7 +107,7 @@ class ActionExtractorFromText(BaseModel):
             atmosphere=False,
         )
         self._quantity_parser.model_post_init(None)
-        atributes = ["chemical", "dropwise"]
+        atributes = ["name", "dropwise"]
         self._schema_parser = SchemaParser(atributes_list=atributes)
         self._schema_parser.model_post_init(None)
         self._filtrate_parser = KeywordSearching(keywords_list=FILTRATE_REGISTRY)
@@ -289,7 +289,7 @@ class SamplesExtractorFromText(BaseModel):
             self._llm_model = ModelLLM(model_name=self.llm_model_name)
         self._llm_model.load_model_parameters(llm_param_path)
         self._llm_model.vllm_load_model()
-        atributes = ["name", "preparation"]
+        atributes = ["name", "preparation", "yield"]
         self._schema_parser = SchemaParser(atributes_list=atributes)
         self._schema_parser.model_post_init(None)
     
@@ -301,16 +301,27 @@ class SamplesExtractorFromText(BaseModel):
         i = 1
         for schema in schemas:
             sample_dict = {}
-            name_list = self._schema_parser.get_atribute_value(schema, "name")
-            procedure_list = self._schema_parser.get_atribute_value(schema, "preparation")
+            name_list: List[str] = self._schema_parser.get_atribute_value(schema, "name")
+            procedure_list: List[str] = self._schema_parser.get_atribute_value(schema, "preparation")
+            yield_list: List[str] = self._schema_parser.get_atribute_value(schema, "yield")
             if len(name_list) > 0:
                 sample_dict["sample"] = name_list[0]
             else:
                 sample_dict["sample"] = f"sample {i}"
                 i += 1
             if len(procedure_list) > 0:
-                sample_dict["procedure"] = procedure_list[0]
+                if procedure_list[0].strip().lower() == "n/a":
+                    sample_dict["procedure"] = None
+                else:
+                    sample_dict["procedure"] = procedure_list[0]
             else:
                 sample_dict["procedure"] = None
+            if len(yield_list) > 0:
+                if yield_list[0].strip().lower() == "n/a":
+                    sample_dict["yield"] = None
+                else:
+                    sample_dict["yield"] = yield_list[0]
+            else:
+                sample_dict["yield"] = None
             samples_list.append(sample_dict)
         return samples_list

@@ -14,6 +14,10 @@ class Amount(BaseModel):
     value: List[str] = []
     repetitions: List[int] = []
 
+class ComplexConditions(BaseModel):
+    stirring_speed: List[str] = []
+    heat_ramp: List[str] = []
+    flow_rate: List[str] = []
 
 class Conditions(BaseModel):
     duration: List[str] = []
@@ -34,6 +38,11 @@ class Parameters(BaseModel):
     pressure_words: List[str] = []
     atmosphere_words: List[str] = []
     amount_words: List[str] = []
+
+class ComplexParameters(BaseModel):
+    stirring_units: List[str] = []
+    heat_ramp_units: List[str] = []
+    flow_rate_units: List[str] = []
 
 
 class ParametersParser(BaseModel):
@@ -105,7 +114,7 @@ class ParametersParser(BaseModel):
         pressure_word_tre: TRE = TRE(*pressure_word_list)
         atmosphere_word_tre: TRE = TRE(*atmosphere_word_list)
         amount_word_tre: TRE = TRE(*amount_word_list)
-        regex: str = rf"([\"'\(\[\s,]((?P<repetitions1>\d+\.?,?\d*)[xX×]+)?(?P<number1>\+?-?-?\d+\.?,?\d*)(?P<unit1>[^-\),\[\]\s]?)-*(?P<number2>\d*\.?,?\d*)\s*(?P<unit2>[^-\),\[\]\d\s]?\s*{units_tre.regex()})([xX×]+(?P<repetitions2>\d+\.?,?\d*))?(?=[\)\]\s,\"'\(\.])|\b(?P<word>(?P<time>{time_word_tre.regex()})|(?P<temperature>{temperature_word_tre.regex()})|(?P<pressure>{pressure_word_tre.regex()})|(?P<atmosphere>{atmosphere_word_tre.regex()})|(?P<amount>{amount_word_tre.regex()}))\b)"
+        regex: str = rf"([\"'\(\[\s,]((?P<repetitions1>\d+\.?,?\d*)[xX×]+)?(?P<number1>\+?-?-?\d+\.?,?\d*)(?P<unit1>.?)-*(?P<number2>\d*\.?,?\d*)\s*(?P<unit2>.?\s*{units_tre.regex()})([xX×]+(?P<repetitions2>\d+\.?,?\d*))?(?=[\)\]\s,\"'\(\.])|\b(?P<word>(?P<time>{time_word_tre.regex()})|(?P<temperature>{temperature_word_tre.regex()})|(?P<pressure>{pressure_word_tre.regex()})|(?P<atmosphere>{atmosphere_word_tre.regex()})|(?P<amount>{amount_word_tre.regex()}))\b)"
         self._regex = re.compile(regex, re.IGNORECASE | re.MULTILINE)
 
     def transform_value(self, number: str, unit: str) -> tuple[str, str, str]:
@@ -239,7 +248,7 @@ class ParametersParser(BaseModel):
         """
         if self._regex is None:
             raise ValueError(
-                "The regex was not initialize, initialize it by <object_name>.initialize()"
+                "The regex was not initialize, initialize it by <object_name>.model_post_init(None)"
             )
         text = " " + text + " "  # needed to avoid errors at the regex parser
         results: Iterator[re.Match[str]] = self._regex.finditer(text)
@@ -278,6 +287,66 @@ class ParametersParser(BaseModel):
         conditions.amount = amount.__dict__
         return conditions
 
+
+class ComplexParametersParser(BaseModel):
+    parser_params_path: str = str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "synthesis_parsing_parameters.json"
+    )
+    _regex: Optional[re.Pattern[str]] = PrivateAttr(default=None)
+
+    def model_post_init(self, __context: Any) -> None:
+        """initialize the parser object by compiling a regex code"""
+        with open(self.parser_params_path, "r") as f:
+            parser_params_dict = json.load(f)
+        parser_params = ComplexParameters(**parser_params_dict)
+        stirring_units_list: List[str] =  parser_params.stirring_units
+        heating_ramp_units_list: List[str] = parser_params.heat_ramp_units
+        flow_rate_units_list: List[str] = parser_params.flow_rate_units
+        stirring_units_tre: TRE = TRE(*stirring_units_list)
+        heating_ramp_units_tre: TRE = TRE(*heating_ramp_units_list)
+        flow_rate_units_tre: TRE = TRE(*flow_rate_units_list)
+        regex: str = rf"([\"'\(\[\s,](?P<number1>\+?-?-?\d+\.?,?\d*)-*(?P<number2>\d*\.?,?\d*)\s*((?P<stirring_speed>[^-\),\[\]\d\s]?\s*{stirring_units_tre.regex()})|(?P<heat_ramp>.?\s*{heating_ramp_units_tre.regex()})|(?P<flow_rate>[^-\),\[\]\d\s]?\s*{flow_rate_units_tre.regex()}))(?=[\)\]\s,\"'\(\.]))"
+        self._regex = re.compile(regex, re.IGNORECASE | re.MULTILINE)
+
+    def generate_value(self, match: re.Match) -> Dict[str, str]:
+        if match.group("number2") != "":
+            value: str = f"{match.group('number1')}-{match.group('number2')}"
+        else:
+            value = f"{match.group('number1')}"
+        if match.group("stirring_speed") is not None:
+            unit: str = f"{match.group('stirring_speed')}"
+            condition_type: str = "stirring_speed"
+        if match.group("heat_ramp") is not None:
+            unit = f"{match.group('heat_ramp')}"
+            condition_type = "heat_ramp"
+        if match.group("flow_rate") is not None:
+            unit = f"{match.group('flow_rate')}"
+            condition_type = "flow_rate"
+        return {"value": f"{value} {unit}", "condition_type": condition_type}
+        
+
+
+    def get_parameters(self, text:str) -> ComplexConditions:
+        if self._regex is None:
+            raise ValueError(
+                "The regex was not initialize, initialize it by <object_name>.model_post_init(None)"
+            )
+        text = " " + text + " "  # needed to avoid errors at the regex parser
+        results: Iterator[re.Match[str]] = self._regex.finditer(text)
+        conditions: ComplexConditions = ComplexConditions()
+        for result in results:
+            result_dict: Dict[str, str] = self.generate_value(result)
+            condition_type: str = result_dict["condition_type"]
+            value: str = result_dict["value"]
+            if condition_type == "stirring_speed":
+                conditions.stirring_speed.append(value)  # type: ignore
+            elif condition_type == "heat_ramp":
+                conditions.heat_ramp.append(value)  # type: ignore
+            elif condition_type == "flow_rate":
+                conditions.flow_rate.append(value)  # type: ignore
+        return conditions
 
 class ActionsParser(BaseModel):
     separators: List[str] = [
@@ -491,8 +560,10 @@ class DimensionlessParser:
     @classmethod
     def get_dimensionless_numbers(cls, context: str) -> List[str]:
         quants: List[Any] = parser.parse(context)
+        print(quants)
         dimensionless_list: List[str] = []
         for quant in quants:
-            if quant.unit.name == "dimensionless":
+            print(quant.unit.entity)
+            if quant.unit.entity.name == "dimensionless":
                 dimensionless_list.append(str(quant.value))
         return dimensionless_list

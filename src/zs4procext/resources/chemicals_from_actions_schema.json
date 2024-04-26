@@ -5,7 +5,7 @@
   "actions": {},
   "answer_schema": {
                     "Initialization" : "For each compound/chemical/molecule/solvent found, create a Json schema with the following format:",
-                    "Fomat" : "{'chemical': <chemical name>, 'amount': <List of amounts coupled with units>, 'dropwise': <True or False>}"
+                    "Format" : "{'name': <chemical name>, 'amount': <List of amounts coupled with units>, 'dropwise': <True or False>}"
                   },
   "conclusion":  "Assume 'dropwise' as False if you are unsure and amounts can contains, mass, moles or volume."
 }
