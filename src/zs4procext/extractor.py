@@ -263,6 +263,7 @@ class SamplesExtractorFromText(BaseModel):
     llm_model_name: Optional[str] = None
     llm_model_parameters_path: Optional[str] = None
     _schema_parser: Optional[SchemaParser] = PrivateAttr(default=None)
+    _prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
 
     def model_post_init(self, __context: Any) -> None:
         if self.prompt_schema_path is None:
