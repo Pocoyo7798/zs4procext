@@ -1,7 +1,7 @@
 import json
 from typing import Any, Dict, Optional
 
-from langchain.llms import VLLM
+from langchain_community.llms import VLLM
 from pydantic import BaseModel
 
 
