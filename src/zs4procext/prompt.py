@@ -204,5 +204,10 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         importlib_resources.files("zs4procext")
         / "resources"
         / "mistral_default_template.json"
+    ),
+    "openchat/openchat_3.5" : str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "open_chat_default_template.json"
     )
 }
