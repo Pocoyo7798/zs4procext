@@ -12,9 +12,9 @@ class PromptFormatter(BaseModel):
     actions: Dict[str, str] = {}
     answer_schema: Dict[str, str] = {}
     conclusion: str = ""
-    loaded_prompt: Optional[BasePromptTemplate] = PrivateAttr(default=None)
-    action_list: Optional[str] = PrivateAttr(default=None)
-    answer_schema: Optional[str] = PrivateAttr(default=None)
+    _loaded_prompt: Optional[BasePromptTemplate] = PrivateAttr(default=None)
+    _action_list: Optional[str] = PrivateAttr(default=None)
+    _answer_schema: Optional[str] = PrivateAttr(default=None)
 
     def actions_to_string(
         self, action_intialization_key: str = "Initialization"
@@ -90,14 +90,14 @@ class PromptFormatter(BaseModel):
                 / "organic_synthesis_actions_last_template.json"
             )
             loaded_prompt = load_prompt(__context)
-            self.loaded_prompt = loaded_prompt
+            self._loaded_prompt = loaded_prompt
         else:
             loaded_prompt = load_prompt(__context)
-            self.loaded_prompt = loaded_prompt
+            self._loaded_prompt = loaded_prompt
         action_list = self.actions_to_string()
-        self.action_list = action_list
+        self._action_list = action_list
         answer_schema = self.answer_schema_to_string()
-        self.answer_schema = answer_schema
+        self._answer_schema = answer_schema
         if self.expertise != "":
             self.expertise = self.expertise + "\n"
         if self.initialization != "":
@@ -118,17 +118,17 @@ class PromptFormatter(BaseModel):
         Returns:
             a formatted prompt.
         """
-        if self.loaded_prompt is None:
+        if self._loaded_prompt is None:
             raise AttributeError(
                 "There is no prompt loaded, you need to post init the object."
             )
-        formatted_prompt: str = self.loaded_prompt.format(
+        formatted_prompt: str = self._loaded_prompt.format(
             expertise=self.expertise,
             initialization=self.initialization,
             objective=self.objective,
             context=f"'{context}'\n",
-            actions=self.action_list,
-            answer_schema=self.answer_schema,
+            actions=self._action_list,
+            answer_schema=self._answer_schema,
             conclusion=self.conclusion,
         )
         return formatted_prompt
