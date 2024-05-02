@@ -59,7 +59,7 @@ def text2samples(
     for text in text_lines:
         print(f"text processed: {count}/{size}")
         results: str = str(
-            extractor.retrieve_samples_from_text(text, ["notes", "note"])
+            extractor.retrieve_samples_from_text(text)
         )
         with open(output_file_path, "a") as f:
             f.write(str(results) + "\n")
