@@ -44,7 +44,8 @@ class ModelLLM(BaseModel):
                         "gpu_memory_utilization"
                     ],
                     "seed": self.model_parameters["seed"],
-                    "enforce_eager": self.model_parameters["enforce-eager"]
+                    "enforce_eager": self.model_parameters["enforce-eager"],
+                    "quantitization": self.model_parameters["quantitization"]
                 },
             )
 
