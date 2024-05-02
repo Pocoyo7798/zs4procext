@@ -289,6 +289,7 @@ class SamplesExtractorFromText(BaseModel):
         else:
             self._llm_model = ModelLLM(model_name=self.llm_model_name)
         self._llm_model.load_model_parameters(llm_param_path)
+        print("cheguei")
         self._llm_model.vllm_load_model()
         atributes = ["name", "preparation", "yield"]
         self._schema_parser = SchemaParser(atributes_list=atributes)
