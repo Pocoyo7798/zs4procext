@@ -45,7 +45,7 @@ class ModelLLM(BaseModel):
                     ],
                     "seed": self.model_parameters["seed"],
                     "enforce_eager": self.model_parameters["enforce-eager"],
-                    "quantitization": self.model_parameters["quantitization"]
+                    "quantization": self.model_parameters["quantization"]
                 },
             )
 
