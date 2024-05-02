@@ -200,4 +200,9 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         / "resources"
         / "mpt_default_template.json"
     ),
+    "mistralai/Mistral-7B-Instruct-v0.2": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "mistral_default_template.json"
+    )
 }
