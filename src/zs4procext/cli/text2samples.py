@@ -49,7 +49,7 @@ def text2samples(
         llm_model_name=llm_model_name,
         llm_model_parameters_path=llm_model_parameters_path,
     )
-    extractor.model_post_init(None)
+    extractor.model_post_init(prompt_structure_path)
     with open(text_file_path, "r") as f:
         text_lines: List[str] = f.readlines()
     size = len(text_lines)
