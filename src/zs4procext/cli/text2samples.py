@@ -1,5 +1,6 @@
 import time
 from typing import List, Optional
+import torch
 
 import click
 
@@ -37,6 +38,7 @@ def text2samples(
     llm_model_name: str,
     llm_model_parameters_path: Optional[str],
 ):
+    torch.cuda.empty_cache()
     start_time = time.time()
     if prompt_structure_path is None:
         try:
