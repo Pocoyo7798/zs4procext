@@ -209,5 +209,10 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         importlib_resources.files("zs4procext")
         / "resources"
         / "open_chat_default_template.json"
+    ),
+        "TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "mistral_default_template.json"
     )
 }
