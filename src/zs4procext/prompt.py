@@ -210,7 +210,7 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         / "resources"
         / "open_chat_default_template.json"
     ),
-        "second-state/Mixtral-8x7B-Instruct-v0.1-GGUF": str(
+        "TheBloke/Mixtral-8x7B-Instruct-v0.1-AWQ": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "mistral_default_template.json"
