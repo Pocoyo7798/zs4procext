@@ -24,6 +24,7 @@ class Conditions(BaseModel):
     temperature: List[str] = []
     pressure: List[str] = []
     atmosphere: List[str] = []
+    size: List[str] = []
     amount: Dict[str, List[Any]] = {}
     other: List[str] = []
 
@@ -33,11 +34,13 @@ class Parameters(BaseModel):
     temperature_units: List[str] = []
     pressure_units: List[str] = []
     quantity_units: List[str] = []
+    size_units: List[str] = []
     time_words: List[str] = []
     temperature_words: List[str] = []
     pressure_words: List[str] = []
     atmosphere_words: List[str] = []
     amount_words: List[str] = []
+    size_words: List[str] = []
 
 class ComplexParameters(BaseModel):
     stirring_units: List[str] = []
@@ -56,6 +59,7 @@ class ParametersParser(BaseModel):
     pressure: bool = True
     atmosphere: bool = True
     amount: bool = True
+    size: bool = True
     convert_units: bool = True
     base_time: str = "minute"
     base_temperature: str = "degree_Celsius"
@@ -63,6 +67,7 @@ class ParametersParser(BaseModel):
     base_volume: str = "milliliter"
     base_mass: str = "milligram"
     base_quantity: str = "millimole"
+    base_size: str = "meter"
     _regex: Optional[re.Pattern[str]] = PrivateAttr(default=None)
     _ureg: Optional[UnitRegistry] = PrivateAttr(default=None)
     _Q: Any = PrivateAttr(default=None)
@@ -89,6 +94,7 @@ class ParametersParser(BaseModel):
         pressure_word_list: List[str] = ["$%##&#$@%"]
         atmosphere_word_list: List[str] = ["$%##&#$@%"]
         amount_word_list: List[str] = ["$%##&#$@%"]
+        size_word_list: List[str] = ["$%##&#$@%"]
         if self.time is True:
             units_list += parser_params.time_units
             if parser_params.time_words != []:
@@ -108,13 +114,18 @@ class ParametersParser(BaseModel):
             units_list += parser_params.quantity_units
             if parser_params.amount_words != []:
                 amount_word_list = parser_params.amount_words
+        if self.size is True:
+            units_list += parser_params.size_units
+            if parser_params.size_words != []:
+                size_word_list = parser_params.size_words
         units_tre: TRE = TRE(*units_list)
         time_word_tre: TRE = TRE(*time_word_list)
         temperature_word_tre: TRE = TRE(*temperature_word_list)
         pressure_word_tre: TRE = TRE(*pressure_word_list)
         atmosphere_word_tre: TRE = TRE(*atmosphere_word_list)
         amount_word_tre: TRE = TRE(*amount_word_list)
-        regex: str = rf"([\"'\(\[\s,]((?P<repetitions1>\d+\.?,?\d*)[xX×]+)?(?P<number1>\+?-?-?\d+\.?,?\d*)(?P<unit1>.?)-*(?P<number2>\d*\.?,?\d*)\s*(?P<unit2>.?\s*{units_tre.regex()})([xX×]+(?P<repetitions2>\d+\.?,?\d*))?(?=[\)\]\s,\"'\(\.])|\b(?P<word>(?P<time>{time_word_tre.regex()})|(?P<temperature>{temperature_word_tre.regex()})|(?P<pressure>{pressure_word_tre.regex()})|(?P<atmosphere>{atmosphere_word_tre.regex()})|(?P<amount>{amount_word_tre.regex()}))\b)"
+        size_word_tre: TRE = TRE(*size_word_list)
+        regex: str = rf"([\"'\(\[\s,]((?P<repetitions1>\d+\.?,?\d*)[xX×]+)?(?P<number1>\+?-?-?\d+\.?,?\d*)(?P<unit1>.?)-*(?P<number2>\d*\.?,?\d*)\s*(?P<unit2>.?\s*{units_tre.regex()})([xX×]+(?P<repetitions2>\d+\.?,?\d*))?(?=[\)\]\s,\"'\(\.])|\b(?P<word>(?P<time>{time_word_tre.regex()})|(?P<temperature>{temperature_word_tre.regex()})|(?P<pressure>{pressure_word_tre.regex()})|(?P<atmosphere>{atmosphere_word_tre.regex()})|(?P<amount>{amount_word_tre.regex()})|(?P<size>{size_word_tre.regex()}))\b)"
         self._regex = re.compile(regex, re.IGNORECASE | re.MULTILINE)
 
     def transform_value(self, number: str, unit: str) -> tuple[str, str, str]:
@@ -126,38 +137,47 @@ class ParametersParser(BaseModel):
         Returns:
             the digit, unit and type of the desired parameter
         """
-        parameter: UnitRegistry.Quantity = self._Q(float(number), unit)
-        unit_type: str
-        if parameter.check("[time]") is True:
-            unit_type = "duration"
-            if self.base_time is not None and self.convert_units is True:
-                parameter.ito(self.base_time)
-        elif parameter.check("[temperature]") is True:
-            unit_type = "temperature"
-            if self.base_temperature is not None and self.convert_units is True:
-                parameter.ito(self.base_temperature)
-        elif parameter.check("[pressure]") is True:
-            unit_type = "pressure"
-            if self.base_pressure is not None and self.convert_units is True:
-                parameter.ito(self.base_pressure)
-        elif parameter.check("[mass]") is True:
-            unit_type = "quantity"
-            if self.base_mass is not None and self.convert_units is True:
-                parameter.ito(self.base_mass)
-        elif parameter.check("[substance]") is True:
-            unit_type = "quantity"
-            if self.base_quantity is not None and self.convert_units is True:
-                parameter.ito(self.base_quantity)
-        elif parameter.check("[volume]") is True:
-            unit_type = "quantity"
-            if self.base_volume is not None and self.convert_units is True:
-                parameter.ito(self.base_volume)
-        else:
+        try:
+            parameter: UnitRegistry.Quantity = self._Q(float(number), unit)
+            unit_type: str
+            if parameter.check("[time]") is True:
+                unit_type = "duration"
+                if self.base_time is not None and self.convert_units is True:
+                    parameter.ito(self.base_time)
+            elif parameter.check("[temperature]") is True:
+                unit_type = "temperature"
+                if self.base_temperature is not None and self.convert_units is True:
+                    parameter.ito(self.base_temperature)
+            elif parameter.check("[pressure]") is True:
+                unit_type = "pressure"
+                if self.base_pressure is not None and self.convert_units is True:
+                    parameter.ito(self.base_pressure)
+            elif parameter.check("[mass]") is True:
+                unit_type = "quantity"
+                if self.base_mass is not None and self.convert_units is True:
+                    parameter.ito(self.base_mass)
+            elif parameter.check("[length]") is True:
+                unit_type = "size"
+                if self.base_mass is not None and self.convert_units is True:
+                    parameter.ito(self.base_mass)
+            elif parameter.check("[substance]") is True:
+                unit_type = "quantity"
+                if self.base_quantity is not None and self.convert_units is True:
+                    parameter.ito(self.base_quantity)
+            elif parameter.check("[volume]") is True:
+                unit_type = "quantity"
+                if self.base_volume is not None and self.convert_units is True:
+                    parameter.ito(self.base_volume)
+            else:
+                unit_type = "other"
+            if self.convert_units is True:
+                digit: str = str(parameter.magnitude)
+                final_unit: str = str(parameter.units)
+            else:
+                digit = number
+                final_unit = unit
+        except Exception:
             unit_type = "other"
-        if self.convert_units is True:
-            digit: str = str(parameter.magnitude)
-            final_unit: str = str(parameter.units)
-        else:
             digit = number
             final_unit = unit
         return digit, final_unit, unit_type
@@ -282,6 +302,8 @@ class ParametersParser(BaseModel):
             elif condition_type == "quantity":
                 amount.value.append(value)  # type: ignore
                 amount.repetitions.append(repetitions)  # type: ignore
+            elif condition_type == "size":
+                conditions.size.append(value)  # type: ignore
             else:
                 conditions.other.append(value)  # type: ignore
         conditions.amount = amount.__dict__
@@ -292,7 +314,7 @@ class ComplexParametersParser(BaseModel):
     parser_params_path: str = str(
         importlib_resources.files("zs4procext")
         / "resources"
-        / "synthesis_parsing_parameters.json"
+        / "synthesis_parsing_complex_parameters.json"
     )
     _regex: Optional[re.Pattern[str]] = PrivateAttr(default=None)
 
@@ -349,62 +371,18 @@ class ComplexParametersParser(BaseModel):
         return conditions
 
 class ActionsParser(BaseModel):
-    separators: List[str] = [
-        "Initialization",
-        "Add",
-        "Cool",
-        "Heat",
-        "SetTemperature",
-        "Stir",
-        "Concentrate",
-        "Evaporate",
-        "DrySolution",
-        "Dry",
-        "CollectLayer",
-        "Collect",
-        "Extract",
-        "Wash",
-        "MakeSolution",
-        "Filter",
-        "Recrystallize",
-        "Crystallize",
-        "Recrystalize",
-        "Purify",
-        "Quench",
-        "PhaseSeparation",
-        "AdjustPH",
-        "Reflux",
-        "DrySolid",
-        "Degas",
-        "Partition",
-        "Sonicate",
-        "Triturate",
-        "FinalProduct",
-        "Wait",
-        "Note",
-        "Notes",
-        "FollowOtherProcedure",
-        "NMR",
-        "ESIMS",
-        "Pour",
-        "Distill",
-        "Collect",
-        "Dissolve",
-        "Final Product:",
-        "Remove",
-        "Warm",
-        "Dilute",
-        "Solidify",
-        "Provide",
-        "Afford",
-        "Obtain",
-    ]
+    separators: List[str] = []
+    type: str = "MaterialSynthesis"
     _regex: Optional[re.Pattern[str]] = PrivateAttr(default=None)
 
     def model_post_init(self, __context: Any) -> None:
         """initialize the parser object by compiling a regex code"""
         tre: TRE = TRE(*self.separators)
         self._regex = re.compile(f"\\b{tre.regex()}\\b", re.IGNORECASE | re.MULTILINE)
+        if self.type == "MaterialSynthesis":
+            self.separators = MATERIAL_SEPARATORS_REGISTRY
+        elif self.type == "Pistachio":
+            self.separators = PISTACHIO_SEPARATORS_REGISTRY
 
     def change_separators(
         self,
@@ -567,3 +545,77 @@ class DimensionlessParser:
             if quant.unit.entity.name == "dimensionless":
                 dimensionless_list.append(str(quant.value))
         return dimensionless_list
+    
+PISTACHIO_SEPARATORS_REGISTRY: List[str] = [
+        "Initialization",
+        "Add",
+        "Cool",
+        "Heat",
+        "SetTemperature",
+        "Stir",
+        "Concentrate",
+        "Evaporate",
+        "DrySolution",
+        "Dry",
+        "CollectLayer",
+        "Collect",
+        "Extract",
+        "Wash",
+        "MakeSolution",
+        "Filter",
+        "Recrystallize",
+        "Crystallize",
+        "Recrystalize",
+        "Purify",
+        "Quench",
+        "PhaseSeparation",
+        "AdjustPH",
+        "Reflux",
+        "DrySolid",
+        "Degas",
+        "Partition",
+        "Sonicate",
+        "Triturate",
+        "FinalProduct",
+        "Wait",
+        "Note",
+        "Notes",
+        "FollowOtherProcedure",
+        "NMR",
+        "ESIMS",
+        "Pour",
+        "Distill",
+        "Collect",
+        "Dissolve",
+        "Final Product:",
+        "Remove",
+        "Warm",
+        "Dilute",
+        "Solidify",
+        "Provide",
+        "Afford",
+        "Obtain",
+    ]
+
+MATERIAL_SEPARATORS_REGISTRY: List[str] = [
+        "Initialization",
+        "Note",
+        "Notes",
+        "NMR",
+        "ESIMS",
+        "Add",
+        "NewSolution",
+        "Crystallization",
+        "Separate",
+        "Wash",
+        "Wait",
+        "Dry",
+        "Calcination",
+        "Stir",
+        "IonExchange",
+        "Repeat",
+        "Cool",
+        "Heat",
+        "Grind",
+        "Sieve"
+    ]
