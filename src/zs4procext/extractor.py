@@ -7,6 +7,8 @@ from pydantic import BaseModel, PrivateAttr
 from zs4procext.actions import (
     ACTION_REGISTRY,
     AQUEOUS_REGISTRY,
+    CENTRIFUGATION_REGISTRY,
+    FILTER_REGISTRY,
     FILTRATE_REGISTRY,
     MICROWAVE_REGISTRY,
     ORGANIC_REGISTRY,
@@ -14,15 +16,22 @@ from zs4procext.actions import (
     PISTACHIO_ACTION_REGISTRY,
     PRECIPITATE_REGISTRY,
     Add,
+    AddMaterials,
+    ChangeTemperature,
     CollectLayer,
     Filter,
     MakeSolution,
+    NewSolution,
     Quench,
+    Separate,
     SetTemperature,
+    StirMaterial,
+    ThermalTreatment,
 )
 from zs4procext.llm import ModelLLM
 from zs4procext.parser import (
     ActionsParser,
+    ComplexParametersParser,
     KeywordSearching,
     ParametersParser,
     SchemaParser,
@@ -43,10 +52,13 @@ class ActionExtractorFromText(BaseModel):
     _llm_model: Optional[ModelLLM] = PrivateAttr(default=None)
     _action_parser: Optional[ActionsParser] = PrivateAttr(default=None)
     _condition_parser: Optional[ParametersParser] = PrivateAttr(default=None)
+    _complex_parser: Optional[ComplexParametersParser] = PrivateAttr(default=None)
     _quantity_parser: Optional[ParametersParser] = PrivateAttr(default=None)
     _schema_parser: Optional[SchemaParser] = PrivateAttr(default=None)
     _filtrate_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
     _precipitate_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
+    _filter_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
+    _centri_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
     _aqueous_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
     _organic_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
     _microwave_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
@@ -89,37 +101,32 @@ class ActionExtractorFromText(BaseModel):
         if self.actions_type == "pistachio":
             self._action_dict = PISTACHIO_ACTION_REGISTRY
             self._ph_parser = KeywordSearching(keywords_list=["&^%#@&#@(*)"])
-            self._ph_parser.model_post_init(None)
-        else:
+            self._aqueous_parser = KeywordSearching(keywords_list=AQUEOUS_REGISTRY)
+            self._organic_parser = KeywordSearching(keywords_list=ORGANIC_REGISTRY)
+            atributes = ["name", "dropwise"]
+        elif self.actions_type == "materials":
+            self._action_dict = PISTACHIO_ACTION_REGISTRY
             self._ph_parser = KeywordSearching(keywords_list=PH_REGISTRY)
-        self._ph_parser.model_post_init(None)
+            self._filter_parser = KeywordSearching(keywords_list=FILTER_REGISTRY)
+            self._centri_parser = KeywordSearching(keywords_list=CENTRIFUGATION_REGISTRY)
+            self._complex_parser = ComplexParametersParser()
+            atributes = ["type", "name", "dropwise"]
         self._llm_model.load_model_parameters(llm_param_path)
         self._llm_model.vllm_load_model()
-        self._action_parser = ActionsParser()
-        self._action_parser.model_post_init(None)
+        self._action_parser = ActionsParser(type=self.actions_type)
         self._condition_parser = ParametersParser(convert_units=False, amount=False)
-        self._condition_parser.model_post_init(None)
         self._quantity_parser = ParametersParser(
             convert_units=False,
             time=False,
             temperature=False,
             pressure=False,
             atmosphere=False,
+            size=False
         )
-        self._quantity_parser.model_post_init(None)
-        atributes = ["name", "dropwise"]
         self._schema_parser = SchemaParser(atributes_list=atributes)
-        self._schema_parser.model_post_init(None)
         self._filtrate_parser = KeywordSearching(keywords_list=FILTRATE_REGISTRY)
-        self._filtrate_parser.model_post_init(None)
         self._precipitate_parser = KeywordSearching(keywords_list=PRECIPITATE_REGISTRY)
-        self._precipitate_parser.model_post_init(None)
-        self._aqueous_parser = KeywordSearching(keywords_list=AQUEOUS_REGISTRY)
-        self._aqueous_parser.model_post_init(None)
-        self._organic_parser = KeywordSearching(keywords_list=ORGANIC_REGISTRY)
-        self._organic_parser.model_post_init(None)
         self._microwave_parser = KeywordSearching(keywords_list=MICROWAVE_REGISTRY)
-        self._microwave_parser.model_post_init(None)
 
     @staticmethod
     def empty_action(action: Dict[str, Any]):
@@ -200,12 +207,15 @@ class ActionExtractorFromText(BaseModel):
                 print(action_name)
                 if action_name.lower() in stop_words:
                     break
-            elif action is SetTemperature:
+            elif action in set([SetTemperature, ChangeTemperature]):
                 new_action: List[Dict[str, Any]] = action.generate_action(
                     context, self._condition_parser, self._microwave_parser
                 )
                 action_list.extend(new_action)
-            elif action is MakeSolution or action is Add or action is Quench:
+            elif action in set([ThermalTreatment, StirMaterial]):
+                new_action = action.generate_action(context, self._condition_parser, self._complex_parser)
+                action_list.extend(new_action)
+            elif action in set([MakeSolution, Add, Quench, AddMaterials, NewSolution]):
                 chemical_prompt = self._chemical_prompt.format_prompt(context)
                 chemical_response = self._llm_model.run_single_prompt(chemical_prompt)
                 schemas = self._schema_parser.parse_schema(chemical_response)
@@ -250,6 +260,13 @@ class ActionExtractorFromText(BaseModel):
                 new_action = action.generate_action(
                     context, self._aqueous_parser, self._organic_parser
                 )
+                action_list.extend(new_action)
+            elif action is Separate:
+                new_action = action.generate_action(
+                    context, self._filtrate_parser, self._precipitate_parser,
+                    self._centri_parser, self._filter_parser
+                )
+                action_list.extend(new_action)
                 action_list.extend(new_action)
             elif action.type is None:
                 new_action = action.generate_action(context)
