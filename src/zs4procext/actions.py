@@ -201,7 +201,7 @@ class ActionsWithchemicals(Actions):
 class ActionsWithConditons(Actions):
     type: ClassVar[Optional[str]] = "onlyconditions"
 
-    def validate_conditions(self, conditions_parser: ParametersParser, complex_conditions_parser: Optional[ComplexParametersParser]=None) -> None:
+    def validate_conditions(self, conditions_parser: ParametersParser, complex_conditions_parser: Optional[ComplexParametersParser]=None, add_others: bool=False) -> None:
         conditions: Dict[str, Any] = conditions_parser.get_parameters(
             self.action_context
         ).__dict__
@@ -213,7 +213,10 @@ class ActionsWithConditons(Actions):
             try:
                 new_value = conditions[atribute][0]
             except Exception:
-                new_value = self.__dict__[atribute]
+                if len(conditions["other"]) > 0 and add_others is True:
+                    new_value = conditions["other"][0]
+                else:
+                    new_value = self.__dict__[atribute]
             if complex_conditions_parser is not None:
                 try:
                     new_value = complex_conditions[atribute][0]
@@ -257,7 +260,7 @@ class ActionsWithChemicalAndConditions(Actions):
             chemical_info.repetitions = max(repetitions_list)
         return chemical_info
 
-    def validate_conditions(self, conditions_parser: ParametersParser, complex_conditions_parser: Optional[ComplexParametersParser]=None) -> None:
+    def validate_conditions(self, conditions_parser: ParametersParser, complex_conditions_parser: Optional[ComplexParametersParser]=None, add_others: bool=False) -> None:
         conditions: Dict[str, Any] = conditions_parser.get_parameters(
             self.action_context
         ).__dict__
@@ -269,13 +272,17 @@ class ActionsWithChemicalAndConditions(Actions):
             try:
                 new_value = conditions[atribute][0]
             except Exception:
-                new_value = self.__dict__[atribute]
+                if len(conditions["other"]) > 0 and add_others is True:
+                    new_value = conditions["other"][0]
+                else:
+                    new_value = self.__dict__[atribute]
             if complex_conditions_parser is not None:
                 try:
                     new_value = complex_conditions[atribute][0]
                 except Exception:
                     pass
             setattr(self, atribute, new_value)
+
     
     @classmethod
     def validate_chemicals_materials(
@@ -1018,6 +1025,35 @@ class Crystallization(ActionsWithConditons):
         action.validate_conditions(conditions_parser)
         return [action.zeolite_dict()]
 
+class Separate(Actions):
+    phase_to_keep: str = "precipitate"
+    method: Optional[str] = None
+
+    @classmethod
+    def generate_action(
+        cls,
+        context: str,
+        filtrate_parser: KeywordSearching,
+        precipitate_parser: KeywordSearching,
+        centrifuge_parser: KeywordSearching,
+        filter_parser: KeywordSearching,
+    ) -> List[Dict[str, Any]]:
+        action: Separate = cls(action_name="Separate", action_context=context)
+        filtrate_results: List[str] = filtrate_parser.find_keywords(action.action_context)
+        precipitate_results: List[str] = precipitate_parser.find_keywords(action.action_context)
+        centrifuge_results: List[str] = centrifuge_parser.find_keywords(action.action_context)
+        filter_results: List[str] = filter_parser.find_keywords(action.action_context)
+        if len(filtrate_results) > 0:
+            action.phase_to_keep = "filtrate"
+        elif len(precipitate_results) > 0:
+            action.phase_to_keep = "precipitate"
+        if len(filter_results) > 0:
+            action.method = "filtration"
+        elif len(centrifuge_results) > 0:
+            action.method = "centrifugation"
+        return [action.transform_into_pistachio()]
+        
+
 class WashMaterial(ActionsWithchemicals):
     material: Optional[ChemicalsMaterials] = None
     repetitions: int = 1
@@ -1045,6 +1081,17 @@ class WashMaterial(ActionsWithchemicals):
             print(
                 "Warning: More than one Material found on Wash object, only the first one was considered"
             )
+        return [action.zeolite_dict()]
+
+class WaitMaterial(ActionsWithConditons):
+    duration: Optional[str] = None
+
+    @classmethod
+    def generate_action(
+        cls, context: str, conditions_parser: ParametersParser
+    ) -> List[Dict[str, Any]]:
+        action: WaitMaterial = cls(action_name="Wait", action_context=context)
+        action.validate_conditions(conditions_parser)
         return [action.zeolite_dict()]
 
 class DryMaterial(ActionsWithConditons):
@@ -1123,9 +1170,9 @@ class Repeat(Actions):
     amount: str = 1
     
     @classmethod
-    def generate_action(cls, context: str, parser: DimensionlessParser):
+    def generate_action(cls, context: str):
         action: Repeat = cls(action_name="Repeat", action_context=context)
-        number_list: List[str] = parser.get_dimensionless_numbers(context)
+        number_list: List[str] = DimensionlessParser.get_dimensionless_numbers(context)
         if len(number_list) == 0:
             pass
         elif len(number_list) == 1:
@@ -1144,14 +1191,32 @@ class ChangeTemperature(ActionsWithConditons):
 
     @classmethod
     def generate_action(
-        cls, context: str, conditions_parser: ParametersParser
+        cls, context: str, conditions_parser: ParametersParser, microwave_parser: KeywordSearching
     ) -> List[Dict[str, Any]]:
         action = cls(action_name="ChangeTemperature", action_context=context)
         action.validate_conditions(conditions_parser)
+        keywords_list = microwave_parser.find_keywords(context)
+        if len(keywords_list) > 0:
+            action.microwave = True
         return [action.zeolite_dict()]
 
 class MicrowaveMaterial(ActionsWithConditons):
-    temperature: Optional[str] = None
+    pass
+
+class Grind(Actions):
+
+    @classmethod
+    def generate_action(cls, context: str):
+        action: Grind = cls(action_name="Grind", action_context=context)
+        return [action.zeolite_dict()]
+
+class Sieve(ActionsWithConditons):
+    size: Optional[str] = None
+    @classmethod
+    def generate_action(cls, context: str, conditions_parser: ParametersParser):
+        action = cls(action_name="Sieve", action_context=context)
+        action.validate_conditions(conditions_parser, add_others=True)
+        return [action.zeolite_dict()]
 
 ACTION_REGISTRY: Dict[str, Any] = {
     "add": Add,
@@ -1226,6 +1291,25 @@ PISTACHIO_ACTION_REGISTRY: Dict[str, Any] = {
     "afford": Yield,
     "obtain": Yield,
 }
+MATERIAL_ACTION_REGISTRY: Dict[str, Any] = {
+    "add": AddMaterials,
+    "newsolution": NewSolution,
+    "crystallization": Crystallization,
+    "separate": Separate,
+    "wash": WashMaterial,
+    "wait": WaitMaterial,
+    "dry": DryMaterial,
+    "calcination": ThermalTreatment,
+    "stir": StirMaterial,
+
+    "ionexchange": IonExchange,
+    "repeat": Repeat,
+    "cool": ChangeTemperature,
+    "heat": ChangeTemperature,
+    "grind": Grind,
+    "sieve": Sieve
+
+}
 AQUEOUS_REGISTRY: List[str] = ["aqueous", "aq", "hydrophilic", "water", "aquatic"]
 ORGANIC_REGISTRY: List[str] = ["organic", "org", "hydrophobic"]
 FILTRATE_REGISTRY: List[str] = [
@@ -1241,6 +1325,16 @@ PRECIPITATE_REGISTRY: List[str] = [
     "filter cake",
     "sludge",
     "solid",
+    "powder"
+]
+FILTER_REGISTRY: List[str] = [
+    "filtrate",
+    "filter",
+    "filtration"
+]
+CENTRIFUGATION_REGISTRY: List[str] = [
+    "centrifuge",
+    "centrifugation"
 ]
 MICROWAVE_REGISTRY: List[str] = ["microwave", "microwaves"]
 PH_REGISTRY: List[str] = ["ph"]
