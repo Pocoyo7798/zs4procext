@@ -13,7 +13,7 @@ from zs4procext.prompt import TEMPLATE_REGISTRY
 @click.option(
     "--actions_type",
     default="All",
-    help="Type of actions to considered. Options: All or pistachio.",
+    help="Type of actions to considered. Options: All or pistachio or materials.",
 )
 @click.option(
     "--action_prompt_structure_path",

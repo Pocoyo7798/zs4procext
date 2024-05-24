@@ -1301,7 +1301,6 @@ MATERIAL_ACTION_REGISTRY: Dict[str, Any] = {
     "dry": DryMaterial,
     "calcination": ThermalTreatment,
     "stir": StirMaterial,
-
     "ionexchange": IonExchange,
     "repeat": Repeat,
     "cool": ChangeTemperature,
