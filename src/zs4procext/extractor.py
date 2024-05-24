@@ -316,6 +316,7 @@ class SamplesExtractorFromText(BaseModel):
     def retrieve_samples_from_text(self, paragraph: str) -> List[Any]:
         prompt: str = self._prompt.format_prompt(paragraph)
         response: str = self._llm_model.run_single_prompt(prompt)
+        print(response)
         schemas: List[str] = self._schema_parser.parse_schema(response)
         samples_list: List[Any] = []
         i = 1

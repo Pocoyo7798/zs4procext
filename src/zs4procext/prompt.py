@@ -218,7 +218,7 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
     "mistralai/Mixtral-8x7B-Instruct-v0.1": str(
         importlib_resources.files("zs4procext")
         / "resources"
-        / "mistral_default_template.json"
+        / "mistral_instruct_default_template.json"
     ),
     "meta-llama/Meta-Llama-3-8B-Instruct": str(
         importlib_resources.files("zs4procext")
