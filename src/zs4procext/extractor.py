@@ -67,10 +67,6 @@ class ActionExtractorFromText(BaseModel):
     _action_dict: Dict[str, Any] = PrivateAttr(default=ACTION_REGISTRY)
 
     def model_post_init(self, __context: Any) -> None:
-        with open(self.action_prompt_schema_path, "r") as f:
-            action_prompt_dict = json.load(f)
-        self._action_prompt = PromptFormatter(**action_prompt_dict)
-        self._action_prompt.model_post_init(self.action_prompt_structure_path)
         if self.chemical_prompt_schema_path is None:
             self.chemical_prompt_schema_path = str(
                 importlib_resources.files("zs4procext")
@@ -118,6 +114,10 @@ class ActionExtractorFromText(BaseModel):
             self._centri_parser = KeywordSearching(keywords_list=CENTRIFUGATION_REGISTRY)
             self._complex_parser = ComplexParametersParser()
             atributes = ["type", "name", "dropwise"]
+        with open(self.action_prompt_schema_path, "r") as f:
+                action_prompt_dict = json.load(f)
+        self._action_prompt = PromptFormatter(**action_prompt_dict)
+        self._action_prompt.model_post_init(self.action_prompt_structure_path)
         self._llm_model.load_model_parameters(llm_param_path)
         self._llm_model.vllm_load_model()
         self._action_parser = ActionsParser(type=self.actions_type)
