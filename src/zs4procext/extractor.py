@@ -120,7 +120,7 @@ class ActionExtractorFromText(BaseModel):
             self._centri_parser.model_post_init(None)
             self._complex_parser = ComplexParametersParser()
             self._complex_parser.model_post_init(None)
-            atributes = ["type", "name", "dropwise"]
+            atributes = ["type", "name", "dropwise", "concentration", "amount"]
         with open(self.action_prompt_schema_path, "r") as f:
                 action_prompt_dict = json.load(f)
         print("extractor")
