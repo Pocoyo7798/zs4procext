@@ -79,9 +79,9 @@ class ChemicalsMaterials(Chemical):
     concentration: Optional[List[str]] = None
     def get_chemical_materials(self, schema: str, schema_parser: SchemaParser) -> bool:
         dropwise = self.get_chemical(schema, schema_parser)
-        print(schema_parser.get_atribute_value(schema, "type"))
-        if schema_parser.get_atribute_value(schema, "type")[0].lower() == "final solution":
-            self.chemical_type = "final solution"
+        if len(schema_parser.get_atribute_value(schema, "type")) > 0:
+            if schema_parser.get_atribute_value(schema, "type")[0].lower() == "final solution":
+                self.chemical_type = "final solution"
         concentration_list: List[str] = schema_parser.get_atribute_value(schema, "concentration")
         if len(concentration_list) == 0:
             pass
