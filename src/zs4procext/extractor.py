@@ -205,6 +205,7 @@ class ActionExtractorFromText(BaseModel):
             raise AttributeError("You need to post initilize the class")
         action_prompt: str = self._action_prompt.format_prompt(paragraph)
         actions_response: str = self._llm_model.run_single_prompt(action_prompt)
+        print(actions_response)
         actions_info: Dict[str, List[str]] = self._action_parser.parse(actions_response)
         i = 0
         action_list: List = []

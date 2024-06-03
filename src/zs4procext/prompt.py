@@ -215,6 +215,11 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         / "resources"
         / "open_chat_default_template.json"
     ),
+    "openchat/openchat-3.6-8b-20240522" : str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "open_chat_3.6_default_template.json"
+    ),
     "TheBloke/Mixtral-8x7B-Instruct-v0.1-AWQ": str(
         importlib_resources.files("zs4procext")
         / "resources"
