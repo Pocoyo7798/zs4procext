@@ -372,13 +372,14 @@ class ComplexParametersParser(BaseModel):
 
 class ActionsParser(BaseModel):
     separators: List[str] = []
-    type: str = "MaterialSynthesis"
+    type: str = "materials"
     _regex: Optional[re.Pattern[str]] = PrivateAttr(default=None)
 
     def model_post_init(self, __context: Any) -> None:
         """initialize the parser object by compiling a regex code"""
         tre: TRE = TRE(*self.separators)
         self._regex = re.compile(f"\\b{tre.regex()}\\b", re.IGNORECASE | re.MULTILINE)
+        print(self.type)
         if self.type == "materials":
             self.separators = MATERIAL_SEPARATORS_REGISTRY
         elif self.type == "pistachio":

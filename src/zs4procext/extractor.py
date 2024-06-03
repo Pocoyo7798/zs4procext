@@ -123,6 +123,7 @@ class ActionExtractorFromText(BaseModel):
             atributes = ["type", "name", "dropwise"]
         with open(self.action_prompt_schema_path, "r") as f:
                 action_prompt_dict = json.load(f)
+        print(self.actions_type)
         self._action_prompt = PromptFormatter(**action_prompt_dict)
         self._action_prompt.model_post_init(self.action_prompt_structure_path)
         self._llm_model.load_model_parameters(llm_param_path)
