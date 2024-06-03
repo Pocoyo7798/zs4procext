@@ -219,12 +219,14 @@ class ActionExtractorFromText(BaseModel):
         actions_info: Dict[str, List[str]] = self._action_parser.parse(actions_response)
         i = 0
         action_list: List = []
+        print(actions_info)
         for action_name in actions_info["actions"]:
             context = actions_info["content"][i]
             try:
                 action = self._action_dict[action_name.lower()]
             except KeyError:
                 action = None
+            print(action)
             if action is None:
                 print(action_name)
                 if action_name.lower() in stop_words:
