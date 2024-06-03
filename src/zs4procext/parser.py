@@ -538,10 +538,8 @@ class DimensionlessParser:
     @classmethod
     def get_dimensionless_numbers(cls, context: str) -> List[str]:
         quants: List[Any] = parser.parse(context)
-        print(quants)
         dimensionless_list: List[str] = []
         for quant in quants:
-            print(quant.unit.entity)
             if quant.unit.entity.name == "dimensionless":
                 dimensionless_list.append(str(quant.value))
         return dimensionless_list

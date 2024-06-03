@@ -123,8 +123,6 @@ class ActionExtractorFromText(BaseModel):
             atributes = ["type", "name", "dropwise", "concentration", "amount"]
         with open(self.action_prompt_schema_path, "r") as f:
                 action_prompt_dict = json.load(f)
-        print("extractor")
-        print(self.actions_type)
         self._action_prompt = PromptFormatter(**action_prompt_dict)
         self._action_prompt.model_post_init(self.action_prompt_structure_path)
         self._llm_model.load_model_parameters(llm_param_path)
@@ -221,14 +219,12 @@ class ActionExtractorFromText(BaseModel):
         actions_info: Dict[str, List[str]] = self._action_parser.parse(actions_response)
         i = 0
         action_list: List = []
-        print(actions_info)
         for action_name in actions_info["actions"]:
             context = actions_info["content"][i]
             try:
                 action = self._action_dict[action_name.lower()]
             except KeyError:
                 action = None
-            print(action)
             if action is None:
                 print(action_name)
                 if action_name.lower() in stop_words:
@@ -261,6 +257,7 @@ class ActionExtractorFromText(BaseModel):
             elif action.type == "onlychemicals":
                 chemical_prompt = self._chemical_prompt.format_prompt(context)
                 chemical_response = self._llm_model.run_single_prompt(chemical_prompt)
+                print(chemical_response)
                 schemas = self._schema_parser.parse_schema(chemical_response)
                 new_action = action.generate_action(
                     context, schemas, self._schema_parser, self._quantity_parser
@@ -269,6 +266,7 @@ class ActionExtractorFromText(BaseModel):
             elif action.type == "chemicalsandconditions":
                 chemical_prompt = self._chemical_prompt.format_prompt(context)
                 chemical_response = self._llm_model.run_single_prompt(chemical_prompt)
+                print(chemical_response)
                 schemas = self._schema_parser.parse_schema(chemical_response)
                 new_action = action.generate_action(
                     context,
@@ -334,7 +332,6 @@ class SamplesExtractorFromText(BaseModel):
         else:
             self._llm_model = ModelLLM(model_name=self.llm_model_name)
         self._llm_model.load_model_parameters(llm_param_path)
-        print("cheguei")
         self._llm_model.vllm_load_model()
         atributes = ["name", "preparation", "yield"]
         self._schema_parser = SchemaParser(atributes_list=atributes)
