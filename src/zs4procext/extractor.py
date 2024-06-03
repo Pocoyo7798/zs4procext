@@ -98,8 +98,11 @@ class ActionExtractorFromText(BaseModel):
                 )
             self._action_dict = PISTACHIO_ACTION_REGISTRY
             self._ph_parser = KeywordSearching(keywords_list=["&^%#@&#@(*)"])
+            self._ph_parser.model_post_init(None)
             self._aqueous_parser = KeywordSearching(keywords_list=AQUEOUS_REGISTRY)
+            self._aqueous_parser.model_post_init(None)
             self._organic_parser = KeywordSearching(keywords_list=ORGANIC_REGISTRY)
+            self._organic_parser.model_post_init(None)
             atributes = ["name", "dropwise"]
         elif self.actions_type == "materials":
             if self.action_prompt_schema_path is None:
@@ -110,9 +113,13 @@ class ActionExtractorFromText(BaseModel):
                 )
             self._action_dict = MATERIAL_ACTION_REGISTRY
             self._ph_parser = KeywordSearching(keywords_list=PH_REGISTRY)
+            self._ph_parser.model_post_init(None)
             self._filter_parser = KeywordSearching(keywords_list=FILTER_REGISTRY)
+            self._filter_parser.model_post_init(None)
             self._centri_parser = KeywordSearching(keywords_list=CENTRIFUGATION_REGISTRY)
+            self._centri_parser.model_post_init(None)
             self._complex_parser = ComplexParametersParser()
+            self._complex_parser.model_post_init(None)
             atributes = ["type", "name", "dropwise"]
         with open(self.action_prompt_schema_path, "r") as f:
                 action_prompt_dict = json.load(f)
@@ -136,8 +143,11 @@ class ActionExtractorFromText(BaseModel):
         self._schema_parser = SchemaParser(atributes_list=atributes)
         self._schema_parser.model_post_init(None)
         self._filtrate_parser = KeywordSearching(keywords_list=FILTRATE_REGISTRY)
+        self._filtrate_parser.model_post_init(None)
         self._precipitate_parser = KeywordSearching(keywords_list=PRECIPITATE_REGISTRY)
+        self._precipitate_parser.model_post_init(None)
         self._microwave_parser = KeywordSearching(keywords_list=MICROWAVE_REGISTRY)
+        self._microwave_parser.model_post_init(None)
 
     @staticmethod
     def empty_action(action: Dict[str, Any]):
