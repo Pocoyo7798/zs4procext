@@ -110,11 +110,11 @@ class Actions(BaseModel):
     def transform_into_pistachio(self) -> Dict[str, Any]:
         action_name: str = self.action_name
         if type(self) is SetTemperature:
-            action_dict = self.model_dump(
+            action_dict = self.dict(
                 exclude={"action_name", "action_context", "duration", "pressure"}
             )
         else:
-            action_dict = self.model_dump(
+            action_dict = self.dict(
                 exclude={"action_name", "action_context", "pressure"}
             )
         return {"action": action_name, "content": action_dict}
@@ -122,11 +122,11 @@ class Actions(BaseModel):
     def zeolite_dict(self) -> Dict[str, Any]:
         action_name: str = self.action_name
         if type(self) is Add:
-            action_dict = self.model_dump(
+            action_dict = self.dict(
                 exclude={"action_name", "action_context", "temperature"}
             )
         else:
-            action_dict = self.model_dump(
+            action_dict = self.dict(
                 exclude={"action_name", "action_context"}
             )
         return {"action": action_name, "content": action_dict}
