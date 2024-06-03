@@ -121,7 +121,9 @@ class ActionExtractorFromText(BaseModel):
         self._llm_model.load_model_parameters(llm_param_path)
         self._llm_model.vllm_load_model()
         self._action_parser = ActionsParser(type=self.actions_type)
+        self._action_parser.model_post_init(None)
         self._condition_parser = ParametersParser(convert_units=False, amount=False)
+        self._condition_parser.model_post_init(None)
         self._quantity_parser = ParametersParser(
             convert_units=False,
             time=False,
@@ -130,7 +132,9 @@ class ActionExtractorFromText(BaseModel):
             atmosphere=False,
             size=False
         )
+        self._quantity_parser.model_post_init(None)
         self._schema_parser = SchemaParser(atributes_list=atributes)
+        self._schema_parser.model_post_init(None)
         self._filtrate_parser = KeywordSearching(keywords_list=FILTRATE_REGISTRY)
         self._precipitate_parser = KeywordSearching(keywords_list=PRECIPITATE_REGISTRY)
         self._microwave_parser = KeywordSearching(keywords_list=MICROWAVE_REGISTRY)
