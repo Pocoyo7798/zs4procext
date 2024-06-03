@@ -379,6 +379,7 @@ class ActionsParser(BaseModel):
         """initialize the parser object by compiling a regex code"""
         tre: TRE = TRE(*self.separators)
         self._regex = re.compile(f"\\b{tre.regex()}\\b", re.IGNORECASE | re.MULTILINE)
+        print("parser")
         print(self.type)
         if self.type == "materials":
             self.separators = MATERIAL_SEPARATORS_REGISTRY
