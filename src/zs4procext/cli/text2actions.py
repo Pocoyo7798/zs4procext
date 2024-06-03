@@ -78,7 +78,7 @@ def text2actions(
     )
     extractor.model_post_init(None)
     with open(text_file_path, "r") as f:
-        text_lines: List[str] = f.readlines()
+        text_lines: List[str] = f.readlines()[:1]
     size = len(text_lines)
     count = 1
     for text in text_lines:
