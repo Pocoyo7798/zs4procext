@@ -216,7 +216,7 @@ class ActionExtractorFromText(BaseModel):
         action_prompt: str = self._action_prompt.format_prompt(paragraph)
         print(action_prompt)
         actions_response: str = self._llm_model.run_single_prompt(action_prompt).strip()
-        #print(actions_response)
+        print(actions_response)
         actions_info: Dict[str, List[str]] = self._action_parser.parse(actions_response)
         i = 0
         action_list: List = []

@@ -239,5 +239,10 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         importlib_resources.files("zs4procext")
         / "resources"
         / "phi_default_instruct_template.json"
+    ),
+    "microsoft/Phi-3-mini-4k-instruct": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "phi_default_instruct_template.json"
     )
 }
