@@ -214,8 +214,9 @@ class ActionExtractorFromText(BaseModel):
         ):
             raise AttributeError("You need to post initilize the class")
         action_prompt: str = self._action_prompt.format_prompt(paragraph)
+        print(action_prompt)
         actions_response: str = self._llm_model.run_single_prompt(action_prompt).strip()
-        print(actions_response)
+        #print(actions_response)
         actions_info: Dict[str, List[str]] = self._action_parser.parse(actions_response)
         i = 0
         action_list: List = []
@@ -226,7 +227,7 @@ class ActionExtractorFromText(BaseModel):
             except KeyError:
                 action = None
             if action is None:
-                print(action_name)
+                #print(action_name)
                 if action_name.lower() in stop_words:
                     break
             elif action in set([SetTemperature, ChangeTemperature]):
@@ -240,7 +241,7 @@ class ActionExtractorFromText(BaseModel):
             elif action in set([MakeSolution, Add, Quench, AddMaterials, NewSolution]):
                 chemical_prompt = self._chemical_prompt.format_prompt(context)
                 chemical_response = self._llm_model.run_single_prompt(chemical_prompt).strip()
-                print(chemical_response)
+                #print(chemical_response)
                 schemas = self._schema_parser.parse_schema(chemical_response)
                 new_action = action.generate_action(
                     context,
@@ -257,7 +258,7 @@ class ActionExtractorFromText(BaseModel):
             elif action.type == "onlychemicals":
                 chemical_prompt = self._chemical_prompt.format_prompt(context)
                 chemical_response = self._llm_model.run_single_prompt(chemical_prompt)
-                print(chemical_response)
+                #print(chemical_response)
                 schemas = self._schema_parser.parse_schema(chemical_response)
                 new_action = action.generate_action(
                     context, schemas, self._schema_parser, self._quantity_parser
@@ -266,7 +267,7 @@ class ActionExtractorFromText(BaseModel):
             elif action.type == "chemicalsandconditions":
                 chemical_prompt = self._chemical_prompt.format_prompt(context)
                 chemical_response = self._llm_model.run_single_prompt(chemical_prompt)
-                print(chemical_response)
+                #print(chemical_response)
                 schemas = self._schema_parser.parse_schema(chemical_response)
                 new_action = action.generate_action(
                     context,
