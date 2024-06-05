@@ -317,6 +317,38 @@ class ActionsWithChemicalAndConditions(Actions):
             chemical_info.repetitions = max(repetitions_list)
         return chemical_info
 
+class Treatment(ActionsWithChemicalAndConditions):
+    solutions: Optional[List[ChemicalsMaterials]] = None
+    temperature: Optional[str] = None
+    duration: Optional[str] = None
+    repetitions: int = 1
+    
+    @classmethod
+    def generate_treatment(
+        cls,
+        name,
+        context: str,
+        schemas: List[str],
+        schema_parser: SchemaParser,
+        amount_parser: ParametersParser,
+        conditions_parser: ParametersParser,
+    ) -> List[Dict[str, Any]]:
+        action: Treatment = cls(action_name=name, action_context=context)
+        action.validate_conditions(conditions_parser)
+        chemicals_info: ChemicalInfo = action.validate_chemicals(
+            schemas, schema_parser, amount_parser, action.action_context
+        )
+        if len(chemicals_info.chemical_list) == 0:
+            pass
+        elif len(schemas) == 1:
+            action.solution = chemicals_info.chemical_list[0]
+            action.repetitions = chemicals_info.repetitions
+        else:
+            for chemical in chemicals_info.chemical_list:
+                action.solutions.append(chemical)
+                action.repetitions = chemicals_info.repetitions
+        return [action.zeolite_dict()]
+
 ### Actions for Organic Synthesis
 
 class PH(ActionsWithChemicalAndConditions):
@@ -1153,11 +1185,7 @@ class StirMaterial(ActionsWithChemicalAndConditions):
             list_of_actions.append(action.zeolite_dict())
         return list_of_actions
 
-class IonExchange(ActionsWithChemicalAndConditions):
-    solution: Optional[ChemicalsMaterials] = None
-    temperature: Optional[str] = None
-    duration: Optional[str] = None
-    repetitions: int = 1
+class IonExchange(Treatment):
     
     @classmethod
     def generate_action(
@@ -1168,23 +1196,33 @@ class IonExchange(ActionsWithChemicalAndConditions):
         amount_parser: ParametersParser,
         conditions_parser: ParametersParser,
     ) -> List[Dict[str, Any]]:
-        action: IonExchange = cls(action_name="IonExchange", action_context=context)
-        action.validate_conditions(conditions_parser)
-        chemicals_info: ChemicalInfo = action.validate_chemicals(
-            schemas, schema_parser, amount_parser, action.action_context
-        )
-        if len(chemicals_info.chemical_list) == 0:
-            pass
-        elif len(schemas) == 1:
-            action.solution = chemicals_info.chemical_list[0]
-            action.repetitions = chemicals_info.repetitions
-        else:
-            action.solution = chemicals_info.chemical_list[0]
-            action.repetitions = chemicals_info.repetitions
-            print(
-                "Warning: More than one Material found on Wash object, only the first one was considered"
-            )
-        return [action.zeolite_dict()]
+        return Treatment.generate_treatment("IonExchange", context, schemas, schema_parser, amount_parser, conditions_parser)
+    
+class AlkalineTreatment(Treatment):
+    
+    @classmethod
+    def generate_action(
+        cls,
+        context: str,
+        schemas: List[str],
+        schema_parser: SchemaParser,
+        amount_parser: ParametersParser,
+        conditions_parser: ParametersParser,
+    ) -> List[Dict[str, Any]]:
+        return Treatment.generate_treatment("AlkalineTreatment", context, schemas, schema_parser, amount_parser, conditions_parser)
+    
+class AcidTreatment(Treatment):
+    
+    @classmethod
+    def generate_action(
+        cls,
+        context: str,
+        schemas: List[str],
+        schema_parser: SchemaParser,
+        amount_parser: ParametersParser,
+        conditions_parser: ParametersParser,
+    ) -> List[Dict[str, Any]]:
+        return Treatment.generate_treatment("AcidTreatment", context, schemas, schema_parser, amount_parser, conditions_parser)
 
 class Repeat(Actions):
     amount: str = 1
@@ -1322,6 +1360,8 @@ MATERIAL_ACTION_REGISTRY: Dict[str, Any] = {
     "calcination": ThermalTreatment,
     "stir": StirMaterial,
     "ionexchange": IonExchange,
+    "alkalinetreatment": AlkalineTreatment,
+    "acidtreatment": AcidTreatment,
     "repeat": Repeat,
     "cool": ChangeTemperature,
     "heat": ChangeTemperature,

@@ -17,7 +17,9 @@
               "Sieve" : "Screen the particles by size;",
               "Dry" : "Sample drying. Indicate the temperature and time;",
               "Calcination" : "Thermal treatment of the sample. Indicate the temperature, time and gas used;",
-              "Wait" : "Time passes without nothing happening. Indicate amount of time;"
+              "Wait" : "Time passes without nothing happening. Indicate amount of time;",
+              "AlkalineTreatment" : "Desilication of a sample with a base solution;",
+              "AcidTreatment" : "Treatment of the sample with an acid solution"
               },
   "answer_schema": {},
   "conclusion":  "Good Luck!"
