@@ -1,6 +1,6 @@
 from typing import Any, ClassVar, Dict, List, Optional
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, validator, PrivateAttr
 
 from zs4procext.parser import (
     Conditions,
@@ -75,13 +75,13 @@ class Chemical(BaseModel):
 
 
 class ChemicalsMaterials(Chemical):
-    chemical_type: str = "reactant"
     concentration: Optional[List[str]] = None
+    _chemical_type: str = PrivateAttr(default="reactant")
     def get_chemical_materials(self, schema: str, schema_parser: SchemaParser) -> bool:
         dropwise = self.get_chemical(schema, schema_parser)
         if len(schema_parser.get_atribute_value(schema, "type")) > 0:
             if schema_parser.get_atribute_value(schema, "type")[0].lower() == "final solution":
-                self.chemical_type = "final solution"
+                self._chemical_type = "final solution"
         concentration_list: List[str] = schema_parser.get_atribute_value(schema, "concentration")
         if len(concentration_list) == 0:
             pass
@@ -186,7 +186,7 @@ class ActionsWithchemicals(Actions):
                 pass
             elif new_chemical.name.strip().lower() == "n/a":
                 pass
-            elif new_chemical.chemical_type == "final solution":
+            elif new_chemical._chemical_type == "final solution":
                 chemical_info.final_solution = new_chemical
             else:
                 chemical_info.chemical_list.append(new_chemical)
@@ -305,7 +305,7 @@ class ActionsWithChemicalAndConditions(Actions):
                 pass
             elif new_chemical.name.strip().lower() == "n/a":
                 pass
-            elif new_chemical.chemical_type == "final solution":
+            elif new_chemical._chemical_type == "final solution":
                 chemical_info.final_solution = new_chemical
             else:
                 chemical_info.chemical_list.append(new_chemical)
@@ -1134,7 +1134,7 @@ class StirMaterial(ActionsWithConditons):
         return [action.zeolite_dict()]
 
 class IonExchange(ActionsWithChemicalAndConditions):
-    solution: Optional[Chemical] = None
+    solution: Optional[ChemicalsMaterials] = None
     temperature: Optional[str] = None
     duration: Optional[str] = None
     repetitions: int = 1
