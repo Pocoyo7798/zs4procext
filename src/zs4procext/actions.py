@@ -318,7 +318,7 @@ class ActionsWithChemicalAndConditions(Actions):
         return chemical_info
 
 class Treatment(ActionsWithChemicalAndConditions):
-    solutions: Optional[List[ChemicalsMaterials]] = None
+    solutions: List[ChemicalsMaterials] = []
     temperature: Optional[str] = None
     duration: Optional[str] = None
     repetitions: int = 1
@@ -340,13 +340,9 @@ class Treatment(ActionsWithChemicalAndConditions):
         )
         if len(chemicals_info.chemical_list) == 0:
             pass
-        elif len(schemas) == 1:
-            action.solution = chemicals_info.chemical_list[0]
-            action.repetitions = chemicals_info.repetitions
         else:
-            for chemical in chemicals_info.chemical_list:
-                action.solutions.append(chemical)
-                action.repetitions = chemicals_info.repetitions
+            action.solutions = chemicals_info.chemical_list
+            action.repetitions = chemicals_info.repetitions
         return [action.zeolite_dict()]
 
 ### Actions for Organic Synthesis
