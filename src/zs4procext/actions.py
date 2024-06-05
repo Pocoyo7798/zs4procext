@@ -984,6 +984,7 @@ class AddMaterials(ActionsWithChemicalAndConditions):
                 i += 1
         return list_of_actions
 
+
 class NewSolution(ActionsWithChemicalAndConditions):
     solution: Optional[ChemicalsMaterials] = None
 
@@ -1121,17 +1122,36 @@ class ThermalTreatment(ActionsWithConditons):
         action.validate_conditions(conditions_parser, complex_conditions_parser=complex_conditions_parser)
         return [action.zeolite_dict()]
 
-class StirMaterial(ActionsWithConditons):
+class StirMaterial(ActionsWithChemicalAndConditions):
     duration: Optional[str] = None
     stirring_speed: Optional[str] = None
+    temperature: Optional[str] = None
     
     @classmethod
     def generate_action(
-        cls, context: str, conditions_parser: ParametersParser, complex_conditions_parser: ComplexParametersParser
+        cls, context: str, schemas: List[str],
+        schema_parser: SchemaParser, amount_parser: ParametersParser, conditions_parser: ParametersParser, complex_conditions_parser: ComplexParametersParser
     ) -> List[Dict[str, Any]]:
         action: StirMaterial = cls(action_name="Stir", action_context=context)
         action.validate_conditions(conditions_parser, complex_conditions_parser=complex_conditions_parser)
-        return [action.zeolite_dict()]
+        chemicals_info: ChemicalInfoMaterials = action.validate_chemicals_materials(
+            schemas, schema_parser, amount_parser, action.action_context
+        )
+        list_of_actions: List[Dict[str, Any]] = []
+        if len(chemicals_info.chemical_list) == 0:
+            pass
+        elif len(chemicals_info.chemical_list) == 1:
+            new_action = Add(material=chemicals_info.chemical_list[0], temperature=action.temperature, dropwise=chemicals_info.dropwise[0])
+            list_of_actions.append(new_action.zeolite_dict())
+        else:
+            i = 0
+            for chemical in chemicals_info.chemical_list:
+                new_action = Add(material=chemical, temperature=action.temperature, dropwise=chemicals_info.dropwise[i])
+                list_of_actions.append(new_action.zeolite_dict())
+                i += 1
+        if action.duration is not None:
+            list_of_actions.append(action.zeolite_dict())
+        return list_of_actions
 
 class IonExchange(ActionsWithChemicalAndConditions):
     solution: Optional[ChemicalsMaterials] = None

@@ -235,9 +235,22 @@ class ActionExtractorFromText(BaseModel):
                     context, self._condition_parser, self._microwave_parser
                 )
                 action_list.extend(new_action)
-            elif action in set([ThermalTreatment, StirMaterial]):
+            elif action in set([ThermalTreatment]):
                 new_action = action.generate_action(context, self._condition_parser, self._complex_parser)
                 action_list.extend(new_action)
+            elif action in set([StirMaterial]):
+                chemical_prompt = self._chemical_prompt.format_prompt(context)
+                chemical_response = self._llm_model.run_single_prompt(chemical_prompt).strip()
+                #print(chemical_response)
+                schemas = self._schema_parser.parse_schema(chemical_response)
+                new_action = action.generate_action(
+                    context,
+                    schemas,
+                    self._schema_parser,
+                    self._quantity_parser,
+                    self._condition_parser,
+                    self._complex_parser,
+                )
             elif action in set([MakeSolution, Add, Quench, AddMaterials, NewSolution]):
                 chemical_prompt = self._chemical_prompt.format_prompt(context)
                 chemical_response = self._llm_model.run_single_prompt(chemical_prompt).strip()
