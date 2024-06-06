@@ -319,6 +319,7 @@ class ActionsWithChemicalAndConditions(Actions):
 
 class Treatment(ActionsWithChemicalAndConditions):
     solutions: List[ChemicalsMaterials] = []
+    suspension_concentration: Optional[str] = None
     temperature: Optional[str] = None
     duration: Optional[str] = None
     repetitions: int = 1
