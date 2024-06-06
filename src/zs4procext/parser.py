@@ -615,5 +615,7 @@ MATERIAL_SEPARATORS_REGISTRY: List[str] = [
         "Cool",
         "Heat",
         "Grind",
-        "Sieve"
+        "Sieve",
+        "AlkalineTreatment",
+        "AcidTreatment"
     ]
