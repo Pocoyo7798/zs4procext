@@ -1270,7 +1270,7 @@ class ChangeTemperature(ActionsWithConditons):
         if len(keywords_list) > 0:
             action.microwave = True
         if action.duration is not None:
-            new_action = Crystallization(action_name=Crystallization, temperature=action.temperature, duration=action.duration, pressure=action.pressure, stirring_speed=action.stirring_speed, microwave=action.microwave)
+            new_action = Crystallization(action_name="Crystallization", temperature=action.temperature, duration=action.duration, pressure=action.pressure, stirring_speed=action.stirring_speed, microwave=action.microwave)
             return [new_action.zeolite_dict()]
         else:
             return [action.zeolite_dict()]
