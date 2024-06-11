@@ -75,7 +75,7 @@ class Chemical(BaseModel):
 
 
 class ChemicalsMaterials(Chemical):
-    concentration: Optional[List[str]] = None
+    concentration: Optional[List[str]] = []
     _chemical_type: str = PrivateAttr(default="reactant")
     def get_chemical_materials(self, schema: str, schema_parser: SchemaParser) -> bool:
         dropwise = self.get_chemical(schema, schema_parser)
