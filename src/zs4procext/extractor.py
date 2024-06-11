@@ -272,6 +272,15 @@ class ActionExtractorFromText(BaseModel):
                     self._ph_parser,
                 )
                 action_list.extend(new_action)
+            elif action is WashMaterial:
+                chemical_prompt = self._chemical_prompt.format_prompt(context)
+                chemical_response = self._llm_model.run_single_prompt(chemical_prompt)
+                print(chemical_response)
+                schemas = self._schema_parser.parse_schema(chemical_response)
+                new_action = action.generate_action(
+                    context, schemas, self._schema_parser, self._quantity_parser, self._centri_parser, self._filter_parser
+                )
+                action_list.extend(new_action)
             elif action.type == "onlyconditions":
                 new_action = action.generate_action(context, self._condition_parser)
                 action_list.extend(new_action)
@@ -311,15 +320,6 @@ class ActionExtractorFromText(BaseModel):
                 new_action = action.generate_action(
                     context, self._filtrate_parser, self._precipitate_parser,
                     self._centri_parser, self._filter_parser
-                )
-                action_list.extend(new_action)
-            elif action is WashMaterial:
-                chemical_prompt = self._chemical_prompt.format_prompt(context)
-                chemical_response = self._llm_model.run_single_prompt(chemical_prompt)
-                print(chemical_response)
-                schemas = self._schema_parser.parse_schema(chemical_response)
-                new_action = action.generate_action(
-                    context, schemas, self._schema_parser, self._quantity_parser, self._centri_parser, self._filter_parser
                 )
                 action_list.extend(new_action)
             elif action.type is None:
