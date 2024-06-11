@@ -18,6 +18,7 @@ from zs4procext.actions import (
     PRECIPITATE_REGISTRY,
     Add,
     AddMaterials,
+    Crystallization,
     ChangeTemperature,
     CollectLayer,
     Filter,
@@ -230,9 +231,14 @@ class ActionExtractorFromText(BaseModel):
                 print(action_name)
                 if action_name.lower() in stop_words:
                     break
-            elif action in set([SetTemperature, ChangeTemperature]):
+            elif action in set([SetTemperature]):
                 new_action: List[Dict[str, Any]] = action.generate_action(
                     context, self._condition_parser, self._microwave_parser
+                )
+                action_list.extend(new_action)
+            elif action in set([ChangeTemperature, Crystallization]):
+                new_action: List[Dict[str, Any]] = action.generate_action(
+                    context, self._condition_parser, self._complex_parser, self._microwave_parser
                 )
                 action_list.extend(new_action)
             elif action in set([ThermalTreatment]):

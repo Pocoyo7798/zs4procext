@@ -121,9 +121,9 @@ class Actions(BaseModel):
     
     def zeolite_dict(self) -> Dict[str, Any]:
         action_name: str = self.action_name
-        if type(self) is Add:
+        if type(self) is ChangeTemperature:
             action_dict = self.dict(
-                exclude={"action_name", "action_context", "temperature"}
+                exclude={"action_name", "action_context", "pressure", "duration", "stirring_speed"}
             )
         else:
             action_dict = self.dict(
@@ -1031,7 +1031,6 @@ class NewSolution(ActionsWithChemicalAndConditions):
         chemicals_info: ChemicalInfoMaterials = action.validate_chemicals_materials(
             schemas, schema_parser, amount_parser, action.action_context
         )
-        print(chemicals_info)
         if chemicals_info.final_solution is not None:
             action.solution = chemicals_info.final_solution
         list_of_actions: List[Dict[str, Any]] = []
@@ -1046,13 +1045,18 @@ class Crystallization(ActionsWithConditons):
     temperature: Optional[str] = None
     duration: Optional[str] = None
     pressure: Optional[str] = None
+    stirring_speed: Optional[str] = None
+    microwave: bool = False
 
     @classmethod
     def generate_action(
-        cls, context: str, conditions_parser: ParametersParser
+        cls, context: str, conditions_parser: ParametersParser, complex_conditions_parser: ComplexParametersParser, microwave_parser: KeywordSearching
     ) -> List[Dict[str, Any]]:
         action: Crystallization = cls(action_name="Crystallization", action_context=context)
-        action.validate_conditions(conditions_parser)
+        action.validate_conditions(conditions_parser, complex_conditions_parser=complex_conditions_parser)
+        keywords_list = microwave_parser.find_keywords(context)
+        if len(keywords_list) > 0:
+            action.microwave = True
         return [action.zeolite_dict()]
 
 class Separate(Actions):
@@ -1218,7 +1222,7 @@ class AlkalineTreatment(Treatment):
         return Treatment.generate_treatment("AlkalineTreatment", context, schemas, schema_parser, amount_parser, conditions_parser)
     
 class AcidTreatment(Treatment):
-    
+
     @classmethod
     def generate_action(
         cls,
@@ -1252,17 +1256,24 @@ class Repeat(Actions):
 class ChangeTemperature(ActionsWithConditons):
     temperature: Optional[str] = None
     microwave: bool = False
+    duration: Optional[str] = None
+    pressure: Optional[str] = None
+    stirring_speed: Optional[str] = None
 
     @classmethod
     def generate_action(
-        cls, context: str, conditions_parser: ParametersParser, microwave_parser: KeywordSearching
+        cls, context: str, conditions_parser: ParametersParser, complex_conditions_parser: ComplexParametersParser, microwave_parser: KeywordSearching
     ) -> List[Dict[str, Any]]:
         action = cls(action_name="ChangeTemperature", action_context=context)
-        action.validate_conditions(conditions_parser)
+        action.validate_conditions(conditions_parser, complex_conditions_parser=complex_conditions_parser)
         keywords_list = microwave_parser.find_keywords(context)
         if len(keywords_list) > 0:
             action.microwave = True
-        return [action.zeolite_dict()]
+        if action.duration is not None:
+            new_action = Crystallization(action_name=Crystallization, temperature=action.temperature, duration=action.duration, pressure=action.pressure, stirring_speed=action.stirring_speed, microwave=action.microwave)
+            return [new_action.zeolite_dict()]
+        else:
+            return [action.zeolite_dict()]
 
 class MicrowaveMaterial(ActionsWithConditons):
     pass
