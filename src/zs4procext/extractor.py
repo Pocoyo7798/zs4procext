@@ -220,7 +220,7 @@ class ActionExtractorFromText(BaseModel):
         i = 0
         action_list: List = []
         for action_name in actions_info["actions"]:
-            context = actions_info["content"][i]
+            context = action_name + actions_info["content"][i]
             try:
                 action = self._action_dict[action_name.lower()]
             except KeyError:
@@ -250,6 +250,7 @@ class ActionExtractorFromText(BaseModel):
                     self._condition_parser,
                     self._complex_parser,
                 )
+                action_list.extend(new_action)
             elif action in set([MakeSolution, Add, Quench, AddMaterials, NewSolution]):
                 chemical_prompt = self._chemical_prompt.format_prompt(context)
                 chemical_response = self._llm_model.run_single_prompt(chemical_prompt).strip()
