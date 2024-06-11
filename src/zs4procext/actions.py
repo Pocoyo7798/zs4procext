@@ -336,7 +336,7 @@ class Treatment(ActionsWithChemicalAndConditions):
     ) -> List[Dict[str, Any]]:
         action: Treatment = cls(action_name=name, action_context=context)
         action.validate_conditions(conditions_parser)
-        chemicals_info: ChemicalInfo = action.validate_chemicals(
+        chemicals_info: ChemicalInfoMaterials = action.validate_chemicals_materials(
             schemas, schema_parser, amount_parser, action.action_context
         )
         if len(chemicals_info.chemical_list) == 0:
