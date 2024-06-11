@@ -1086,6 +1086,7 @@ class Separate(Actions):
 
 class WashMaterial(ActionsWithchemicals):
     material: Optional[ChemicalsMaterials] = None
+    method: Optional[str] = None
     repetitions: int = 1
 
     @classmethod
@@ -1095,11 +1096,15 @@ class WashMaterial(ActionsWithchemicals):
         schemas: List[str],
         schema_parser: SchemaParser,
         amount_parser: ParametersParser,
+        centrifuge_parser: KeywordSearching,
+        filter_parser: KeywordSearching,
     ) -> List[Dict[str, Any]]:
         action: WashMaterial = cls(action_name="Wash", action_context=context)
         chemicals_info: ChemicalInfoMaterials = action.validate_chemicals_materials(
             schemas, schema_parser, amount_parser, action.action_context
         )
+        centrifuge_results: List[str] = centrifuge_parser.find_keywords(action.action_context)
+        filter_results: List[str] = filter_parser.find_keywords(action.action_context)
         if len(chemicals_info.chemical_list) == 0:
             pass
         elif len(schemas) == 1:
@@ -1111,6 +1116,10 @@ class WashMaterial(ActionsWithchemicals):
             print(
                 "Warning: More than one Material found on Wash object, only the first one was considered"
             )
+        if len(filter_results) > 0:
+            action.method = "filtration"
+        elif len(centrifuge_results) > 0:
+            action.method = "centrifugation"
         return [action.zeolite_dict()]
 
 class WaitMaterial(ActionsWithConditons):

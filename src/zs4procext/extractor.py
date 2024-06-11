@@ -28,6 +28,7 @@ from zs4procext.actions import (
     SetTemperature,
     StirMaterial,
     ThermalTreatment,
+    WashMaterial
 )
 from zs4procext.llm import ModelLLM
 from zs4procext.parser import (
@@ -306,6 +307,14 @@ class ActionExtractorFromText(BaseModel):
                     self._centri_parser, self._filter_parser
                 )
                 action_list.extend(new_action)
+            elif action is WashMaterial:
+                chemical_prompt = self._chemical_prompt.format_prompt(context)
+                chemical_response = self._llm_model.run_single_prompt(chemical_prompt)
+                print(chemical_response)
+                schemas = self._schema_parser.parse_schema(chemical_response)
+                new_action = action.generate_action(
+                    context, schemas, self._schema_parser, self._quantity_parser, self._centri_parser, self._filter_parser
+                )
                 action_list.extend(new_action)
             elif action.type is None:
                 new_action = action.generate_action(context)
