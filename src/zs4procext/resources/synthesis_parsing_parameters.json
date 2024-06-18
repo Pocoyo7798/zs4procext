@@ -5,8 +5,8 @@
     "quantity_units" : ["moles", "mol", "gram", "g", "liter", "L"],
     "size_units" : ["m", "mesh"],
     "time_words" : ["overnight"],
-    "temperature_words" : ["room temperature", "ambient temperature", "steam bath", "ice bath", "rt"],
-    "pressure_words" : ["reduced pressure", "high pressure", "low pressure"],
+    "temperature_words" : ["room temperature", "ambient temperature", "steam bath", "ice bath", "rt", "reflux"],
+    "pressure_words" : ["reduced pressure", "high pressure", "low pressure", "autogeneous"],
     "atmosphere_words" : ["nitrogen", "n2", "argon", "ar", "air", "inert", "oxygen", "o2", "helium", "he", "high vacuo", "low vacuo", "vacuo", "high vacuum", "low vacuum"],
     "amount_words" : [],
     "size_words" : []

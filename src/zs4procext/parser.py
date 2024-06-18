@@ -417,6 +417,13 @@ class ActionsParser(BaseModel):
             )
         actions: List[str] = self._regex.findall(text)
         content: List[str] = self._regex.split(text)[1:]
+        i = 0
+        for action in actions[:-1]:
+            if action == actions[i + 1] and len(content[i] < 6):
+                del actions[i]
+                del content[i]
+            else:
+                i += 1
         return {"actions": actions, "content": content}
 
 

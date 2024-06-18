@@ -125,6 +125,10 @@ class Actions(BaseModel):
             action_dict = self.dict(
                 exclude={"action_name", "action_context", "pressure", "duration", "stirring_speed"}
             )
+        elif type(self) is WaitMaterial:
+            action_dict = self.dict(
+                exclude={"action_name", "action_context", "temperature"}
+            )
         else:
             action_dict = self.dict(
                 exclude={"action_name", "action_context"}
@@ -1071,12 +1075,14 @@ class Separate(Actions):
         precipitate_parser: KeywordSearching,
         centrifuge_parser: KeywordSearching,
         filter_parser: KeywordSearching,
+        evaporation_parser: KeywordSearching
     ) -> List[Dict[str, Any]]:
         action: Separate = cls(action_name="Separate", action_context=context)
         filtrate_results: List[str] = filtrate_parser.find_keywords(action.action_context)
         precipitate_results: List[str] = precipitate_parser.find_keywords(action.action_context)
         centrifuge_results: List[str] = centrifuge_parser.find_keywords(action.action_context)
         filter_results: List[str] = filter_parser.find_keywords(action.action_context)
+        evaporation_results: List[str] = evaporation_parser.find_keywords(action.action_context)
         if len(filtrate_results) > 0:
             action.phase_to_keep = "filtrate"
         elif len(precipitate_results) > 0:
@@ -1085,6 +1091,8 @@ class Separate(Actions):
             action.method = "filtration"
         elif len(centrifuge_results) > 0:
             action.method = "centrifugation"
+        elif len(evaporation_results) > 0:
+            action.method = "evaporation"
         return [action.transform_into_pistachio()]
         
 
@@ -1128,6 +1136,7 @@ class WashMaterial(ActionsWithchemicals):
 
 class WaitMaterial(ActionsWithConditons):
     duration: Optional[str] = None
+    temperature: Optional[str] = None
 
     @classmethod
     def generate_action(
@@ -1135,7 +1144,12 @@ class WaitMaterial(ActionsWithConditons):
     ) -> List[Dict[str, Any]]:
         action: WaitMaterial = cls(action_name="Wait", action_context=context)
         action.validate_conditions(conditions_parser)
-        return [action.zeolite_dict()]
+        list_of_actions: List[Any] = []
+        if action.temperature is not None:
+            list_of_actions.append(ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature).zeolite_dict())
+        if action.duration is not None:
+            list_of_actions.append(action.zeolite_dict())
+        return list_of_actions
 
 class DryMaterial(ActionsWithConditons):
     temperature: Optional[str] = None
@@ -1171,28 +1185,14 @@ class StirMaterial(ActionsWithChemicalAndConditions):
     
     @classmethod
     def generate_action(
-        cls, context: str, schemas: List[str],
-        schema_parser: SchemaParser, amount_parser: ParametersParser, conditions_parser: ParametersParser, complex_conditions_parser: ComplexParametersParser
+        cls, context: str, conditions_parser: ParametersParser, complex_conditions_parser: ComplexParametersParser
     ) -> List[Dict[str, Any]]:
         action: StirMaterial = cls(action_name="Stir", action_context=context)
         action.validate_conditions(conditions_parser, complex_conditions_parser=complex_conditions_parser)
-        chemicals_info: ChemicalInfoMaterials = action.validate_chemicals_materials(
-            schemas, schema_parser, amount_parser, action.action_context
-        )
-        list_of_actions: List[Dict[str, Any]] = []
-        if len(chemicals_info.chemical_list) == 0:
-            pass
-        elif len(chemicals_info.chemical_list) == 1:
-            new_action = Add(material=chemicals_info.chemical_list[0], temperature=action.temperature, dropwise=chemicals_info.dropwise[0])
-            list_of_actions.append(new_action.zeolite_dict())
-        else:
-            i = 0
-            for chemical in chemicals_info.chemical_list:
-                new_action = Add(material=chemical, temperature=action.temperature, dropwise=chemicals_info.dropwise[i])
-                list_of_actions.append(new_action.zeolite_dict())
-                i += 1
         if action.duration is not None:
-            list_of_actions.append(action.zeolite_dict())
+            list_of_actions: List[Any] = [action.zeolite_dict]
+        else:
+            list_of_actions = []
         return list_of_actions
 
 class IonExchange(Treatment):
@@ -1410,7 +1410,13 @@ FILTER_REGISTRY: List[str] = [
 ]
 CENTRIFUGATION_REGISTRY: List[str] = [
     "centrifuge",
-    "centrifugation"
+    "centrifugation",
+    "centrifugally",
+    "centrifugal"
+]
+EVAPORATION_REGISTRY: List[str] = [
+    "evaporation",
+    "evaporate"
 ]
 MICROWAVE_REGISTRY: List[str] = ["microwave", "microwaves"]
 PH_REGISTRY: List[str] = ["ph"]

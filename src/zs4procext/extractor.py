@@ -8,6 +8,7 @@ from zs4procext.actions import (
     ACTION_REGISTRY,
     AQUEOUS_REGISTRY,
     CENTRIFUGATION_REGISTRY,
+    EVAPORATION_REGISTRY,
     FILTER_REGISTRY,
     FILTRATE_REGISTRY,
     MATERIAL_ACTION_REGISTRY,
@@ -62,6 +63,7 @@ class ActionExtractorFromText(BaseModel):
     _precipitate_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
     _filter_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
     _centri_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
+    _evaporation_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
     _aqueous_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
     _organic_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
     _microwave_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
@@ -120,6 +122,8 @@ class ActionExtractorFromText(BaseModel):
             self._filter_parser.model_post_init(None)
             self._centri_parser = KeywordSearching(keywords_list=CENTRIFUGATION_REGISTRY)
             self._centri_parser.model_post_init(None)
+            self._evaporation_parser = KeywordSearching(keywords_list=EVAPORATION_REGISTRY)
+            self._evaporation_parser.model_post_init(None)
             self._complex_parser = ComplexParametersParser()
             self._complex_parser.model_post_init(None)
             atributes = ["type", "name", "dropwise", "concentration", "amount"]
@@ -217,6 +221,9 @@ class ActionExtractorFromText(BaseModel):
             raise AttributeError("You need to post initilize the class")
         action_prompt: str = self._action_prompt.format_prompt(paragraph)
         actions_response: str = self._llm_model.run_single_prompt(action_prompt).strip()
+        actions_response = actions_response.replace("\x03C", "°C")
+        actions_response = actions_response.replace("oC", "°C")
+        actions_response = actions_response.replace("8C", "°C")
         print(actions_response)
         actions_info: Dict[str, List[str]] = self._action_parser.parse(actions_response)
         i = 0
@@ -241,22 +248,8 @@ class ActionExtractorFromText(BaseModel):
                     context, self._condition_parser, self._complex_parser, self._microwave_parser
                 )
                 action_list.extend(new_action)
-            elif action in set([ThermalTreatment]):
+            elif action in set([ThermalTreatment, StirMaterial]):
                 new_action = action.generate_action(context, self._condition_parser, self._complex_parser)
-                action_list.extend(new_action)
-            elif action in set([StirMaterial]):
-                chemical_prompt = self._chemical_prompt.format_prompt(context)
-                chemical_response = self._llm_model.run_single_prompt(chemical_prompt).strip()
-                print(chemical_response)
-                schemas = self._schema_parser.parse_schema(chemical_response)
-                new_action = action.generate_action(
-                    context,
-                    schemas,
-                    self._schema_parser,
-                    self._quantity_parser,
-                    self._condition_parser,
-                    self._complex_parser,
-                )
                 action_list.extend(new_action)
             elif action in set([MakeSolution, Add, Quench, AddMaterials, NewSolution]):
                 chemical_prompt = self._chemical_prompt.format_prompt(context)
