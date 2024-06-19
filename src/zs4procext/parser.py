@@ -419,7 +419,7 @@ class ActionsParser(BaseModel):
         content: List[str] = self._regex.split(text)[1:]
         i = 0
         for action in actions[:-1]:
-            if action == actions[i + 1] and len(content[i] < 6):
+            if action == actions[i + 1] and len(content[i]) < 6:
                 del actions[i]
                 del content[i]
             else:
