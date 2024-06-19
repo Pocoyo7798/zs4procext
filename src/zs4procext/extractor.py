@@ -312,7 +312,7 @@ class ActionExtractorFromText(BaseModel):
             elif action is Separate:
                 new_action = action.generate_action(
                     context, self._filtrate_parser, self._precipitate_parser,
-                    self._centri_parser, self._filter_parser
+                    self._centri_parser, self._filter_parser, self._evaporation_parser
                 )
                 action_list.extend(new_action)
             elif action.type is None:
