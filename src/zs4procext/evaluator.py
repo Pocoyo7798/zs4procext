@@ -29,7 +29,7 @@ class Evaluator(BaseModel):
         """
         i = 0
         for ref_action in list_of_actions:
-            if SequenceMatcher(None, str(action), str(ref_action)).ratio() > threshold:
+            if SequenceMatcher(None, str(action["content"]), str(ref_action["content"])).ratio() > threshold and action["action"] == ref_action["action"]:
                 return True, i
             i = i + 1
         return False, i
