@@ -177,7 +177,6 @@ class ActionExtractorFromText(BaseModel):
 
     @staticmethod
     def eliminate_empty_sequence(action_list: List[Dict[str, Any]], threshold: int):
-        print(action_list)
         ignore_set = {
             "CollectLayer",
             "Concentrate",

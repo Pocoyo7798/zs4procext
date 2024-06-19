@@ -1190,7 +1190,7 @@ class StirMaterial(ActionsWithChemicalAndConditions):
         action: StirMaterial = cls(action_name="Stir", action_context=context)
         action.validate_conditions(conditions_parser, complex_conditions_parser=complex_conditions_parser)
         if action.duration is not None:
-            list_of_actions: List[Any] = [action.zeolite_dict]
+            list_of_actions: List[Any] = [action.zeolite_dict()]
         else:
             list_of_actions = []
         return list_of_actions
