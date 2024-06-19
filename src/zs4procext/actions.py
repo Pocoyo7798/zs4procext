@@ -1244,9 +1244,9 @@ class Repeat(Actions):
         if len(number_list) == 0:
             pass
         elif len(number_list) == 1:
-            action.amount = number_list[0]
+            action.amount = int(float(number_list[0]))
         else :
-            action.amount = number_list[0]
+            action.amount = int(float(number_list[0]))
             print(
                 "Warning: More than one adimensional number was found, only the first one was considered"
                 )
