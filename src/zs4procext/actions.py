@@ -1028,7 +1028,7 @@ class AddMaterials(ActionsWithChemicalAndConditions):
         if action.temperature is not None:
             list_of_actions.append(ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature).zeolite_dict())
         if action.atmosphere is not None:
-            list_of_actions.append(SetAtmosphere(action_name="SetAtmosphere", atmosphere= action.atmosphere))
+            list_of_actions.append(SetAtmosphere(action_name="SetAtmosphere", atmosphere= action.atmosphere).zeolite_dict())
         if len(chemicals_info.chemical_list) == 0:
             pass
         elif len(chemicals_info.chemical_list) == 1:
@@ -1221,7 +1221,7 @@ class StirMaterial(ActionsWithChemicalAndConditions):
         else:
             list_of_actions = []
         if action.temperature is not None:
-            list_of_actions.append(ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature))
+            list_of_actions.append(ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature).zeolite_dict())
         return list_of_actions
 
 class IonExchange(Treatment):
@@ -1333,7 +1333,7 @@ class Cool(ActionsWithConditons):
                 action.temperature = "Cool"
             return [action.zeolite_dict()]
 
-class SetAtmosphere:
+class SetAtmosphere(Actions):
     atmosphere: Optional[str] = None
     pressure: Optional[str] = None
     flow_rate: Optional[str] = None
