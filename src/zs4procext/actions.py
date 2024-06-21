@@ -1288,6 +1288,7 @@ class Repeat(Actions):
 class ChangeTemperature(ActionsWithConditons):
     temperature: Optional[str] = None
     microwave: bool = False
+    heat_ramp: Optional[str] = None
     duration: Optional[str] = None
     pressure: Optional[str] = None
     stirring_speed: Optional[str] = None
@@ -1310,6 +1311,7 @@ class ChangeTemperature(ActionsWithConditons):
 class Cool(ActionsWithConditons):
     temperature: Optional[str] = None
     microwave: bool = False
+    heat_ramp: Optional[str] = None
     duration: Optional[str] = None
     pressure: Optional[str] = None
     stirring_speed: Optional[str] = None

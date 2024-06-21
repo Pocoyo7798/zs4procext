@@ -45,6 +45,11 @@ from zs4procext.prompt import TEMPLATE_REGISTRY
     default=None,
     help="Parameters of the LLM used to get the actions",
 )
+@click.option(
+    "--elementar_actions",
+    default=False,
+    help="True to transform all actions into combinations of elementar actions, False otherwise",
+)
 def text2actions(
     text_file_path: str,
     output_file_path: str,
@@ -55,6 +60,7 @@ def text2actions(
     chemical_prompt_schema_path: Optional[str],
     llm_model_name: str,
     llm_model_parameters_path: Optional[str],
+    elementar_actions: bool
 ):
     start_time = time.time()
     if action_prompt_structure_path is None:
@@ -75,6 +81,7 @@ def text2actions(
         chemical_prompt_schema_path=chemical_prompt_schema_path,
         llm_model_name=llm_model_name,
         llm_model_parameters_path=llm_model_parameters_path,
+        elementar_actions=elementar_actions
     )
     extractor.model_post_init(None)
     with open(text_file_path, "r") as f:
