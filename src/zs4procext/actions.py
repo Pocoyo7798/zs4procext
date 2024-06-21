@@ -356,7 +356,7 @@ class Treatment(ActionsWithChemicalAndConditions):
         concentration = re.findall(r'\d+', str(action.suspension_concentration))
         list_of_actions: List[Any] = []
         if len(action.solutions) > 0:
-            list_of_actions.append(NewSolution(action_name="NewSolution"))
+            list_of_actions.append(NewSolution(action_name="NewSolution").zeolite_dict())
             for solution in action.solutions:
                 if len(concentration) > 0 and len(solution["quantity"]) == 0:
                     solution["quantity"].append(str(float(concentration[0]) / len(action.solutions)) + "mL")
