@@ -1,6 +1,7 @@
 from typing import Any, ClassVar, Dict, List, Optional
 
 from pydantic import BaseModel, validator, PrivateAttr
+import re
 
 from zs4procext.parser import (
     Conditions,
@@ -121,13 +122,17 @@ class Actions(BaseModel):
     
     def zeolite_dict(self) -> Dict[str, Any]:
         action_name: str = self.action_name
-        if type(self) is ChangeTemperature:
+        if type(self) in set([ChangeTemperature, Cool]):
             action_dict = self.dict(
                 exclude={"action_name", "action_context", "pressure", "duration", "stirring_speed"}
             )
-        elif type(self) is WaitMaterial:
+        elif type(self) in set([WaitMaterial, StirMaterial]):
             action_dict = self.dict(
                 exclude={"action_name", "action_context", "temperature"}
+            )
+        if type(self) is AddMaterials:
+            action_dict = self.dict(
+                exclude={"action_name", "action_context", "atmosphere", "temperature"}
             )
         else:
             action_dict = self.dict(
@@ -348,7 +353,25 @@ class Treatment(ActionsWithChemicalAndConditions):
         else:
             action.solutions = chemicals_info.chemical_list
             action.repetitions = chemicals_info.repetitions
-        return [action.zeolite_dict()]
+        concentration = re.findall(r'\d+', action.suspension_concentration)
+        list_of_actions: List[Any] = []
+        if len(action.solutions) > 0:
+            list_of_actions.append(NewSolution(action_name="NewSolution"))
+            for solution in action.solutions:
+                if len(concentration) > 0 and len(solution["quantity"]) == 0:
+                    solution["quantity"].append(str(float(concentration[0]) / len(action.solutions)) + "mL")
+                new_action: Actions = Add(action_name="Add", material=solution)
+                list_of_actions.append(new_action.zeolite_dict())
+        if action.temperature is not None:
+            new_action = ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature)
+            list_of_actions.append(new_action.zeolite_dict())
+        if len(concentration) > 0:
+            new_sample: Dict[str, Any] = {'action': 'Add', 'content': {'material': {'name': 'sample', 'quantity': ['1 g'], 'concentration': []}}, 'dropwise': False, 'duration': None, 'ph': None}
+            list_of_actions.append(new_sample)
+        if action.duration is not None:
+            new_actions = Stir(action_name="Stir", duration=action.duration)
+            list_of_actions.append(new_action.zeolite_dict())
+        return list_of_actions
 
 ### Actions for Organic Synthesis
 
@@ -1002,8 +1025,12 @@ class AddMaterials(ActionsWithChemicalAndConditions):
                     "Warning: More than one dimentionless value was found for the pH, only the first one was considered"
                 )
         list_of_actions: List[Dict[str, Any]] = []
+        if action.temperature is not None:
+            list_of_actions.append(ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature).zeolite_dict())
+        if action.atmosphere is not None:
+            list_of_actions.append(SetAtmosphere(action_name="SetAtmosphere", atmosphere= action.atmosphere))
         if len(chemicals_info.chemical_list) == 0:
-            list_of_actions.append(action.zeolite_dict())
+            pass
         elif len(chemicals_info.chemical_list) == 1:
             action.material = chemicals_info.chemical_list[0]
             action.dropwise = chemicals_info.dropwise[0]
@@ -1099,7 +1126,6 @@ class Separate(Actions):
 class WashMaterial(ActionsWithchemicals):
     material: Optional[ChemicalsMaterials] = None
     method: Optional[str] = None
-    repetitions: int = 1
 
     @classmethod
     def generate_action(
@@ -1121,10 +1147,8 @@ class WashMaterial(ActionsWithchemicals):
             pass
         elif len(schemas) == 1:
             action.material = chemicals_info.chemical_list[0]
-            action.repetitions = chemicals_info.repetitions
         else:
             action.material = chemicals_info.chemical_list[0]
-            action.repetitions = chemicals_info.repetitions
             print(
                 "Warning: More than one Material found on Wash object, only the first one was considered"
             )
@@ -1132,6 +1156,9 @@ class WashMaterial(ActionsWithchemicals):
             action.method = "filtration"
         elif len(centrifuge_results) > 0:
             action.method = "centrifugation"
+        list_of_actions: List[Any] = [action.zeolite_dict()]
+        if chemicals_info.repetitions > 1:
+            list_of_actions.append(Repeat(action_name="Repeat", amount=chemicals_info.repetitions).zeolite_dict())
         return [action.zeolite_dict()]
 
 class WaitMaterial(ActionsWithConditons):
@@ -1193,6 +1220,8 @@ class StirMaterial(ActionsWithChemicalAndConditions):
             list_of_actions: List[Any] = [action.zeolite_dict()]
         else:
             list_of_actions = []
+        if action.temperature is not None:
+            list_of_actions.append(ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature))
         return list_of_actions
 
 class IonExchange(Treatment):
@@ -1245,12 +1274,15 @@ class Repeat(Actions):
             pass
         elif len(number_list) == 1:
             action.amount = int(float(number_list[0]))
-        else :
+        else:
             action.amount = int(float(number_list[0]))
             print(
                 "Warning: More than one adimensional number was found, only the first one was considered"
                 )
-        return [action.zeolite_dict()]
+        list_of_actions: List[Any] = []
+        if action.amount > 1:
+            list_of_actions.append(action.zeolite_dict())
+        return list_of_actions
 
 
 class ChangeTemperature(ActionsWithConditons):
@@ -1274,6 +1306,35 @@ class ChangeTemperature(ActionsWithConditons):
             return [new_action.zeolite_dict()]
         else:
             return [action.zeolite_dict()]
+        
+class Cool(ActionsWithConditons):
+    temperature: Optional[str] = None
+    microwave: bool = False
+    duration: Optional[str] = None
+    pressure: Optional[str] = None
+    stirring_speed: Optional[str] = None
+
+    @classmethod
+    def generate_action(
+        cls, context: str, conditions_parser: ParametersParser, complex_conditions_parser: ComplexParametersParser, microwave_parser: KeywordSearching
+    ) -> List[Dict[str, Any]]:
+        action = cls(action_name="ChangeTemperature", action_context=context)
+        action.validate_conditions(conditions_parser, complex_conditions_parser=complex_conditions_parser)
+        keywords_list = microwave_parser.find_keywords(context)
+        if len(keywords_list) > 0:
+            action.microwave = True
+        if action.duration is not None:
+            new_action = Crystallization(action_name="Crystallization", temperature=action.temperature, duration=action.duration, pressure=action.pressure, stirring_speed=action.stirring_speed, microwave=action.microwave)
+            return [new_action.zeolite_dict()]
+        else:
+            if action.temperature is None:
+                action.temperature = "Cool"
+            return [action.zeolite_dict()]
+
+class SetAtmosphere:
+    atmosphere: Optional[str] = None
+    pressure: Optional[str] = None
+    flow_rate: Optional[str] = None
 
 class MicrowaveMaterial(ActionsWithConditons):
     pass
@@ -1380,7 +1441,7 @@ MATERIAL_ACTION_REGISTRY: Dict[str, Any] = {
     "alkalinetreatment": AlkalineTreatment,
     "acidtreatment": AcidTreatment,
     "repeat": Repeat,
-    "cool": ChangeTemperature,
+    "cool": Cool,
     "heat": ChangeTemperature,
     "grind": Grind,
     "sieve": Sieve

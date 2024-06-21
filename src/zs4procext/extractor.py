@@ -19,6 +19,7 @@ from zs4procext.actions import (
     PRECIPITATE_REGISTRY,
     Add,
     AddMaterials,
+    Cool,
     Crystallization,
     ChangeTemperature,
     CollectLayer,
@@ -243,7 +244,7 @@ class ActionExtractorFromText(BaseModel):
                     context, self._condition_parser, self._microwave_parser
                 )
                 action_list.extend(new_action)
-            elif action in set([ChangeTemperature, Crystallization]):
+            elif action in set([ChangeTemperature, Crystallization, Cool]):
                 new_action: List[Dict[str, Any]] = action.generate_action(
                     context, self._condition_parser, self._complex_parser, self._microwave_parser
                 )
