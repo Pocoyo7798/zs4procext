@@ -216,6 +216,10 @@ class ActionExtractorFromText(BaseModel):
             if action["action"] == "Add" and add_new_solution is True:
                 add_new_solution = False
                 action_list.insert(i_new_solution, NewSolution(action_name="NewSolution").zeolite_dict())
+                i = i + 1
+            elif action["action"] == "NewSolution":
+                add_new_solution = False
+                i = i + 1
             elif action["action"] == "ChangeTemperature":
                 content = action["content"]
                 if content["temperature"] in set(["heat", "cool"]):
@@ -253,6 +257,8 @@ class ActionExtractorFromText(BaseModel):
                         b += 1
                     action_list = action_list[:i] + new_actions + action_list[i + 1:]
                     i += b
+                else:
+                    i = i + 1
             elif action["action"] == "Dry":
                 i_new_solution = i + 1
                 if elementar_actions is True:
@@ -274,6 +280,8 @@ class ActionExtractorFromText(BaseModel):
                         b += 1
                     action_list = action_list[:i] + new_actions + action_list[i + 1:]
                     i += b
+                else:
+                    i = i + 1
             elif action["action"] == "ThermalTreatment":
                 i_new_solution = i + 1
                 if elementar_actions is True:
@@ -295,6 +303,10 @@ class ActionExtractorFromText(BaseModel):
                         b += 1
                     action_list = action_list[:i] + new_actions + action_list[i + 1:]
                     i += b
+                else:
+                    i = i + 1
+            else:
+                i = i + 1
         return action_list
 
     def retrieve_actions_from_text(
