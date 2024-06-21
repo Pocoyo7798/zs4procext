@@ -353,7 +353,7 @@ class Treatment(ActionsWithChemicalAndConditions):
         else:
             action.solutions = chemicals_info.chemical_list
             action.repetitions = chemicals_info.repetitions
-        concentration = re.findall(r'\d+', action.suspension_concentration)
+        concentration = re.findall(r'\d+', str(action.suspension_concentration))
         list_of_actions: List[Any] = []
         if len(action.solutions) > 0:
             list_of_actions.append(NewSolution(action_name="NewSolution"))
