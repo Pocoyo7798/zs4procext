@@ -283,6 +283,7 @@ class ActionExtractorFromText(BaseModel):
                         b += 1
                     action_list = action_list[:i] + new_actions + action_list[i + 1:]
                     i += b
+        return action_list
 
     def retrieve_actions_from_text(
         self, paragraph: str, stop_words: List[str]
