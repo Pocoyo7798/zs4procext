@@ -210,8 +210,13 @@ class ActionExtractorFromText(BaseModel):
     def correct_action_list(action_list: List[Dict[str, Any]], elementar_actions: bool=False):
         i = 0
         temperature = None
+        add_new_solution = True
+        i_new_solution = 0
         for action in action_list:
-            if action["action"] == "ChangeTemperature":
+            if action["action"] == "Add" and add_new_solution is True:
+                add_new_solution = False
+                action_list.insert(i_new_solution, NewSolution(action_name="NewSolution").zeolite_dict())
+            elif action["action"] == "ChangeTemperature":
                 content = action["content"]
                 if content["temperature"] in set(["heat", "cool"]):
                     temperature = content["temperature"]
@@ -221,8 +226,11 @@ class ActionExtractorFromText(BaseModel):
                 else:
                     temperature = content["temperature"]
                     i = i + 1
-            if elementar_actions is True:
-                if action["action"] == "Crystallization":
+            elif action["action"] in set(["Wash", "Separate"]):
+                i_new_solution = i + 1
+            if action["action"] == "Crystallization":
+                i_new_solution = i + 1
+                if elementar_actions is True:
                     content = action["content"]
                     new_actions = []
                     b = 2
@@ -245,7 +253,9 @@ class ActionExtractorFromText(BaseModel):
                         b += 1
                     action_list = action_list[:i] + new_actions + action_list[i + 1:]
                     i += b
-                elif action["action"] == "Dry":
+            elif action["action"] == "Dry":
+                i_new_solution = i + 1
+                if elementar_actions is True:
                     content = action["content"]
                     new_actions = []
                     b = 1
@@ -264,7 +274,9 @@ class ActionExtractorFromText(BaseModel):
                         b += 1
                     action_list = action_list[:i] + new_actions + action_list[i + 1:]
                     i += b
-                elif action["action"] == "ThermalTreatment":
+            elif action["action"] == "ThermalTreatment":
+                i_new_solution = i + 1
+                if elementar_actions is True:
                     content = action["content"]
                     new_actions = []
                     b = 1

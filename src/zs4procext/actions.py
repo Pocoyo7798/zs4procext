@@ -369,7 +369,7 @@ class Treatment(ActionsWithChemicalAndConditions):
             new_sample: Dict[str, Any] = {'action': 'Add', 'content': {'material': {'name': 'sample', 'quantity': ['1 g'], 'concentration': []}}, 'dropwise': False, 'duration': None, 'ph': None}
             list_of_actions.append(new_sample)
         if action.duration is not None:
-            new_actions = Stir(action_name="Stir", duration=action.duration)
+            new_action = Stir(action_name="Stir", duration=action.duration)
             list_of_actions.append(new_action.zeolite_dict())
         return list_of_actions
 
@@ -1143,15 +1143,16 @@ class WashMaterial(ActionsWithchemicals):
         )
         centrifuge_results: List[str] = centrifuge_parser.find_keywords(action.action_context)
         filter_results: List[str] = filter_parser.find_keywords(action.action_context)
+        list_of_actions: List[Any] = []
         if len(chemicals_info.chemical_list) == 0:
             pass
         elif len(schemas) == 1:
             action.material = chemicals_info.chemical_list[0]
+            list_of_actions.append(action.zeolite_dict())
         else:
-            action.material = chemicals_info.chemical_list[0]
-            print(
-                "Warning: More than one Material found on Wash object, only the first one was considered"
-            )
+            for material in chemicals_info.chemical_list:
+                action.material = material
+                list_of_actions.append(action.zeolite_dict())
         if len(filter_results) > 0:
             action.method = "filtration"
         elif len(centrifuge_results) > 0:
@@ -1159,7 +1160,7 @@ class WashMaterial(ActionsWithchemicals):
         list_of_actions: List[Any] = [action.zeolite_dict()]
         if chemicals_info.repetitions > 1:
             list_of_actions.append(Repeat(action_name="Repeat", amount=chemicals_info.repetitions).zeolite_dict())
-        return [action.zeolite_dict()]
+        return list_of_actions
 
 class WaitMaterial(ActionsWithConditons):
     duration: Optional[str] = None
