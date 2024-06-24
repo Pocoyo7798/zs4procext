@@ -232,7 +232,7 @@ class ActionExtractorFromText(BaseModel):
                     i = i + 1
             elif action["action"] in set(["Wash", "Separate"]):
                 i_new_solution = i + 1
-            if action["action"] == "Crystallization":
+            elif action["action"] == "Crystallization":
                 i_new_solution = i + 1
                 if elementar_actions is True:
                     content = action["content"]

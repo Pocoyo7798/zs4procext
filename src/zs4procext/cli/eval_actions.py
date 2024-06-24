@@ -27,6 +27,7 @@ def eval_actions(
             evaluated_dataset_path, threshold=similarity_threshold
         ),
         "sequence": evaluator.evaluate_actions_order(evaluated_dataset_path),
+        "chemicals": evaluator.evaluate_chemicals(evaluated_dataset_path, threshold=similarity_threshold),
         "threshold": similarity_threshold,
     }
     results_json = json.dumps(results, indent=4)
