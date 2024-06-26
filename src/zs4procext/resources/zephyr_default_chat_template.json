@@ -11,7 +11,7 @@
     "input_types": {},
     "output_parser": null,
     "partial_variables": {},
-    "template": "<|system|>\n</s>\n<|user|>\n{expertise}{initialization}{actions}{objective}{context}{answer_schema}{conclusion}</s>\n<|assistant|>",
+    "template": "# <|system|>\n{expertise}{initialization}{actions}</s>\n<|user|>\n{objective}{context}{answer_schema}{conclusion}</s>\n<|assistant|>",
     "template_format": "f-string",
     "validate_template": true,
     "_type": "prompt"
