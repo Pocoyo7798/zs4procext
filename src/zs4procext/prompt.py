@@ -264,5 +264,15 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         importlib_resources.files("zs4procext")
         / "resources"
         / "zephyr_default_chat_template.json"
+    ),
+    "google/gemma-1.1-7b-it": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "gemma_default_it_template.json"
+    ),
+    "google/gemma-1.1-2b-it": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "gemma_default_it_template.json"
     )
 }
