@@ -244,5 +244,10 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         importlib_resources.files("zs4procext")
         / "resources"
         / "phi_default_instruct_template.json"
+    ),
+    "Qwen/Qwen1.5-7B-Chat": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "qwen1.5_default_chat_template.json"
     )
 }
