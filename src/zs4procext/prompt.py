@@ -274,5 +274,10 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         importlib_resources.files("zs4procext")
         / "resources"
         / "gemma_default_it_template.json"
+    ),
+    "dreamgen/WizardLM-2-7B": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "wizardlm-2_default_template.json"
     )
 }
