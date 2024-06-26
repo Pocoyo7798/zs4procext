@@ -254,5 +254,15 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         importlib_resources.files("zs4procext")
         / "resources"
         / "starlinglm_default_template.json"
+    ),
+    "SanjiWatsuki/Kunoichi-DPO-v2-7B": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "kunoichi-dp_default_chat_template.json"
+    ),
+    "HuggingFaceH4/zephyr-7b-beta": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "zephyr_default_chat_template.json"
     )
 }
