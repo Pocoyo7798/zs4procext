@@ -249,5 +249,10 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         importlib_resources.files("zs4procext")
         / "resources"
         / "qwen1.5_default_chat_template.json"
+    ),
+    "berkeley-nest/Starling-LM-7B-alpha": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "starlinglm_default_template.json"
     )
 }
