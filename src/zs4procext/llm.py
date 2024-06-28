@@ -47,8 +47,8 @@ class ModelLLM(BaseModel):
                     "enforce_eager": self.model_parameters["enforce-eager"],
                     "quantization": self.model_parameters["quantization"],
                     "max_model_len": self.model_parameters["max_model_len"],
-                    "worker_use_ray": self.model_parameters["worker-use-ray"]
-                    #"distributed_executor_backend": self.model_parameters["distributed-executor-backend"]
+                    "worker_use_ray": self.model_parameters["worker-use-ray"],
+                    "distributed_executor_backend": self.model_parameters["distributed-executor-backend"]
                 },
             )
 
