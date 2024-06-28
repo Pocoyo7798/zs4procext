@@ -1433,6 +1433,7 @@ PISTACHIO_ACTION_REGISTRY: Dict[str, Any] = {
 MATERIAL_ACTION_REGISTRY: Dict[str, Any] = {
     "add": AddMaterials,
     "newsolution": NewSolution,
+    "makesolution": NewSolution,
     "crystallization": Crystallization,
     "separate": Separate,
     "wash": WashMaterial,
