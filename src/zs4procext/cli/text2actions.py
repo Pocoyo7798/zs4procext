@@ -1,5 +1,6 @@
 import time
 from typing import List, Optional
+import torch
 
 import click
 
@@ -62,6 +63,7 @@ def text2actions(
     llm_model_parameters_path: Optional[str],
     elementar_actions: bool
 ):
+    torch.cuda.empty_cache()
     start_time = time.time()
     if action_prompt_structure_path is None:
         try:
