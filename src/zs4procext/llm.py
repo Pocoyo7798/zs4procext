@@ -46,7 +46,8 @@ class ModelLLM(BaseModel):
                     "seed": self.model_parameters["seed"],
                     "enforce_eager": self.model_parameters["enforce-eager"],
                     "quantization": self.model_parameters["quantization"],
-                    "max_model_len": self.model_parameters["max_model_len"]
+                    "max_model_len": self.model_parameters["max_model_len"],
+                    "distributed-executor-backend": self.model_parameters["distributed-executor-backend"]
                 },
             )
 
