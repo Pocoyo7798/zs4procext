@@ -378,9 +378,9 @@ class ActionsParser(BaseModel):
     def model_post_init(self, __context: Any) -> None:
         """initialize the parser object by compiling a regex code"""
         if self.type == "materials":
-            self.separators = MATERIAL_SEPARATORS_REGISTRY
+            self.separators = self.separators + MATERIAL_SEPARATORS_REGISTRY
         elif self.type == "pistachio":
-            self.separators = PISTACHIO_SEPARATORS_REGISTRY
+            self.separators = self.separators + PISTACHIO_SEPARATORS_REGISTRY
         tre: TRE = TRE(*self.separators)
         self._regex = re.compile(f"\\b{tre.regex()}\\b", re.IGNORECASE | re.MULTILINE)
 
@@ -553,36 +553,6 @@ class DimensionlessParser:
     
 PISTACHIO_SEPARATORS_REGISTRY: List[str] = [
         "Initialization",
-        "Add",
-        "Cool",
-        "Heat",
-        "SetTemperature",
-        "Stir",
-        "Concentrate",
-        "Evaporate",
-        "DrySolution",
-        "Dry",
-        "CollectLayer",
-        "Collect",
-        "Extract",
-        "Wash",
-        "MakeSolution",
-        "Filter",
-        "Recrystallize",
-        "Crystallize",
-        "Recrystalize",
-        "Purify",
-        "Quench",
-        "PhaseSeparation",
-        "AdjustPH",
-        "Reflux",
-        "DrySolid",
-        "Degas",
-        "Partition",
-        "Sonicate",
-        "Triturate",
-        "FinalProduct",
-        "Wait",
         "Note",
         "Notes",
         "FollowOtherProcedure",
@@ -607,22 +577,5 @@ MATERIAL_SEPARATORS_REGISTRY: List[str] = [
         "Note",
         "Notes",
         "NMR",
-        "ESIMS",
-        "Add",
-        "NewSolution",
-        "Crystallization",
-        "Separate",
-        "Wash",
-        "Wait",
-        "Dry",
-        "Calcination",
-        "Stir",
-        "IonExchange",
-        "Repeat",
-        "Cool",
-        "Heat",
-        "Grind",
-        "Sieve",
-        "AlkalineTreatment",
-        "AcidTreatment"
+        "ESIMS"
     ]

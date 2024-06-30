@@ -50,11 +50,17 @@ class ActionExtractorFromText(BaseModel):
     chemical_prompt_structure_path: Optional[str] = None
     action_prompt_schema_path: Optional[str] = None
     chemical_prompt_schema_path: Optional[str] = None
+    wash_chemical_prompt_schema_path: Optional[str] = None
+    add_chemical_prompt_schema_path: Optional[str] = None
+    solution_chemical_prompt_schema_path: Optional[str] = None
     llm_model_name: Optional[str] = None
     llm_model_parameters_path: Optional[str] = None
     elementar_actions: bool = False
     _action_prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
     _chemical_prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
+    _wash_chemical_prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
+    _add_chemical_prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
+    _solution_chemical_prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
     _llm_model: Optional[ModelLLM] = PrivateAttr(default=None)
     _action_parser: Optional[ActionsParser] = PrivateAttr(default=None)
     _condition_parser: Optional[ParametersParser] = PrivateAttr(default=None)
@@ -83,6 +89,27 @@ class ActionExtractorFromText(BaseModel):
             chemical_prompt_dict = json.load(f)
         self._chemical_prompt = PromptFormatter(**chemical_prompt_dict)
         self._chemical_prompt.model_post_init(self.chemical_prompt_structure_path)
+        if self.wash_chemical_prompt_schema_path is None:
+            self._wash_chemical_prompt = self._chemical_prompt
+        else:
+            with open(self.wash_chemical_prompt_schema_path, "r") as f:
+                wash_chemical_prompt_dict = json.load(f)
+            self._wash_chemical_prompt = PromptFormatter(**wash_chemical_prompt_dict)
+            self._wash_chemical_prompt.model_post_init(self.chemical_prompt_structure_path)
+        if self.add_chemical_prompt_schema_path is None:
+            self._add_chemical_prompt = self._chemical_prompt
+        else:
+            with open(self.add_chemical_prompt_schema_path, "r") as f:
+                add_chemical_prompt_dict = json.load(f)
+            self._add_chemical_prompt = PromptFormatter(**add_chemical_prompt_dict)
+            self._add_chemical_prompt.model_post_init(self.chemical_prompt_structure_path)
+        if self.solution_chemical_prompt_schema_path is None:
+            self._solution_chemical_prompt = self._chemical_prompt
+        else:
+            with open(self.solution_chemical_prompt_schema_path, "r") as f:
+                solution_chemical_prompt_dict = json.load(f)
+            self._solution_chemical_prompt = PromptFormatter(**solution_chemical_prompt_dict)
+            self._solution_chemical_prompt.model_post_init(self.chemical_prompt_structure_path)
         if self.llm_model_parameters_path is None:
             llm_param_path = str(
                 importlib_resources.files("zs4procext")
@@ -135,7 +162,7 @@ class ActionExtractorFromText(BaseModel):
         self._action_prompt.model_post_init(self.action_prompt_structure_path)
         self._llm_model.load_model_parameters(llm_param_path)
         self._llm_model.vllm_load_model()
-        self._action_parser = ActionsParser(type=self.actions_type)
+        self._action_parser = ActionsParser(type=self.actions_type, separators=self._action_prompt._action_list)
         self._action_parser.model_post_init(None)
         self._condition_parser = ParametersParser(convert_units=False, amount=False)
         self._condition_parser.model_post_init(None)
@@ -361,7 +388,12 @@ class ActionExtractorFromText(BaseModel):
                 new_action = action.generate_action(context, self._condition_parser, self._complex_parser)
                 action_list.extend(new_action)
             elif action in set([MakeSolution, Add, Quench, AddMaterials, NewSolution]):
-                chemical_prompt = self._chemical_prompt.format_prompt(context)
+                if action is AddMaterials or action is Add:
+                    chemical_prompt = self._add_chemical_prompt.format_prompt(context)
+                elif action is NewSolution or action is MakeSolution:
+                    chemical_prompt = self._solution_chemical_prompt.format_prompt(context)
+                else:
+                    chemical_prompt = self._chemical_prompt.format_prompt(context)
                 chemical_response = self._llm_model.run_single_prompt(chemical_prompt).strip()
                 print(chemical_response)
                 schemas = self._schema_parser.parse_schema(chemical_response)
@@ -375,7 +407,7 @@ class ActionExtractorFromText(BaseModel):
                 )
                 action_list.extend(new_action)
             elif action is WashMaterial:
-                chemical_prompt = self._chemical_prompt.format_prompt(context)
+                chemical_prompt = self._wash_chemical_prompt.format_prompt(context)
                 chemical_response = self._llm_model.run_single_prompt(chemical_prompt)
                 print(chemical_response)
                 schemas = self._schema_parser.parse_schema(chemical_response)

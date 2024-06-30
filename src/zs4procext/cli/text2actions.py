@@ -37,6 +37,21 @@ from zs4procext.prompt import TEMPLATE_REGISTRY
     help="Path to the file containing the schema of the chemical prompt",
 )
 @click.option(
+    "--wash_chemical_prompt_schema_path",
+    default=None,
+    help="Path to the file containing the schema of the wash chemical prompt",
+)
+@click.option(
+    "--add_chemical_prompt_schema_path",
+    default=None,
+    help="Path to the file containing the schema of the add chemical prompt",
+)
+@click.option(
+    "--solution_chemical_prompt_schema_path",
+    default=None,
+    help="Path to the file containing the schema of the  newsolution chemical prompt",
+)
+@click.option(
     "--llm_model_name",
     default=None,
     help="Name of the LLM used to get the actions",
@@ -59,6 +74,9 @@ def text2actions(
     chemical_prompt_structure_path: Optional[str],
     action_prompt_schema_path: Optional[str],
     chemical_prompt_schema_path: Optional[str],
+    wash_chemical_prompt_schema_path: Optional[str],
+    add_chemical_prompt_schema_path: Optional[str],
+    solution_chemical_prompt_schema_path: Optional[str],
     llm_model_name: str,
     llm_model_parameters_path: Optional[str],
     elementar_actions: bool
@@ -81,6 +99,9 @@ def text2actions(
         chemical_prompt_structure_path=chemical_prompt_structure_path,
         action_prompt_schema_path=action_prompt_schema_path,
         chemical_prompt_schema_path=chemical_prompt_schema_path,
+        wash_chemical_prompt_schema_path=wash_chemical_prompt_schema_path,
+        add_chemical_prompt_schema_path=add_chemical_prompt_schema_path,
+        solution_chemical_prompt_schema_path=solution_chemical_prompt_schema_path,
         llm_model_name=llm_model_name,
         llm_model_parameters_path=llm_model_parameters_path,
         elementar_actions=elementar_actions

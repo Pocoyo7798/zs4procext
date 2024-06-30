@@ -15,6 +15,7 @@ class PromptFormatter(BaseModel):
     _loaded_prompt: Optional[BasePromptTemplate] = PrivateAttr(default=None)
     _action_list: Optional[str] = PrivateAttr(default=None)
     _answer_schema: Optional[str] = PrivateAttr(default=None)
+    _action_list: Optional[str] = PrivateAttr(default=[None])
 
     def actions_to_string(
         self, action_intialization_key: str = "Initialization"
@@ -32,7 +33,7 @@ class PromptFormatter(BaseModel):
         """
         if self.actions == {}:
             return ""
-        action_list: List[str] = [
+        self._action_list: List[str] = [
             action_key
             for action_key in self.actions.keys()
             if action_intialization_key not in action_key
@@ -44,7 +45,7 @@ class PromptFormatter(BaseModel):
             )
         else:
             actions.append(f"{self.actions[action_intialization_key]}\n")
-        for action in action_list:
+        for action in self._action_list:
             actions.append(f"-'{action}' : {self.actions[action]}\n")
         return "".join(actions)
 
