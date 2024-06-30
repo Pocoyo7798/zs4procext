@@ -13,7 +13,7 @@ class PromptFormatter(BaseModel):
     answer_schema: Dict[str, str] = {}
     conclusion: str = ""
     _loaded_prompt: Optional[BasePromptTemplate] = PrivateAttr(default=None)
-    _action_list: Optional[str] = PrivateAttr(default=None)
+    _action_sperators: Optional[List[str]] = PrivateAttr(default=None)
     _answer_schema: Optional[str] = PrivateAttr(default=None)
     _action_list: Optional[str] = PrivateAttr(default=[None])
 
@@ -33,7 +33,7 @@ class PromptFormatter(BaseModel):
         """
         if self.actions == {}:
             return ""
-        self._action_list: List[str] = [
+        self._action_separators: List[str] = [
             action_key
             for action_key in self.actions.keys()
             if action_intialization_key not in action_key
@@ -45,7 +45,7 @@ class PromptFormatter(BaseModel):
             )
         else:
             actions.append(f"{self.actions[action_intialization_key]}\n")
-        for action in self._action_list:
+        for action in self._action_separators:
             actions.append(f"-'{action}' : {self.actions[action]}\n")
         return "".join(actions)
 
