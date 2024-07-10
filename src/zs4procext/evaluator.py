@@ -1,6 +1,8 @@
 import ast
 from difflib import SequenceMatcher
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
+import re
+from zs4procext.parser import KeywordSearching
 
 import numpy as np
 from Levenshtein import ratio
@@ -9,10 +11,22 @@ from pydantic import BaseModel
 
 class Evaluator(BaseModel):
     reference_dataset_path: str
+    _keyword_parser: Optional[KeywordSearching] = None
 
-    @classmethod
+    def model_post_init(self, _context):
+        words_list = list(CHEMICALS_REGISTRY.keys())
+        self._keyword_parser = KeywordSearching(keywords_list=words_list)
+        self._keyword_parser.model_post_init(False)
+
+    def transform_chemical_name(self, name: str):
+        name = name.lower()
+        list_keywords: List[str] = self._keyword_parser.find_keywords(name)
+        for keyword in list_keywords:
+            name = name.replace(keyword, CHEMICALS_REGISTRY[keyword])
+        return name.replace(" ", "")
+
     def exist_action_in_list(
-        cls,
+        self,
         action: Dict[str, Any],
         list_of_actions: List[Dict[str, Any]],
         threshold=0.8,
@@ -29,23 +43,62 @@ class Evaluator(BaseModel):
         """
         i = 0
         for ref_action in list_of_actions:
-            if SequenceMatcher(None, str(action), str(ref_action)).ratio() > threshold and action["action"] == ref_action["action"]:
-                return True, i
+            if SequenceMatcher(None, str(action), str(ref_action)).ratio() >= threshold and action["action"] == ref_action["action"]:
+                if action["action"] in set(["Stir", "Wait"]):
+                    if ref_action["content"]["duration"] == action["content"]["duration"]:
+                        return True, i
+                    ref_duration = re.findall(r'\d+', str(ref_action["content"]["duration"]))
+                    duration = re.findall(r'\d+', str(action["content"]["duration"]))
+                    if len(ref_duration) > 0 and len(duration) > 0:
+                        if float(ref_duration[0]) == float(duration[0]):
+                            return True, i
+                elif action["action"] == "Add":
+                    ref_chemical_name: str = self.transform_chemical_name(ref_action["content"]["material"]["name"])
+                    chemical_name: str = self.transform_chemical_name(action["content"]["material"]["name"])
+                    if SequenceMatcher(None, chemical_name, ref_chemical_name).ratio() > 0.5:
+                        return True, i
+                elif action["action"] == "Separate":
+                    ref_phase: str = ref_action["content"]["phase_to_keep"]
+                    phase: str = action["content"]["phase_to_keep"]
+                    if ref_phase == phase:
+                        return True, i
+                elif action["action"] in set(["ChangeTemperature", "Crystallization", "Dry", "ThermalTreatment"]):
+                    ref_temp = str(ref_action["content"]["temperature"])
+                    temp = str(action["content"]["temperature"])
+                    if SequenceMatcher(None, temp.strip(), ref_temp.strip()).ratio() > 0.25:
+                        return True, i
+                else:
+                    return True, i
             i = i + 1
         return False, i
     
-    @classmethod
     def exist_chemical_in_list(
-        cls,
+        self,
         chemical: Dict[str, Any],
         list_of_chemicals: List[Dict[str, Any]],
         threshold=0.8,
     ):
+        if chemical is None:
+            chemical_name: str = "None"
+        else:
+            chemical_name = str(chemical["name"])
+        chemical_name = self.transform_chemical_name(chemical_name)
         i = 0
         for ref_chemical in list_of_chemicals:
-            if SequenceMatcher(None, str(chemical), str(ref_chemical)).ratio() > threshold:
-                return True, i
+            if SequenceMatcher(None, str(chemical), str(ref_chemical)).ratio() >= threshold:
+                if ref_chemical is None:
+                    ref_chemical_name: str = "None"
+                else:
+                    ref_chemical_name: str = str(ref_chemical["name"])
+                ref_chemical_name = self.transform_chemical_name(ref_chemical_name)
+                if SequenceMatcher(None, chemical_name, ref_chemical_name).ratio() > 0.5:
+                    return True, i
             i = i + 1
+        for chemical1 in list_of_chemicals:
+            if chemical1 is None:
+                ref_chemical_name = "none"
+            else:
+                ref_chemical_name = self.transform_chemical_name(chemical1["name"])
         return False, i
 
     def evaluate_actions(
@@ -74,6 +127,8 @@ class Evaluator(BaseModel):
             action_list_transformed: List[Dict[str, Any]] = ast.literal_eval(
                 action_list
             )
+            #print(ref_action_list)
+            #print(action_list_transformed)
             fn = fn + len(ref_action_list)
             fp = fp + len(action_list_transformed)
             found = 0
@@ -82,6 +137,8 @@ class Evaluator(BaseModel):
                     action, ref_action_list, threshold=threshold
                 )
                 if test is True:
+                    #print(action)
+                    #print(ref_action_list[index])
                     found = found + 1
                     del ref_action_list[index]
             tp = tp + found
@@ -106,6 +163,7 @@ class Evaluator(BaseModel):
         i = 0
         reference_chemicals: List[str] = []
         for action_list in test_dataset:
+            print(i)
             ref_action_list: List[Dict[str, Any]] = ast.literal_eval(
                 reference_dataset[i]
             )
@@ -198,3 +256,49 @@ class Evaluator(BaseModel):
             "%missing": actions_missing,
             "%%extra": actions_extra,
         }
+
+CHEMICALS_REGISTRY = {"solution": "",
+                      "aqueous": "",
+                      "sample": "",
+                      "dilute": "",
+                      "concetrated": "",
+                      "sodium": "na",
+                      "cetrimonium bromide": "ctab",
+                      "water": "h2o",
+                      "hydroxide": "oh",
+                      "sulfuric acid": "h2so4",
+                      "nitric acid": "hno3",
+                      "hydrochloric acid": "hcl",
+                      "tetramethylammonium": "tma",
+                      "tetrapropylammonium": "tpa",
+                      "tetrabutylammonium": "tba",
+                      "ammonium": "nh4",
+                      "nitrate": "no3",
+                      "bromide": "br",
+                      "hydrate": "h2o",
+                      "alumina": "al2o3",
+                      "aluminate": "alo2",
+                      "silica": "sio4",
+                      "metasilicate": "sio3",
+                      "silicate": "sio3",
+                      "tetraethyl": "te",
+                      "orthosilicate": "os",
+                      "nickel": "ni",
+                      "ni(ii)": "ni",
+                      "tin(ii)": "sn",
+                      "tin": "sn",
+                      "chloride": "cl",
+                      "citrate": "c12h10o14",
+                      "triphenylphosphine": "pph3",
+                      "oxide": "o",
+                      "aluminium": "al",
+                      "copper": "cu",
+                      "potassium": "k",
+                      "hydrogen": "h2",
+                      "sulfate": "so4",
+                      "polytetrafluoroethylene": "ptfe",
+                      "cobalt": "co",
+                      "manganese": "mn",
+                      "acetate": "ch3co2",
+                      "iso-propoxide": "o-ch(ch3)2",
+}

@@ -239,7 +239,8 @@ class ActionExtractorFromText(BaseModel):
         temperature = None
         add_new_solution = True
         i_new_solution = 0
-        for action in action_list:
+        while i < len(action_list):
+            action = action_list[i]
             if action["action"] == "Add" and add_new_solution is True:
                 add_new_solution = False
                 action_list.insert(i_new_solution, NewSolution(action_name="NewSolution").zeolite_dict())

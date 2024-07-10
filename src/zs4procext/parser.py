@@ -442,7 +442,10 @@ class KeywordSearching(BaseModel):
     def model_post_init(self, __context: Any) -> None:
         """initialize the parser object by compiling a regex code"""
         tre: TRE = TRE(*self.keywords_list)
-        self._regex = re.compile(f"\\b{tre.regex()}\\b", re.IGNORECASE | re.MULTILINE)
+        if __context is False:
+            self._regex = re.compile(f"{tre.regex()}", re.IGNORECASE | re.MULTILINE)
+        else:
+            self._regex = re.compile(f"\\b{tre.regex()}\\b", re.IGNORECASE | re.MULTILINE)
 
     def find_keywords(self, text: str) -> List[str]:
         """find all the keywords inside a string
@@ -550,6 +553,20 @@ class DimensionlessParser:
             if quant.unit.entity.name == "dimensionless":
                 dimensionless_list.append(str(quant.value))
         return dimensionless_list
+
+class MolarRatioFinder(BaseModel):
+    chemicals_list: List[str]
+    _regex: Optional[re.Pattern[str]] = PrivateAttr(default=None)
+    
+    def model_post_init(self, __context: Any):
+        tre: TRE = TRE(*self.chemicals_list)
+        self._regex = re.compile(rf"((\s*([\d\.\s\-–−]|[xyznkabc+])*\s*{tre.regex()}" + r"\s*[:\/\-]?){3,})", re.IGNORECASE | re.MULTILINE)
+
+
+    def find_molar_ratio(self, text:str):
+        if self._regex is None:
+            raise AttributeError("There is no valid regex loaded")
+        return self._regex.findall(text)
     
 PISTACHIO_SEPARATORS_REGISTRY: List[str] = [
         "Initialization",

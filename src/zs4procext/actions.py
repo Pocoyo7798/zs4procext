@@ -111,31 +111,33 @@ class Actions(BaseModel):
     def transform_into_pistachio(self) -> Dict[str, Any]:
         action_name: str = self.action_name
         if type(self) is SetTemperature:
-            action_dict = self.dict(
+            action_dict = self.model_dump(
                 exclude={"action_name", "action_context", "duration", "pressure"}
             )
         else:
-            action_dict = self.dict(
+            action_dict = self.model_dump(
                 exclude={"action_name", "action_context", "pressure"}
             )
         return {"action": action_name, "content": action_dict}
     
     def zeolite_dict(self) -> Dict[str, Any]:
         action_name: str = self.action_name
+        print(self)
         if type(self) in set([ChangeTemperature, Cool]):
-            action_dict = self.dict(
+            action_dict = self.model_dump(
                 exclude={"action_name", "action_context", "pressure", "duration", "stirring_speed"}
             )
         elif type(self) in set([WaitMaterial, StirMaterial]):
-            action_dict = self.dict(
+            action_dict = self.model_dump(
                 exclude={"action_name", "action_context", "temperature"}
             )
-        if type(self) is AddMaterials:
-            action_dict = self.dict(
+            print(action_dict)
+        elif type(self) is AddMaterials:
+            action_dict = self.model_dump(
                 exclude={"action_name", "action_context", "atmosphere", "temperature"}
             )
         else:
-            action_dict = self.dict(
+            action_dict = self.model_dump(
                 exclude={"action_name", "action_context"}
             )
         return {"action": action_name, "content": action_dict}
@@ -1217,12 +1219,11 @@ class StirMaterial(ActionsWithChemicalAndConditions):
     ) -> List[Dict[str, Any]]:
         action: StirMaterial = cls(action_name="Stir", action_context=context)
         action.validate_conditions(conditions_parser, complex_conditions_parser=complex_conditions_parser)
-        if action.duration is not None:
-            list_of_actions: List[Any] = [action.zeolite_dict()]
-        else:
-            list_of_actions = []
+        list_of_actions: List[Any] = []
         if action.temperature is not None:
             list_of_actions.append(ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature).zeolite_dict())
+        if action.duration is not None:
+            list_of_actions.append(action.zeolite_dict())
         return list_of_actions
 
 class IonExchange(Treatment):
