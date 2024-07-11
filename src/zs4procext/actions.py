@@ -1035,7 +1035,7 @@ class AddMaterials(ActionsWithChemicalAndConditions):
         if len(chemicals_info.chemical_list) == 0:
             pass
         elif len(chemicals_info.chemical_list) == 1:
-            banned_names: List[str] = banned_parser.find_keywords(chemicals_info.chemical_list[0])
+            banned_names: List[str] = banned_parser.find_keywords(chemicals_info.chemical_list[0].name)
             if len(banned_names) == 0:
                 action.material = chemicals_info.chemical_list[0]
                 action.dropwise = chemicals_info.dropwise[0]
@@ -1043,7 +1043,7 @@ class AddMaterials(ActionsWithChemicalAndConditions):
         else:
             i = 0
             for chemical in chemicals_info.chemical_list:
-                banned_names: List[str] = banned_parser.find_keywords(chemical)
+                banned_names: List[str] = banned_parser.find_keywords(chemical.name)
                 if len(banned_names) == 0:
                     action.material = chemical
                     action.dropwise = chemicals_info.dropwise[i]
@@ -1160,13 +1160,13 @@ class WashMaterial(ActionsWithchemicals):
         if len(chemicals_info.chemical_list) == 0:
             pass
         elif len(schemas) == 1:
-            banned_names: List[str] = banned_parser.find_keywords(chemicals_info.chemical_list[0])
+            banned_names: List[str] = banned_parser.find_keywords(chemicals_info.chemical_list[0].name)
             if len(banned_names) == 0:
                 action.material = chemicals_info.chemical_list[0]
                 list_of_actions.append(action.zeolite_dict())
         else:
             for material in chemicals_info.chemical_list:
-                banned_names: List[str] = banned_parser.find_keywords(material)
+                banned_names: List[str] = banned_parser.find_keywords(material.name)
                 if len(banned_names) == 0:
                     action.material = material
                     list_of_actions.append(action.zeolite_dict())
