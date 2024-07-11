@@ -243,6 +243,11 @@ class ActionExtractorFromText(BaseModel):
         temperature = None
         add_new_solution = True
         i_new_solution = 0
+        if len(action_list) > 1:
+            last_action: Dict[str, Any] = action_list[-1]
+            second_last_action = Dict[str, Any] = action_list[-1]
+            if last_action["actions"] == "Wait" and second_last_action["actions"] in set(["Dry", "Wait", "ThermalTreatment", "Wash", "Separate"]):
+                del action_list[-1]
         while i < len(action_list):
             action = action_list[i]
             if action["action"] == "Add" and add_new_solution is True:
@@ -253,6 +258,7 @@ class ActionExtractorFromText(BaseModel):
                 add_new_solution = False
                 i = i + 1
             elif action["action"] == "ChangeTemperature":
+                i_new_solution = i + 1
                 content = action["content"]
                 if content["temperature"] in set(["heat", "cool"]):
                     temperature = content["temperature"]
@@ -263,6 +269,7 @@ class ActionExtractorFromText(BaseModel):
                     temperature = content["temperature"]
                     i = i + 1
             elif action["action"] in set(["Wash", "Separate"]):
+                add_new_solution = True
                 i_new_solution = i + 1
                 i = i + 1
             elif action["action"] == "Crystallization":
