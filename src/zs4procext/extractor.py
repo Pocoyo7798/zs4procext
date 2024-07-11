@@ -245,7 +245,7 @@ class ActionExtractorFromText(BaseModel):
         i_new_solution = 0
         if len(action_list) > 1:
             last_action: Dict[str, Any] = action_list[-1]
-            second_last_action = Dict[str, Any] = action_list[-1]
+            second_last_action: Dict[str, Any] = action_list[-1]
             if last_action["actions"] == "Wait" and second_last_action["actions"] in set(["Dry", "Wait", "ThermalTreatment", "Wash", "Separate"]):
                 del action_list[-1]
         while i < len(action_list):
