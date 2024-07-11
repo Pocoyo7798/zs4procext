@@ -127,6 +127,7 @@ class Evaluator(BaseModel):
             action_list_transformed: List[Dict[str, Any]] = ast.literal_eval(
                 action_list
             )
+            print(i)
             #print(ref_action_list)
             #print(action_list_transformed)
             fn = fn + len(ref_action_list)
@@ -141,6 +142,11 @@ class Evaluator(BaseModel):
                     #print(ref_action_list[index])
                     found = found + 1
                     del ref_action_list[index]
+                else:
+                    print("####")
+                    print(ref_action_list)
+                    print(action)
+                    print("####")
             tp = tp + found
             fp = fp - found
             fn = fn - found
@@ -198,7 +204,6 @@ class Evaluator(BaseModel):
                     found = found + 1
                     del reference_chemicals[index]
                 else:
-                    print(material)
                     not_found = not_found + 1
             tp = tp + found
             fp = fp + not_found
