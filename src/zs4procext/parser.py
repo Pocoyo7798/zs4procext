@@ -118,13 +118,13 @@ class ParametersParser(BaseModel):
             units_list += parser_params.size_units
             if parser_params.size_words != []:
                 size_word_list = parser_params.size_words
-        units_tre: re.Pattern[str] = correct_tre(*units_list)
-        time_word_tre: re.Pattern[str] = correct_tre(*time_word_list)
-        temperature_word_tre: re.Pattern[str] = correct_tre(*temperature_word_list)
-        pressure_word_tre: re.Pattern[str] = correct_tre(*pressure_word_list)
-        atmosphere_word_tre: re.Pattern[str] = correct_tre(*atmosphere_word_list)
-        amount_word_tre: re.Pattern[str] = correct_tre(*amount_word_list)
-        size_word_tre: re.Pattern[str] = correct_tre(*size_word_list)
+        units_tre: re.Pattern[str] = correct_tre(units_list)
+        time_word_tre: re.Pattern[str] = correct_tre(time_word_list)
+        temperature_word_tre: re.Pattern[str] = correct_tre(temperature_word_list)
+        pressure_word_tre: re.Pattern[str] = correct_tre(pressure_word_list)
+        atmosphere_word_tre: re.Pattern[str] = correct_tre(atmosphere_word_list)
+        amount_word_tre: re.Pattern[str] = correct_tre(amount_word_list)
+        size_word_tre: re.Pattern[str] = correct_tre(size_word_list)
         regex: str = rf"([\"'\(\[\s,]((?P<repetitions1>\d+\.?,?\d*)[xX×]+)?(?P<number1>\+?-?-?\d+\.?,?\d*)(?P<unit1>.?)-*(?P<number2>\d*\.?,?\d*)\s*(?P<unit2>.?\s*{units_tre})([xX×]+(?P<repetitions2>\d+\.?,?\d*))?(?=[\)\]\s,\"'\(\.])|\b(?P<word>(?P<time>{time_word_tre})|(?P<temperature>{temperature_word_tre})|(?P<pressure>{pressure_word_tre})|(?P<atmosphere>{atmosphere_word_tre})|(?P<amount>{amount_word_tre})|(?P<size>{size_word_tre}))\b)"
         self._regex = re.compile(regex, re.IGNORECASE | re.MULTILINE)
 
@@ -326,9 +326,9 @@ class ComplexParametersParser(BaseModel):
         stirring_units_list: List[str] =  parser_params.stirring_units
         heating_ramp_units_list: List[str] = parser_params.heat_ramp_units
         flow_rate_units_list: List[str] = parser_params.flow_rate_units
-        stirring_units_tre: re.Pattern[str] = correct_tre(*stirring_units_list)
-        heating_ramp_units_tre: re.Pattern[str] = correct_tre(*heating_ramp_units_list)
-        flow_rate_units_tre: re.Pattern[str] = correct_tre(*flow_rate_units_list)
+        stirring_units_tre: re.Pattern[str] = correct_tre(stirring_units_list)
+        heating_ramp_units_tre: re.Pattern[str] = correct_tre(heating_ramp_units_list)
+        flow_rate_units_tre: re.Pattern[str] = correct_tre(flow_rate_units_list)
         regex: str = rf"([\"'\(\[\s,](?P<number1>\+?-?-?\d+\.?,?\d*)-*(?P<number2>\d*\.?,?\d*)\s*((?P<stirring_speed>[^-\),\[\]\d\s]?\s*{stirring_units_tre})|(?P<heat_ramp>.?\s*{heating_ramp_units_tre})|(?P<flow_rate>[^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))(?=[\)\]\s,\"'\(\.]))"
         self._regex = re.compile(regex, re.IGNORECASE | re.MULTILINE)
 
@@ -381,7 +381,7 @@ class ActionsParser(BaseModel):
             self.separators = self.separators + MATERIAL_SEPARATORS_REGISTRY
         elif self.type == "pistachio":
             self.separators = self.separators + PISTACHIO_SEPARATORS_REGISTRY
-        tre_regex: re.Pattern[str] = correct_tre(*self.separators)
+        tre_regex: re.Pattern[str] = correct_tre(self.separators)
         self._regex = re.compile(f"\\b{tre_regex}\\b", re.IGNORECASE | re.MULTILINE)
 
     def change_separators(
@@ -487,7 +487,7 @@ class SchemaParser(BaseModel):
 
     def model_post_init(self, _context: Any) -> None:
         limiters_list: List[str] = [self.limiters["initial"], self.limiters["final"]]
-        tre_regex: re.Pattern[str] = correct_tre(*limiters_list)
+        tre_regex: re.Pattern[str] = correct_tre(limiters_list)
         self._schema_regex = re.compile(f"{tre_regex}", re.IGNORECASE | re.MULTILINE)
         for atribute in self.atributes_list:
             self._atributes_regex[atribute] = re.compile(
@@ -579,7 +579,6 @@ def correct_tre(word_list: List["str"]) -> re.Pattern[str]:
         if i > 100:
             raise TimeoutError("It was not possible to achieve the correct regex in the maximum amount of interations")
         i += 1
-    print(len(regex))
     return regex
 
 PISTACHIO_SEPARATORS_REGISTRY: List[str] = [
