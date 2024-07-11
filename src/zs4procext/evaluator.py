@@ -198,6 +198,7 @@ class Evaluator(BaseModel):
                     found = found + 1
                     del reference_chemicals[index]
                 else:
+                    print(material)
                     not_found = not_found + 1
             tp = tp + found
             fp = fp + not_found
