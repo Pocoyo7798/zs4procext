@@ -182,7 +182,7 @@ class ActionExtractorFromText(BaseModel):
         self._filtrate_parser = KeywordSearching(keywords_list=FILTRATE_REGISTRY)
         self._filtrate_parser.model_post_init(None)
         self._banned_parser = KeywordSearching(keywords_list=BANNED_CHEMICALS_REGISTRY)
-        self._banned_parser.model_post_init()
+        self._banned_parser.model_post_init(None)
         self._precipitate_parser = KeywordSearching(keywords_list=PRECIPITATE_REGISTRY)
         self._precipitate_parser.model_post_init(None)
         self._microwave_parser = KeywordSearching(keywords_list=MICROWAVE_REGISTRY)
