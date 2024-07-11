@@ -1064,6 +1064,7 @@ class NewSolution(ActionsWithChemicalAndConditions):
         amount_parser: ParametersParser,
         conditions_parser: ParametersParser,
         ph_parser: KeywordSearching,
+        banned_parser: KeywordSearching
     ) -> List[Dict[str, Any]]:
         action: NewSolution = cls(action_name="NewSolution", action_context=context)
         chemicals_info: ChemicalInfoMaterials = action.validate_chemicals_materials(
@@ -1074,7 +1075,7 @@ class NewSolution(ActionsWithChemicalAndConditions):
         list_of_actions: List[Dict[str, Any]] = []
         list_of_actions.append(action.zeolite_dict())
         add_actions = AddMaterials.generate_action(
-                context, schemas, schema_parser, amount_parser, conditions_parser, ph_parser
+                context, schemas, schema_parser, amount_parser, conditions_parser, ph_parser, banned_parser
             )
         list_of_actions += add_actions
         return list_of_actions
