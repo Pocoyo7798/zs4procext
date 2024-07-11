@@ -394,11 +394,9 @@ class ActionExtractorFromText(BaseModel):
             elif action in set([ThermalTreatment, StirMaterial]):
                 new_action = action.generate_action(context, self._condition_parser, self._complex_parser)
                 action_list.extend(new_action)
-            elif action in set([MakeSolution, Add, Quench, AddMaterials, NewSolution]):
+            elif action in set([MakeSolution, Add, Quench, AddMaterials]):
                 if action is AddMaterials or action is Add:
                     chemical_prompt = self._add_chemical_prompt.format_prompt(context)
-                elif action is NewSolution or action is MakeSolution:
-                    chemical_prompt = self._solution_chemical_prompt.format_prompt(context)
                 else:
                     chemical_prompt = self._chemical_prompt.format_prompt(context)
                 chemical_response = self._llm_model.run_single_prompt(chemical_prompt).strip()
@@ -412,6 +410,20 @@ class ActionExtractorFromText(BaseModel):
                     self._condition_parser,
                     self._ph_parser,
                     self._banned_parser
+                )
+                action_list.extend(new_action)
+            elif action is NewSolution:
+                chemical_prompt = self._solution_chemical_prompt.format_prompt(context)
+                chemical_response = self._llm_model.run_single_prompt(chemical_prompt).strip()
+                print(chemical_response)
+                schemas = self._schema_parser.parse_schema(chemical_response)
+                new_action = action.generate_action(
+                    context,
+                    schemas,
+                    self._schema_parser,
+                    self._quantity_parser,
+                    self._condition_parser,
+                    self._ph_parser
                 )
                 action_list.extend(new_action)
             elif action is WashMaterial:
