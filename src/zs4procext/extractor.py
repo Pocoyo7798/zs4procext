@@ -7,6 +7,7 @@ from pydantic import BaseModel, PrivateAttr
 from zs4procext.actions import (
     ACTION_REGISTRY,
     AQUEOUS_REGISTRY,
+    BANNED_CHEMICALS_REGISTRY,
     CENTRIFUGATION_REGISTRY,
     EVAPORATION_REGISTRY,
     FILTER_REGISTRY,
@@ -76,6 +77,7 @@ class ActionExtractorFromText(BaseModel):
     _organic_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
     _microwave_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
     _ph_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
+    _banned_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
     _action_dict: Dict[str, Any] = PrivateAttr(default=ACTION_REGISTRY)
 
     def model_post_init(self, __context: Any) -> None:
@@ -179,6 +181,8 @@ class ActionExtractorFromText(BaseModel):
         self._schema_parser.model_post_init(None)
         self._filtrate_parser = KeywordSearching(keywords_list=FILTRATE_REGISTRY)
         self._filtrate_parser.model_post_init(None)
+        self._banned_parser = KeywordSearching(keywords_list=BANNED_CHEMICALS_REGISTRY)
+        self._banned_parser.model_post_init()
         self._precipitate_parser = KeywordSearching(keywords_list=PRECIPITATE_REGISTRY)
         self._precipitate_parser.model_post_init(None)
         self._microwave_parser = KeywordSearching(keywords_list=MICROWAVE_REGISTRY)
@@ -407,6 +411,7 @@ class ActionExtractorFromText(BaseModel):
                     self._quantity_parser,
                     self._condition_parser,
                     self._ph_parser,
+                    self._banned_parser
                 )
                 action_list.extend(new_action)
             elif action is WashMaterial:
@@ -415,7 +420,7 @@ class ActionExtractorFromText(BaseModel):
                 print(chemical_response)
                 schemas = self._schema_parser.parse_schema(chemical_response)
                 new_action = action.generate_action(
-                    context, schemas, self._schema_parser, self._quantity_parser, self._centri_parser, self._filter_parser
+                    context, schemas, self._schema_parser, self._quantity_parser, self._centri_parser, self._filter_parser, self._banned_parser
                 )
                 action_list.extend(new_action)
             elif action.type == "onlyconditions":

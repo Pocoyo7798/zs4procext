@@ -1009,6 +1009,7 @@ class AddMaterials(ActionsWithChemicalAndConditions):
         amount_parser: ParametersParser,
         conditions_parser: ParametersParser,
         ph_parser: KeywordSearching,
+        banned_parser: KeywordSearching
     ) -> List[Dict[str, Any]]:
         action: AddMaterials = cls(action_name="Add", action_context=context)
         action.validate_conditions(conditions_parser)
@@ -1034,15 +1035,19 @@ class AddMaterials(ActionsWithChemicalAndConditions):
         if len(chemicals_info.chemical_list) == 0:
             pass
         elif len(chemicals_info.chemical_list) == 1:
-            action.material = chemicals_info.chemical_list[0]
-            action.dropwise = chemicals_info.dropwise[0]
-            list_of_actions.append(action.zeolite_dict())
+            banned_names: List[str] = banned_parser.find_keywords(chemicals_info.chemical_list[0])
+            if len(banned_names) == 0:
+                action.material = chemicals_info.chemical_list[0]
+                action.dropwise = chemicals_info.dropwise[0]
+                list_of_actions.append(action.zeolite_dict())
         else:
             i = 0
             for chemical in chemicals_info.chemical_list:
-                action.material = chemical
-                action.dropwise = chemicals_info.dropwise[i]
-                list_of_actions.append(action.zeolite_dict())
+                banned_names: List[str] = banned_parser.find_keywords(chemical)
+                if len(banned_names) == 0:
+                    action.material = chemical
+                    action.dropwise = chemicals_info.dropwise[i]
+                    list_of_actions.append(action.zeolite_dict())
                 i += 1
         return list_of_actions
 
@@ -1138,6 +1143,7 @@ class WashMaterial(ActionsWithchemicals):
         amount_parser: ParametersParser,
         centrifuge_parser: KeywordSearching,
         filter_parser: KeywordSearching,
+        banned_parser: KeywordSearching
     ) -> List[Dict[str, Any]]:
         action: WashMaterial = cls(action_name="Wash", action_context=context)
         chemicals_info: ChemicalInfoMaterials = action.validate_chemicals_materials(
@@ -1146,20 +1152,23 @@ class WashMaterial(ActionsWithchemicals):
         centrifuge_results: List[str] = centrifuge_parser.find_keywords(action.action_context)
         filter_results: List[str] = filter_parser.find_keywords(action.action_context)
         list_of_actions: List[Any] = []
-        if len(chemicals_info.chemical_list) == 0:
-            pass
-        elif len(schemas) == 1:
-            action.material = chemicals_info.chemical_list[0]
-            list_of_actions.append(action.zeolite_dict())
-        else:
-            for material in chemicals_info.chemical_list:
-                action.material = material
-                list_of_actions.append(action.zeolite_dict())
         if len(filter_results) > 0:
             action.method = "filtration"
         elif len(centrifuge_results) > 0:
             action.method = "centrifugation"
-        list_of_actions: List[Any] = [action.zeolite_dict()]
+        if len(chemicals_info.chemical_list) == 0:
+            pass
+        elif len(schemas) == 1:
+            banned_names: List[str] = banned_parser.find_keywords(chemicals_info.chemical_list[0])
+            if len(banned_names) == 0:
+                action.material = chemicals_info.chemical_list[0]
+                list_of_actions.append(action.zeolite_dict())
+        else:
+            for material in chemicals_info.chemical_list:
+                banned_names: List[str] = banned_parser.find_keywords(material)
+                if len(banned_names) == 0:
+                    action.material = material
+                    list_of_actions.append(action.zeolite_dict())
         if chemicals_info.repetitions > 1:
             list_of_actions.append(Repeat(action_name="Repeat", amount=chemicals_info.repetitions).zeolite_dict())
         return list_of_actions
@@ -1357,6 +1366,25 @@ class Sieve(ActionsWithConditons):
         action = cls(action_name="Sieve", action_context=context)
         action.validate_conditions(conditions_parser, add_others=True)
         return [action.zeolite_dict()]
+
+BANNED_CHEMICALS_REGISTRY: List[str] = [
+    "newsolution",
+    "new solution",
+    "heated",
+    "cooled",
+    "hydrothermal",
+    "gel",
+    "unknown",
+    "rinse",
+    "teflon",
+    "teflon-lined",
+    "autoclave",
+    "washing",
+    "mixed",
+    "precursor",
+    "pre-prepared",
+    "prepapared"
+]
 
 ACTION_REGISTRY: Dict[str, Any] = {
     "add": Add,
