@@ -1280,6 +1280,7 @@ class Repeat(Actions):
     
     @classmethod
     def generate_action(cls, context: str):
+        print(context)
         action: Repeat = cls(action_name="Repeat", action_context=context)
         number_list: List[str] = DimensionlessParser.get_dimensionless_numbers(context)
         if len(number_list) == 0:
@@ -1294,6 +1295,7 @@ class Repeat(Actions):
         list_of_actions: List[Any] = []
         if action.amount > 1:
             list_of_actions.append(action.zeolite_dict())
+        print(list_of_actions)
         return list_of_actions
 
 
