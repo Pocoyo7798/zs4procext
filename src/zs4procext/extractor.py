@@ -239,6 +239,7 @@ class ActionExtractorFromText(BaseModel):
     
     @staticmethod
     def correct_action_list(action_list: List[Dict[str, Any]], elementar_actions: bool=False):
+        print(action_list)
         for action in action_list:
             print(action)
         i = 0
