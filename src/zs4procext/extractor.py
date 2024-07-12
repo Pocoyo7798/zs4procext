@@ -382,6 +382,7 @@ class ActionExtractorFromText(BaseModel):
         actions_response = actions_response.replace("C", "°C")
         actions_response = actions_response.replace("C", "°C")
         actions_response = actions_response.replace("℃", "°C")
+        actions_response = actions_response.replace( "\x03C", "°C")
         print(actions_response)
         actions_info: Dict[str, List[str]] = self._action_parser.parse(actions_response)
         print(actions_info)
