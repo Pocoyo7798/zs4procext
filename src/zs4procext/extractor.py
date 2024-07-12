@@ -239,6 +239,8 @@ class ActionExtractorFromText(BaseModel):
     
     @staticmethod
     def correct_action_list(action_list: List[Dict[str, Any]], elementar_actions: bool=False):
+        for action in action_list:
+            print(action)
         i = 0
         temperature = None
         add_new_solution = True
@@ -367,15 +369,18 @@ class ActionExtractorFromText(BaseModel):
         action_prompt: str = self._action_prompt.format_prompt(paragraph)
         actions_response: str = self._llm_model.run_single_prompt(action_prompt).strip()
         actions_response = actions_response.replace("\x03C", "°C")
-        actions_response = actions_response.replace("oC", "°C")
+        actions_response = actions_response.replace("oC", "°C") 
         actions_response = actions_response.replace("8C", "°C")
         actions_response = actions_response.replace("0C", "°C")
         actions_response = actions_response.replace("∘C", "°C")
         actions_response = actions_response.replace("◦C", "°C")
         actions_response = actions_response.replace("ºC", "°C")
         actions_response = actions_response.replace("C", "°C")
+        actions_response = actions_response.replace("C", "°C")
+        actions_response = actions_response.replace("℃", "°C")
         print(actions_response)
         actions_info: Dict[str, List[str]] = self._action_parser.parse(actions_response)
+        print(actions_info)
         i = 0
         action_list: List = []
         for action_name in actions_info["actions"]:

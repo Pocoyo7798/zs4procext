@@ -70,6 +70,11 @@ class Evaluator(BaseModel):
                 else:
                     return True, i
             i = i + 1
+        if action["action"] in set(["ChangeTemperature", "Crystallization", "Dry", "ThermalTreatment"]):
+            print("########")
+            print(action)
+            print(list_of_actions)
+            print("########")
         return False, i
     
     def exist_chemical_in_list(
@@ -142,11 +147,6 @@ class Evaluator(BaseModel):
                     #print(ref_action_list[index])
                     found = found + 1
                     del ref_action_list[index]
-                else:
-                    print("####")
-                    print(ref_action_list)
-                    print(action)
-                    print("####")
             tp = tp + found
             fp = fp - found
             fn = fn - found
