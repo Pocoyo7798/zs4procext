@@ -350,6 +350,9 @@ class ActionExtractorFromText(BaseModel):
                     i = i + 1
             else:
                 i = i + 1
+        print("result:")
+        for action in action_list:
+            print(action)
         return action_list
 
     def retrieve_actions_from_text(
