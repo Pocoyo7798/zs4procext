@@ -70,16 +70,11 @@ class Evaluator(BaseModel):
                 else:
                     return True, i
             i = i + 1
-        if action["action"] in set(["ChangeTemperature", "Crystallization", "Dry", "ThermalTreatment"]):
-            print("########")
-            print(action)
-            print(list_of_actions)
-            print("########")
         return False, i
     
     def exist_chemical_in_list(
         self,
-        chemical: Dict[str, Any],
+        chemical: Optional[Dict[str, Any]],
         list_of_chemicals: List[Dict[str, Any]],
         threshold=0.8,
     ):
@@ -99,11 +94,8 @@ class Evaluator(BaseModel):
                 if SequenceMatcher(None, chemical_name, ref_chemical_name).ratio() > 0.5:
                     return True, i
             i = i + 1
-        for chemical1 in list_of_chemicals:
-            if chemical1 is None:
-                ref_chemical_name = "none"
-            else:
-                ref_chemical_name = self.transform_chemical_name(chemical1["name"])
+        print(chemical)
+        print(chemical_name)
         return False, i
 
     def evaluate_actions(
@@ -133,8 +125,6 @@ class Evaluator(BaseModel):
                 action_list
             )
             print(i)
-            #print(ref_action_list)
-            #print(action_list_transformed)
             fn = fn + len(ref_action_list)
             fp = fp + len(action_list_transformed)
             found = 0
@@ -143,8 +133,6 @@ class Evaluator(BaseModel):
                     action, ref_action_list, threshold=threshold
                 )
                 if test is True:
-                    #print(action)
-                    #print(ref_action_list[index])
                     found = found + 1
                     del ref_action_list[index]
             tp = tp + found
@@ -264,17 +252,20 @@ class Evaluator(BaseModel):
         }
 
 CHEMICALS_REGISTRY = {"solution": "",
+                      "phosphoric acid": "h3po4",
                       "aqueous": "",
                       "sample": "",
                       "dilute": "",
-                      "concetrated": "",
+                      "concentrated": "",
                       "sodium": "na",
+                      "cetyl trimethyl ammonium bromide" : "ctab",
                       "cetrimonium bromide": "ctab",
                       "water": "h2o",
                       "hydroxide": "oh",
                       "sulfuric acid": "h2so4",
                       "nitric acid": "hno3",
                       "hydrochloric acid": "hcl",
+                      "hydrofluoric acid": "hf",
                       "tetramethylammonium": "tma",
                       "tetrapropylammonium": "tpa",
                       "tetrabutylammonium": "tba",

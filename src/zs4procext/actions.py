@@ -1293,7 +1293,7 @@ class Repeat(Actions):
                 "Warning: More than one adimensional number was found, only the first one was considered"
                 )
         list_of_actions: List[Any] = []
-        if action.amount > 1:
+        if 6 > action.amount > 1:
             list_of_actions.append(action.zeolite_dict())
         print(list_of_actions)
         return list_of_actions
@@ -1386,7 +1386,9 @@ BANNED_CHEMICALS_REGISTRY: List[str] = [
     "mixed",
     "precursor",
     "pre-prepared",
-    "prepapared"
+    "prepapared",
+    "clear",
+    "obtained"
 ]
 
 ACTION_REGISTRY: Dict[str, Any] = {
