@@ -567,6 +567,19 @@ class MolarRatioFinder(BaseModel):
         if self._regex is None:
             raise AttributeError("There is no valid regex loaded")
         return self._regex.findall(text)
+    
+    def substitute(self, text:str):
+        molar_ratio_list = self.find_molar_ratio(text)
+        if len(molar_ratio_list) > 0:
+            return text
+        for molar_ratio in molar_ratio_list:
+            molar_ratio_value = molar_ratio[0]
+            if molar_ratio_value[0] != " ":
+                new_string: str = molar_ratio_value[0] + " unknown"
+            else:
+                new_string = " unknown"
+            text = text.replace(molar_ratio_value, new_string)
+        return text
 
 def correct_tre(word_list: List["str"]) -> re.Pattern[str]:
     tre: TRE = TRE(*word_list)
@@ -609,3 +622,43 @@ MATERIAL_SEPARATORS_REGISTRY: List[str] = [
         "NMR",
         "ESIMS"
     ]
+
+MOLAR_RATIO_REGISTRY: List[str] = ["TBP OH", 
+                                   "P2O5", 
+                                   "Mor", 
+                                   "TEAOH",
+                                   "[Cu(NH2CH2CH2NH2)2]2+",
+                                   "Al(NO3)3",
+                                   "CTAB", 
+                                   "Al", 
+                                   "TPOA",
+                                   "TMAda",
+                                   "Si/28", 
+                                   "OSDA", 
+                                   "GeO2",
+                                   "C22–6–6(OH)2",
+                                   "NH3", 
+                                   "Ni", 
+                                   "Fe(NO3)3", 
+                                   "HCL", 
+                                   "NaCl" ,
+                                   "n-butylamine",
+                                   "EtOH", 
+                                   "MnO", 
+                                   "SiO2", 
+                                   "TiO2", 
+                                   "TPAOH", 
+                                   "H2O", 
+                                   "Mn\(NO3\)2•4H2O", 
+                                   "Fe\(NO3\)3•9H2O", 
+                                   "TEPA", 
+                                   "Al2O3", 
+                                   "OPA", 
+                                   "H2SO4", 
+                                   "NaOH", 
+                                   "TPABr", 
+                                   "Ga2O3", 
+                                   "Na2O", 
+                                   "CDM", 
+                                   "TPOAC"
+                                   ]

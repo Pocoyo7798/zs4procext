@@ -39,6 +39,8 @@ from zs4procext.parser import (
     ActionsParser,
     ComplexParametersParser,
     KeywordSearching,
+    MolarRatioFinder,
+    MOLAR_RATIO_REGISTRY,
     ParametersParser,
     SchemaParser,
 )
@@ -78,6 +80,7 @@ class ActionExtractorFromText(BaseModel):
     _microwave_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
     _ph_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
     _banned_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
+    _molar_ratio_parser: Optional[MolarRatioFinder] = PrivateAttr(default=None)
     _action_dict: Dict[str, Any] = PrivateAttr(default=ACTION_REGISTRY)
 
     def model_post_init(self, __context: Any) -> None:
@@ -187,6 +190,8 @@ class ActionExtractorFromText(BaseModel):
         self._precipitate_parser.model_post_init(None)
         self._microwave_parser = KeywordSearching(keywords_list=MICROWAVE_REGISTRY)
         self._microwave_parser.model_post_init(None)
+        self._molar_ratio_parser = MolarRatioFinder(chemicals_list=MOLAR_RATIO_REGISTRY)
+        self._molar_ratio_parser.model_post_init(None)
 
     @staticmethod
     def empty_action(action: Dict[str, Any]):
@@ -370,6 +375,7 @@ class ActionExtractorFromText(BaseModel):
             or self._microwave_parser is None
         ):
             raise AttributeError("You need to post initilize the class")
+        paragraph = self._molar_ratio_parser.substitute(paragraph)
         action_prompt: str = self._action_prompt.format_prompt(paragraph)
         actions_response: str = self._llm_model.run_single_prompt(action_prompt).strip()
         actions_response = actions_response.replace("\x03C", "°C")
