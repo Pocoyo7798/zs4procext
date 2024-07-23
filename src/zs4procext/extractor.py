@@ -354,9 +354,6 @@ class ActionExtractorFromText(BaseModel):
                     i = i + 1
             else:
                 i = i + 1
-        print("result:")
-        for action in action_list:
-            print(action)
         return action_list
 
     def retrieve_actions_from_text(
@@ -391,7 +388,6 @@ class ActionExtractorFromText(BaseModel):
         actions_response = actions_response.replace( "\x03C", "°C")
         print(actions_response)
         actions_info: Dict[str, List[str]] = self._action_parser.parse(actions_response)
-        print(actions_info)
         i = 0
         action_list: List = []
         for action_name in actions_info["actions"]:

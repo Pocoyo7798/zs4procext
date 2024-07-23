@@ -569,6 +569,7 @@ class MolarRatioFinder(BaseModel):
         return self._regex.findall(text)
     
     def substitute(self, text:str):
+        print(text)
         molar_ratio_list = self.find_molar_ratio(text)
         if len(molar_ratio_list) > 0:
             return text
@@ -579,6 +580,7 @@ class MolarRatioFinder(BaseModel):
             else:
                 new_string = " unknown"
             text = text.replace(molar_ratio_value, new_string)
+        print(text)
         return text
 
 def correct_tre(word_list: List["str"]) -> re.Pattern[str]:
