@@ -2,12 +2,12 @@
     "time_units" : ["hour", "h", "hr", "hrs", "hours", "minutes", "min", "minute", "second", "seconds", "s", "sec", "day", "days"],
     "temperature_units" : ["C", "K", "F", "Celsius", "Kelvin", "Fahrenheit", "\u25e6C"],
     "pressure_units" : ["bar", "atm", "atmospheres", "atmosphere", "pa", "pascal", "psi"],
-    "quantity_units" : ["moles", "mol", "gram", "g", "liter", "L"],
+    "quantity_units" : ["moles", "mol", "gram", "g", "liter", "L", "m3"],
     "size_units" : ["m", "mesh"],
     "time_words" : ["overnight"],
     "temperature_words" : ["room temperature", "ambient temperature", "steam bath", "rt", "reflux"],
     "pressure_words" : ["reduced pressure", "high pressure", "low pressure", "autogeneous"],
-    "atmosphere_words" : ["nitrogen", "n2", "argon", "ar", "air", "inert", "oxygen", "o2", "helium", "he", "high vacuo", "low vacuo", "vacuo", "high vacuum", "low vacuum"],
+    "atmosphere_words" : ["nitrogen", "n2", "argon", "ar", "air", "inert", "oxygen", "o2", "helium", "he", "high vacuo", "low vacuo", "vacuo", "high vacuum", "low vacuum", "vacuum"],
     "amount_words" : [],
     "size_words" : []
 }

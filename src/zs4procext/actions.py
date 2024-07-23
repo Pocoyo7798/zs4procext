@@ -371,7 +371,7 @@ class Treatment(ActionsWithChemicalAndConditions):
             new_sample: Dict[str, Any] = {'action': 'Add', 'content': {'material': {'name': 'sample', 'quantity': ['1 g'], 'concentration': []}}, 'dropwise': False, 'duration': None, 'ph': None}
             list_of_actions.append(new_sample)
         if action.duration is not None:
-            new_action = Stir(action_name="Stir", duration=action.duration)
+            new_action = StirMaterial(action_name="Stir", duration=action.duration)
             list_of_actions.append(new_action.zeolite_dict())
         return list_of_actions
 
@@ -1071,7 +1071,9 @@ class NewSolution(ActionsWithChemicalAndConditions):
             schemas, schema_parser, amount_parser, action.action_context
         )
         if chemicals_info.final_solution is not None:
-            action.solution = chemicals_info.final_solution
+            banned_words = banned_parser.find_keywords(chemicals_info.final_solution.name)
+            if len(banned_words) > 0:
+                action.solution = chemicals_info.final_solution
         list_of_actions: List[Dict[str, Any]] = []
         list_of_actions.append(action.zeolite_dict())
         add_actions = AddMaterials.generate_action(
@@ -1376,7 +1378,6 @@ BANNED_CHEMICALS_REGISTRY: List[str] = [
     "heated",
     "cooled",
     "hydrothermal",
-    "gel",
     "unknown",
     "rinse",
     "teflon",
@@ -1388,7 +1389,14 @@ BANNED_CHEMICALS_REGISTRY: List[str] = [
     "pre-prepared",
     "prepapared",
     "clear",
-    "obtained"
+    "obtained",
+    "new",
+    "reactants",
+    "reactant",
+    "N/A",
+    "ph",
+    "final",
+    "suspension",
 ]
 
 ACTION_REGISTRY: Dict[str, Any] = {
