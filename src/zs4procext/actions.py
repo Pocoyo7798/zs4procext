@@ -362,7 +362,7 @@ class Treatment(ActionsWithChemicalAndConditions):
             for solution in action.solutions:
                 if len(concentration) > 0 and len(solution["quantity"]) == 0:
                     solution["quantity"].append(str(float(concentration[0]) / len(action.solutions)) + "mL")
-                new_action: Actions = Add(action_name="Add", material=solution)
+                new_action: Actions = AddMaterials(action_name="Add", material=solution)
                 list_of_actions.append(new_action.zeolite_dict())
         if action.temperature is not None:
             new_action = ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature)
@@ -1468,6 +1468,7 @@ MATERIAL_ACTION_REGISTRY: Dict[str, Any] = {
     "add": AddMaterials,
     "newsolution": NewSolution,
     "makesolution": NewSolution,
+    "newmixture": NewSolution,
     "crystallization": Crystallization,
     "separate": Separate,
     "wash": WashMaterial,
