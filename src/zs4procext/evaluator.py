@@ -298,4 +298,6 @@ CHEMICALS_REGISTRY = {"solution": "",
                       "manganese": "mn",
                       "acetate": "ch3co2",
                       "iso-propoxide": "o-ch(ch3)2",
+                      "germanium": "ge",
+                      "gold": "au"
 }

@@ -1381,9 +1381,11 @@ BANNED_CHEMICALS_REGISTRY: List[str] = [
     "unknown",
     "rinse",
     "teflon",
+    "Te\ue104on",
     "teflon-lined",
     "autoclave",
     "washing",
+    "wash",
     "mixed",
     "precursor",
     "pre-prepared",
@@ -1394,9 +1396,15 @@ BANNED_CHEMICALS_REGISTRY: List[str] = [
     "reactants",
     "reactant",
     "N/A",
+    "N/A,\n",
     "ph",
     "final",
     "suspension",
+    "makesolution",
+    "rising",
+    "slurry",
+    "leaching",
+    "metal",
 ]
 
 ACTION_REGISTRY: Dict[str, Any] = {
