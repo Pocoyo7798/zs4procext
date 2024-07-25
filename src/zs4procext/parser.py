@@ -569,18 +569,17 @@ class MolarRatioFinder(BaseModel):
         return self._regex.findall(text)
     
     def substitute(self, text:str):
-        print(text)
         molar_ratio_list = self.find_molar_ratio(text)
-        if len(molar_ratio_list) > 0:
+        print(molar_ratio_list)
+        if len(molar_ratio_list) == 0:
             return text
         for molar_ratio in molar_ratio_list:
             molar_ratio_value = molar_ratio[0]
             if molar_ratio_value[0] != " ":
-                new_string: str = molar_ratio_value[0] + " unknown"
+                new_string: str = molar_ratio_value[0] + " unknown "
             else:
-                new_string = " unknown"
+                new_string = " unknown "
             text = text.replace(molar_ratio_value, new_string)
-        print(text)
         return text
 
 def correct_tre(word_list: List["str"]) -> re.Pattern[str]:
@@ -629,6 +628,7 @@ MOLAR_RATIO_REGISTRY: List[str] = ["TBP OH",
                                    "P2O5", 
                                    "Mor", 
                                    "TEAOH",
+                                   "TEOS",
                                    "[Cu(NH2CH2CH2NH2)2]2+",
                                    "Al(NO3)3",
                                    "CTAB", 
