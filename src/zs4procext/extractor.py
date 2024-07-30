@@ -264,6 +264,7 @@ class ActionExtractorFromText(BaseModel):
                 i = i + 1
             elif action["action"] == "NewSolution":
                 add_new_solution = False
+                temperature = None
                 i = i + 1
             elif action["action"] == "ChangeTemperature":
                 content = action["content"]
@@ -281,6 +282,9 @@ class ActionExtractorFromText(BaseModel):
                 i = i + 1
             elif action["action"] == "Crystallization":
                 i_new_solution = i + 1
+                content = action["content"]
+                if content["temperature"] is not None:
+                    temperature = content["temperature"]
                 if elementar_actions is True:
                     content = action["content"]
                     new_actions = []
@@ -308,6 +312,9 @@ class ActionExtractorFromText(BaseModel):
                     i = i + 1
             elif action["action"] == "Dry":
                 i_new_solution = i + 1
+                content = action["content"]
+                if content["temperature"] is not None:
+                    temperature = content["temperature"]
                 if elementar_actions is True:
                     content = action["content"]
                     new_actions = []
@@ -331,6 +338,9 @@ class ActionExtractorFromText(BaseModel):
                     i = i + 1
             elif action["action"] == "ThermalTreatment":
                 i_new_solution = i + 1
+                content = action["content"]
+                if content["temperature"] is not None:
+                    temperature = content["temperature"]
                 if elementar_actions is True:
                     content = action["content"]
                     new_actions = []

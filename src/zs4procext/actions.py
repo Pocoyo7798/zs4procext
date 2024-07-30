@@ -1375,6 +1375,7 @@ class Sieve(ActionsWithConditons):
 BANNED_CHEMICALS_REGISTRY: List[str] = [
     "newsolution",
     "new solution",
+    "extract",
     "heated",
     "cooled",
     "hydrothermal",
