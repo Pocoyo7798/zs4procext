@@ -1406,6 +1406,9 @@ BANNED_CHEMICALS_REGISTRY: List[str] = [
     "slurry",
     "leaching",
     "metal",
+    "name",
+    "Polytetrafluoroethylene",
+    "PTFE",
 ]
 
 ACTION_REGISTRY: Dict[str, Any] = {
