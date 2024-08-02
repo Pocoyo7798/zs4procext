@@ -1,8 +1,9 @@
 import json
 from typing import Any, Dict, List, Optional
+import os
 
 import importlib_resources
-from pydantic import BaseModel, PrivateAttr
+from pydantic import BaseModel, PrivateAttr, validator
 
 from zs4procext.actions import (
     ACTION_REGISTRY,
@@ -577,3 +578,32 @@ class SamplesExtractorFromText(BaseModel):
                 sample_dict["yield"] = None
             samples_list.append(sample_dict)
         return samples_list
+    
+class MolarRatioExtractorFromText(BaseModel):
+    chemicals_path: Optional[str] = None
+    _finder: Optional[MolarRatioFinder] = PrivateAttr(default=None)
+
+    @validator("chemicals_path")
+    def layer_options(cls, chemicals_path):
+        if chemicals_path is None:
+            pass
+        elif os.path.splitext(chemicals_path)[-1] != ".txt":
+            raise NameError("The file should be a .txt file")
+        return chemicals_path
+
+    def model_post_init(self, __context: Any) -> None:
+        if self.chemicals_path is None:
+            self._finder = MolarRatioFinder(chemicals_list=MOLAR_RATIO_REGISTRY)
+        else:
+            with open(self.chemicals_path, "r") as f:
+                chemicals_list = f.readlines()
+            self._finder = MolarRatioFinder(chemicals_list=chemicals_list)
+        self._finder.model_post_init(None)
+    
+    def extract_molar_ratio(self, text: str) -> List[Dict[str, Any]]:
+        molar_ratio_list: List[Any] = self._finder.find_molar_ratio(text)
+        if len(molar_ratio_list) == 0:
+            molar_ratios_result: List[Dict[str, Any]] = []
+        for molar_ratio in molar_ratio_list:
+            molar_ratios_result.append(molar_ratio)
+        return molar_ratios_result
