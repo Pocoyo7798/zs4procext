@@ -557,16 +557,48 @@ class DimensionlessParser:
 class MolarRatioFinder(BaseModel):
     chemicals_list: List[str]
     _regex: Optional[re.Pattern[str]] = PrivateAttr(default=None)
+    _single_ratio_regex: Optional[re.Pattern[str]] = PrivateAttr(default=None)
+    _single_value_regex: Optional[re.Pattern[str]] = PrivateAttr(default=None)
+    _entries_regex: Optional[re.Pattern[str]] = PrivateAttr(default=None)
     
     def model_post_init(self, __context: Any):
         tre_regex: re.Pattern[str] = correct_tre(self.chemicals_list)
-        self._regex = re.compile(rf"((\s*([\d\.\s\-–−]|[xyznkabc+])*\s*{tre_regex}" + r"\s*[:\/\-]?){3,})", re.IGNORECASE | re.MULTILINE)
+        self._regex = re.compile(rf"(([   \t\(]*([\d\.\s\-–−]|[xyznkabc+])*[   \t\)]*{tre_regex}[   \t\()]*([\d\.\s\-–−]|[xyznkabc+])*\)?" + r"[   \t\)]*[:\/\-]?){3,})", re.IGNORECASE | re.MULTILINE)
+        print(self._regex)
+        self._entries_regex = re.compile(rf"[   \t\(]*(?P<number1>\+?-?-?\d+\.?,?\d*[-–−]*?\d*\.?,?\d*|[xyznkabc+])*[   \t\)]*(?P<chemical>{tre_regex})[   \t\(]*(?P<number2>\+?-?-?\d+\.?,?\d*[-–−]*?\d*\.?,?\d*|[xyznkabc+])*[   \t\)]*[:\/\-]?", re.IGNORECASE | re.MULTILINE)
+        self._single_ratio_regex = re.compile(rf"(?P<chemical1>{tre_regex})[ \t]*[/]+[ \t]*(?P<chemical2>{tre_regex})[ \t]*(=|is|was)[ \t]*(?P<value>[\d\.-–−]+)", re.IGNORECASE | re.MULTILINE)
+        self._single_value_regex = re.compile(rf"(?P<chemical>{tre_regex})[ \t]*(=|is|was)[ \t]*(?P<value>[\d\.-–−]+)", re.IGNORECASE | re.MULTILINE)
 
-
-    def find_molar_ratio(self, text:str):
+    def find_molar_ratio(self, text:str) -> List[Any]:
         if self._regex is None:
             raise AttributeError("There is no valid regex loaded")
         return self._regex.findall(text)
+    
+    def single_ratios(self, text:str) -> Iterator[re.Match[str]]:
+        all_ratios: Iterator[re.Match[str]] = self._single_ratio_regex.finditer(text)
+        return all_ratios
+    
+    def single_values(self, text:str) -> Iterator[re.Match[str]]:
+        all_ratios: Iterator[re.Match[str]] = self._single_value_regex.finditer(text)
+        return all_ratios
+    
+    def find_chemical_information(self, text:str) -> Dict[str, Any]:
+        if self._entries_regex is None:
+            raise AttributeError("There is no valid regex loaded")
+        found_values: bool = False
+        chemicals_list: List[re.Match[str]] = self._entries_regex.finditer(text)
+        final_dict: Dict[str, str] = {}
+        for chemical in chemicals_list:
+            chemical_name: str = chemical.group("chemical").replace(" ", "")
+            number: Optional[str] = None
+            if chemical.group("number1") is not None:
+                number = chemical.group("number1")
+                found_values = True
+            elif chemical.group("number2") is not None:
+                number = chemical.group("number2")
+                found_values = True
+            final_dict[chemical_name] = number
+        return {"result": final_dict, "values_found": found_values}
     
     def substitute(self, text:str):
         molar_ratio_list = self.find_molar_ratio(text)
@@ -581,6 +613,56 @@ class MolarRatioFinder(BaseModel):
                 new_string = " unknown "
             text = text.replace(molar_ratio_value, new_string)
         return text
+    
+class NumberFinder(BaseModel):
+    _regex: Optional[re.Pattern[str]] = PrivateAttr(default=None)
+    _list_regex: str = rf"[\d\.xyz\-–−]+(?:[ \t]*(,|and|:|\/)[ \t]*[\d\.xyz\-–−]+)"
+
+    def model_post_init(self, __context: Any):
+        regex = rf"[-–−]*\s*((\+?-?-?\d+\.?,?\d*)[-–−]*(\d*\.?,?\d*))"
+        self._regex = re.compile(regex, re.IGNORECASE | re.MULTILINE)
+    
+    def find_numbers(self, text: str):
+        return self._regex.findall(text)
+    
+    def find_numbers_list(self, text: str, size) -> Optional[str]:
+        regex_string: str = self._list_regex + "{" + rf"{size - 1}" + "}"
+        print(regex_string)
+        lists_found: Optional[re.Match] = re.search(regex_string, text, re.MULTILINE)
+        if lists_found is None:
+            result: Optional[str] = None
+        else:
+            result = lists_found.group(0)
+        return result
+
+    
+class VariableFinder(BaseModel):
+    _value_regex: str = rf"\s?(=|at|is|was|were|are)\s?(?P<value>[\d\.]+(?:[ \t]*(,|and)[ \t]*[\d\.]+)*)"
+
+    def find_value(self, variable: str, text: str):
+        regex_string: str = variable + self._value_regex
+        print(text)
+        pattern: Optional[re.Match] = re.search(regex_string, text, re.MULTILINE)
+        if pattern is None:
+            value: Optional[str] = None
+        else:
+            value = pattern.group("value")
+        print(value)
+        return value
+
+class EquationFinder(BaseModel):
+    _equation_regex: str = r"(?P<value>[\d\.xyzabc]+(?:[  \t]*(,|and|\+|\\)[  \t]*[\d\.xyzabc]+)+)[  \t]*=[  \t]*[\d\.xyzabc]+"
+
+    def find_all(self, text: str) -> List[str]:
+        matches = re.finditer(self._equation_regex, text, re.MULTILINE)
+        equation_list: List[str] = []
+        for match in matches:
+            equation = match.group(0)
+            print(equation)
+            if equation[-1] == ".":
+                equation = equation[:-1]
+            equation_list.append(equation)
+        return equation_list
 
 def correct_tre(word_list: List["str"]) -> re.Pattern[str]:
     tre: TRE = TRE(*word_list)
@@ -660,7 +742,14 @@ MOLAR_RATIO_REGISTRY: List[str] = ["TBP OH",
                                    "NaOH", 
                                    "TPABr", 
                                    "Ga2O3", 
-                                   "Na2O", 
+                                   "Na2O",
+                                   "Na2 O",
                                    "CDM", 
-                                   "TPOAC"
+                                   "TPOAC",
+                                   "TPA2O",
+                                   "ODAC",
+                                   "template",
+                                   "K2O",
+                                   "Al (OH)3",
+                                   "NH4F"
                                    ]

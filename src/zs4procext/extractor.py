@@ -1,6 +1,7 @@
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterator, List, Optional
 import os
+import re
 
 import importlib_resources
 from pydantic import BaseModel, PrivateAttr, validator
@@ -39,11 +40,14 @@ from zs4procext.llm import ModelLLM
 from zs4procext.parser import (
     ActionsParser,
     ComplexParametersParser,
+    EquationFinder,
     KeywordSearching,
     MolarRatioFinder,
     MOLAR_RATIO_REGISTRY,
+    NumberFinder,
     ParametersParser,
     SchemaParser,
+    VariableFinder
 )
 from zs4procext.prompt import PromptFormatter
 
@@ -582,6 +586,10 @@ class SamplesExtractorFromText(BaseModel):
 class MolarRatioExtractorFromText(BaseModel):
     chemicals_path: Optional[str] = None
     _finder: Optional[MolarRatioFinder] = PrivateAttr(default=None)
+    _chemical_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
+    _number_parser: Optional[NumberFinder] = PrivateAttr(default=None)
+    _variable_parser: VariableFinder = VariableFinder()
+    _equation_parser: EquationFinder = EquationFinder()
 
     @validator("chemicals_path")
     def layer_options(cls, chemicals_path):
@@ -594,16 +602,114 @@ class MolarRatioExtractorFromText(BaseModel):
     def model_post_init(self, __context: Any) -> None:
         if self.chemicals_path is None:
             self._finder = MolarRatioFinder(chemicals_list=MOLAR_RATIO_REGISTRY)
+            self._chemical_parser = KeywordSearching(keywords_list=MOLAR_RATIO_REGISTRY)
         else:
             with open(self.chemicals_path, "r") as f:
                 chemicals_list = f.readlines()
             self._finder = MolarRatioFinder(chemicals_list=chemicals_list)
+            self._chemical_parser = KeywordSearching(keywords_list=chemicals_list)
         self._finder.model_post_init(None)
+        self._chemical_parser.model_post_init(False)
+        self._number_parser = NumberFinder()
+        self._number_parser.model_post_init(None)
+
+    def correct_variables(self, ratio_dict: Dict[str, Optional[str]], text: str) -> tuple:
+        keys: List[str] = list(ratio_dict.keys())
+        conversion_dict: Dict[str, str] = {}
+        for key in keys:
+            ratio: Optional[str] = ratio_dict[key]
+            if ratio is None:
+                pass
+            elif ratio.isnumeric():
+                pass
+            elif len(ratio) == 1:
+                value_found: Optional[str] = self._variable_parser.find_value(ratio, text)
+                conversion_dict[ratio] = key
+                if value_found is None:
+                    pass
+                elif value_found[-1] == ".":
+                    ratio = value_found[:-1]
+                else:
+                    ratio = value_found
+                text = text.replace(ratio, "")
+                ratio = ratio.strip()
+                ratio = ratio.replace(", ", ",")
+                ratio = ratio.replace(" and ", ",")
+                ratio = ratio.replace(" ", ",")
+            ratio_dict[key] = ratio
+        return ratio_dict, conversion_dict, text
+
+    def correct_ratios(self, ratio_dict: Dict[str, Optional[str]], text: str) -> tuple:
+        keys: List[str] = list(ratio_dict.keys())
+        numbers_list = self._number_parser.find_numbers_list(text, len(keys))
+        if numbers_list is None:
+            pass
+        else:
+            if numbers_list[-1] == ".":
+                numbers_list = numbers_list[:-1]
+            text = text.replace(numbers_list, "")
+            numbers_list.replace("and", ",")
+            values_list = re.split("[,:\/]", numbers_list)
+            i = 0
+            for key in keys:
+                ratio_dict[key] = values_list[i]
+                i += 1
+        return ratio_dict, text
     
+    def find_equations(self, text: str) -> tuple:
+        equation_list: List[str] = self._equation_parser.find_all(text)
+        for equation in equation_list:
+            text = text.replace(equation, "")
+        return equation_list, text
+    
+    def find_ratios(self, text: str) -> Dict[str, str]:
+        molar_ratios: Dict[str, str] = {}
+        all_ratios: Iterator[re.Match[str]] = self._finder.single_ratios(text)
+        ratios_found: bool = False
+        for ratio in all_ratios:
+            ratios_found = True
+            chemical1 = ratio.group("chemical1")
+            chemical2 = ratio.group("chemical2")
+            value = ratio.group("value")
+            try:
+                initial_value: str = molar_ratios[chemical2]
+                list_initial_values: List[str] = re.split("[-–−]", initial_value)
+            except KeyError:
+                molar_ratios[chemical2] = "1"
+                list_initial_values = ["1"]
+            final_values: str = ""
+            for initial_value in list_initial_values:
+                new_value = float(value) * float(initial_value)
+                final_values = final_values + f"{new_value}-"
+            final_values = final_values[:-1]
+            try:
+                molar_ratios[chemical1] = molar_ratios[chemical1] + f",{final_values}"
+            except KeyError:
+                 molar_ratios[chemical1] = final_values
+        if ratios_found is False:
+            chemical_values: Iterator[re.Match[str]] = self._finder.single_values(text)
+            for chemical in chemical_values:
+                chemical_name: str = chemical.group("chemical")
+                ratio_value: str = chemical.group("value")
+                molar_ratios[chemical_name] = ratio_value
+        return molar_ratios
+
     def extract_molar_ratio(self, text: str) -> List[Dict[str, Any]]:
+        text = text.replace(" ­", "")
         molar_ratio_list: List[Any] = self._finder.find_molar_ratio(text)
-        if len(molar_ratio_list) == 0:
-            molar_ratios_result: List[Dict[str, Any]] = []
+        molar_ratios_result: List[Dict[str, Any]] = []
+        equations: List[str] = []
+        conversion_dict: Dict[str, str] = {}
         for molar_ratio in molar_ratio_list:
-            molar_ratios_result.append(molar_ratio)
-        return molar_ratios_result
+            string: str = molar_ratio[0]
+            chemical_information: Dict[str, Any] = self._finder.find_chemical_information(string)
+            ratio_dict: Dict[str,str] = chemical_information["result"]
+            equations, text = self.find_equations(text)
+            if chemical_information["values_found"] is False:
+                ratio_dict, text =self.correct_ratios(ratio_dict, text)
+            ratio_dict, conversion_dict, text =self.correct_variables(ratio_dict, text)
+            molar_ratios_result.append(ratio_dict)
+        if molar_ratio_list == []:
+            new_ratio_dict: Dict[str,str] = self.find_ratios(text)
+            molar_ratios_result.append(new_ratio_dict)
+        return {"molar_ratios": molar_ratios_result, "equations": equations, "letters": conversion_dict}
