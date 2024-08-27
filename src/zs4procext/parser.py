@@ -564,7 +564,6 @@ class MolarRatioFinder(BaseModel):
     def model_post_init(self, __context: Any):
         tre_regex: re.Pattern[str] = correct_tre(self.chemicals_list)
         self._regex = re.compile(rf"(([   \t\(]*([\d\.\s\-–−]|[xyznkabc+])*[   \t\)]*{tre_regex}[   \t\()]*([\d\.\s\-–−]|[xyznkabc+])*\)?" + r"[   \t\)]*[:\/\-]?){3,})", re.IGNORECASE | re.MULTILINE)
-        print(self._regex)
         self._entries_regex = re.compile(rf"[   \t\(]*(?P<number1>\+?-?-?\d+\.?,?\d*[-–−]*?\d*\.?,?\d*|[xyznkabc+])*[   \t\)]*(?P<chemical>{tre_regex})[   \t\(]*(?P<number2>\+?-?-?\d+\.?,?\d*[-–−]*?\d*\.?,?\d*|[xyznkabc+])*[   \t\)]*[:\/\-]?", re.IGNORECASE | re.MULTILINE)
         self._single_ratio_regex = re.compile(rf"(?P<chemical1>{tre_regex})[ \t]*[/]+[ \t]*(?P<chemical2>{tre_regex})[ \t]*(=|is|was)[ \t]*(?P<value>[\d\.-–−]+)", re.IGNORECASE | re.MULTILINE)
         self._single_value_regex = re.compile(rf"(?P<chemical>{tre_regex})[ \t]*(=|is|was)[ \t]*(?P<value>[\d\.-–−]+)", re.IGNORECASE | re.MULTILINE)
@@ -602,7 +601,6 @@ class MolarRatioFinder(BaseModel):
     
     def substitute(self, text:str):
         molar_ratio_list = self.find_molar_ratio(text)
-        print(molar_ratio_list)
         if len(molar_ratio_list) == 0:
             return text
         for molar_ratio in molar_ratio_list:
@@ -627,7 +625,6 @@ class NumberFinder(BaseModel):
     
     def find_numbers_list(self, text: str, size) -> Optional[str]:
         regex_string: str = self._list_regex + "{" + rf"{size - 1}" + "}"
-        print(regex_string)
         lists_found: Optional[re.Match] = re.search(regex_string, text, re.MULTILINE)
         if lists_found is None:
             result: Optional[str] = None
@@ -641,13 +638,11 @@ class VariableFinder(BaseModel):
 
     def find_value(self, variable: str, text: str):
         regex_string: str = variable + self._value_regex
-        print(text)
         pattern: Optional[re.Match] = re.search(regex_string, text, re.MULTILINE)
         if pattern is None:
             value: Optional[str] = None
         else:
             value = pattern.group("value")
-        print(value)
         return value
 
 class EquationFinder(BaseModel):
@@ -658,7 +653,6 @@ class EquationFinder(BaseModel):
         equation_list: List[str] = []
         for match in matches:
             equation = match.group(0)
-            print(equation)
             if equation[-1] == ".":
                 equation = equation[:-1]
             equation_list.append(equation)

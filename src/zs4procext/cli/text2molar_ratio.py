@@ -21,7 +21,7 @@ def text2molar_ratio(
 ):
     torch.cuda.empty_cache()
     start_time = time.time()
-    extractor: MolarRatioExtractorFromText = MolarRatioExtractorFromText()
+    extractor: MolarRatioExtractorFromText = MolarRatioExtractorFromText(chemicals_path=valid_chemicals_path)
     extractor.model_post_init(None)
     with open(text_file_path, "r") as f:
         text_lines: List[str] = f.readlines()
