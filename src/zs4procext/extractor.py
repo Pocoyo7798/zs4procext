@@ -622,7 +622,7 @@ class MolarRatioExtractorFromText(BaseModel):
                 pass
             elif ratio.isnumeric():
                 pass
-            elif len(ratio) == 1:
+            elif len(re.findall("[a-zA-Z]", ratio)) == 1:
                 value_found: Optional[str] = self._variable_parser.find_value(ratio, text)
                 conversion_dict[ratio] = key
                 if value_found is None:
@@ -667,6 +667,7 @@ class MolarRatioExtractorFromText(BaseModel):
         all_ratios: Iterator[re.Match[str]] = self._finder.single_ratios(text)
         ratios_found: bool = False
         for ratio in all_ratios:
+            print(ratio)
             ratios_found = True
             chemical1 = ratio.group("chemical1")
             chemical2 = ratio.group("chemical2")
@@ -702,14 +703,19 @@ class MolarRatioExtractorFromText(BaseModel):
         conversion_dict: Dict[str, str] = {}
         for molar_ratio in molar_ratio_list:
             string: str = molar_ratio[0]
+            print(string)
             chemical_information: Dict[str, Any] = self._finder.find_chemical_information(string)
             ratio_dict: Dict[str,str] = chemical_information["result"]
             equations, text = self.find_equations(text)
             if chemical_information["values_found"] is False:
                 ratio_dict, text =self.correct_ratios(ratio_dict, text)
             ratio_dict, conversion_dict, text =self.correct_variables(ratio_dict, text)
-            molar_ratios_result.append(ratio_dict)
+            if len(ratio_dict.keys()) > 2:
+                molar_ratios_result.append(ratio_dict)
+            else:
+                conversion_dict = {}
         if molar_ratio_list == []:
             new_ratio_dict: Dict[str,str] = self.find_ratios(text)
-            molar_ratios_result.append(new_ratio_dict)
+            if len(new_ratio_dict.keys()) > 2:
+                molar_ratios_result.append(new_ratio_dict)
         return {"molar_ratios": molar_ratios_result, "equations": equations, "letters": conversion_dict}

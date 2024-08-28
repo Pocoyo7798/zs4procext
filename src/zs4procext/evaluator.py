@@ -18,12 +18,37 @@ class Evaluator(BaseModel):
         self._keyword_parser = KeywordSearching(keywords_list=words_list)
         self._keyword_parser.model_post_init(False)
 
+    def evaluate(self, tp: int, fp:int, fn:int) -> Dict[str, float]:
+        precision: float = tp / (tp + fp)
+        recall: float = tp / (tp + fn)
+        f_score: float = 2 * precision * recall / (precision + recall)
+        return {"precision": precision, "recall": recall, "f-score": f_score}
+
     def transform_chemical_name(self, name: str):
         name = name.lower()
         list_keywords: List[str] = self._keyword_parser.find_keywords(name)
         for keyword in list_keywords:
             name = name.replace(keyword, CHEMICALS_REGISTRY[keyword])
         return name.replace(" ", "")
+    
+    def evaluate_string_list(test_list: List[str], ref_list: List[str], threshold: float = 0.9) -> Dict[str, int]:
+        tp: int = 0
+        fp: int = len(test_list)
+        fn: int = len(ref_list)
+        for test_string in test_list:
+            test_string = test_string.replace(" ", "").lower()
+            i = 0
+            for ref_string in ref_list:
+                ref_string = ref_string.replace(" ", "").lower()
+                if SequenceMatcher(None, test_string, ref_string).ratio() > threshold:
+                    tp = tp + 1
+                    fp = fp - 1
+                    fn = fn - 1
+                    del ref_list[i]
+                    break
+                i += 1
+        return {"true_positive": tp, "false_positive": max(0, fp), "false_negative": max(0, fn)}
+    
 
     def exist_action_in_list(
         self,
@@ -250,6 +275,144 @@ class Evaluator(BaseModel):
             "%missing": actions_missing,
             "%%extra": actions_extra,
         }
+    
+    def evaluate_chemicals_in_ratios(self, chemicals_list: List[str], molar_ratios_list: List[Dict[str, str]], threshold: int=0.9) -> Dict[str, int]:
+        if len(molar_ratios_list) == 0:
+            raise AttributeError("The molar ratio list is empty, nothing to evaluate")
+        i: int = 0
+        i_best: int = 0
+        tp_best: int = 0
+        fp_best: int = 0
+        fn_best: int = 0
+        for molar_ratio in molar_ratios_list:
+            ref_chemicals: List[str] = list(molar_ratio.keys())
+            result = self.evaluate_string_list(chemicals_list, ref_chemicals, threshold=threshold)
+            test = False
+            if tp_best < result["true_positive"]:
+                test = True
+            elif tp_best > result["true_positive"]:
+                pass
+            elif fn_best > result["false_negative"]:
+                test = True
+            elif fn_best < result["false_negative"]:
+                pass
+            elif fp_best > result["false_positive"]:
+                test = True
+            if test is True:
+                i_best = i
+                tp_best = result["true_positive"]
+                fp_best = result["false_positive"]
+                fn_best = result["false_negative"]
+            i += 1
+        return {"true_positive": tp_best, "false_positive": fp_best, "false_negative": fn_best, "index": i_best}
+    
+    def evaluate_ratio(self, test_ratio: Dict[str, Any], ref_ratio: Dict[str, Any], threshold: int=0.9):
+        test_keys: List[str] = list(test_ratio.keys())
+        ref_keys: List[str] = list(ref_ratio.keys())
+        tp: int = 0
+        fp: int = len(test_keys)
+        fn: int = len(ref_keys)
+        for test_key in test_keys:
+            test_value: str = test_ratio[test_key]
+            i = 0
+            ref_value: Optional[str] = None 
+            for ref_key in ref_keys:
+                if test_key == ref_key:
+                    ref_value = ref_ratio[ref_key]
+                    del ref_keys[i]
+                i += 1
+            if ref_value is None:
+                pass
+            elif SequenceMatcher(None, test_value.lower(), ref_value.lower()).ratio() > threshold:
+                tp += 1
+                fp -= 1
+                fn -= 1
+        return {"true_positive": tp, "false_positive": max(0, fp), "false_negative": max(0, fn)}
+    
+
+    def evaluate_molar_ratio_list(self, test_list: List[Dict[str, str]], ref_list: List[Dict[str, str]], threshold: int = 0.9):
+        fp: int = len(test_list)
+        fn: int = len(ref_list)
+        tp_chemicals: int = 0
+        fp_chemicals: int = 0
+        fn_chemicals: int = 0
+        tp_ratios: int = 0
+        fp_ratios: int = 0
+        fn_ratios: int = 0
+        j = 0
+        for test_ratio in test_list:
+            test_chemicals: List[str] = list(test_ratio.keys())
+            if len(ref_list) > 0:
+                chemicals_result: Dict[str, Any] = self.evaluate_chemicals_in_ratios(test_chemicals, ref_list, threshold=threshold)
+                ref_ratio =  ref_list[chemicals_result["index"]]
+                ratios_result = self.evaluate_ratio(test_ratio, ref_ratio, threshold=threshold)
+                del ref_list[chemicals_result["index"]]
+                fn -= 1
+                fp -= 1
+                tp_chemicals += chemicals_result["true_positive"]
+                fp_chemicals += chemicals_result["false_positive"]
+                fn_chemicals += chemicals_result["false_negative"]
+                tp_ratios += ratios_result["true_positive"]
+                fp_ratios += ratios_result["false_positive"]
+                fn_ratios += ratios_result["false_negative"]
+                j += 1
+        if fp > 0:
+            for  molar_ratio in test_list[j:]:
+                fp_chemicals += len(molar_ratio.keys())
+                fp_ratios += len(molar_ratio.keys())
+        if fn > 0:
+            for molar_ratio in ref_list:
+                fn_chemicals += len(molar_ratio.keys())
+                fn_ratios += len(molar_ratio.keys())
+        return {"true_positive": tp_chemicals, "false_positive": fp_chemicals, "false_negative": fn_chemicals}, {"true_positive": tp_ratios, "false_positive": fp_ratios, "false_negative": fn_ratios}
+
+    def evaluate_molar_ratio(self, test_dataset_path: str):
+        with open(self.reference_dataset_path, "r") as f:
+            reference_dataset: List[str] = f.readlines()
+        with open(test_dataset_path, "r") as f:
+            test_dataset: List[str] = f.readlines()
+        i = 0
+        tp_chemicals: int = 0
+        fp_chemicals: int = 0
+        fn_chemicals: int = 0
+        tp_ratios: int = 0
+        fp_ratios: int = 0
+        fn_ratios: int = 0
+        tp_equations: int = 0
+        fp_equations: int = 0
+        fn_equations: int = 0
+        tp_letters: int = 0
+        fp_letters: int = 0
+        fn_letters: int = 0
+        for molar_dict in test_dataset:
+            ref_molar_dict: Dict[str, Any] = ast.literal_eval(
+                reference_dataset[i]
+            )
+            test_molar_dict: Dict[str, Any] = ast.literal_eval(
+                molar_dict
+            )
+            molar_ratio_test: List[Dict[str,str]] = test_molar_dict["molar_ratios"]
+            molar_ratio_ref: List[Dict[str,str]] = ref_molar_dict["molar_ratios"]
+            equations_test: List[str] = test_molar_dict["equations"]
+            equations_ref: List[str] = ref_molar_dict["equations"]
+            letters_test: List[str] = test_molar_dict["letters"]
+            letters_ref: List[str] = ref_molar_dict["letters"]
+            chemicals_results, ratios_results = self.evaluate_molar_ratio_list(molar_ratio_test, molar_ratio_ref)
+            equations_results: Dict[str, Any] = self.evaluate_string_list(equations_test, equations_ref)
+            letters_results: Dict[str, Any] = self.evaluate_string_list(letters_test, letters_ref)
+            tp_chemicals += chemicals_results["true_positive"]
+            fp_chemicals += chemicals_results["false_positive"]
+            fn_chemicals += chemicals_results["false_negative"]
+            tp_ratios += ratios_results["true_positive"]
+            fp_ratios += ratios_results["false_positive"]
+            fn_ratios += ratios_results["false_negative"]
+            tp_equations += equations_results["true_positive"]
+            fp_equations += equations_results["false_positive"]
+            fn_equations += equations_results["false_negative"]
+            tp_letters += letters_results["true_positive"]
+            fp_letters += letters_results["false_positive"]
+            fn_letters += letters_results["false_negatives"]
+        return {"chemicals" : self.evaluate(tp_chemicals, fp_chemicals, fn_chemicals), "ratios" : self.evaluate(tp_ratios, fp_ratios, fn_ratios), "equations" : self.evaluate(tp_equations, fp_equations, fn_equations), "letters" : self.evaluate(tp_letters, fp_letters, fn_letters)}
 
 CHEMICALS_REGISTRY = {"solution": "",
                       "phosphoric acid": "h3po4",

@@ -563,10 +563,10 @@ class MolarRatioFinder(BaseModel):
     
     def model_post_init(self, __context: Any):
         tre_regex: re.Pattern[str] = correct_tre(self.chemicals_list)
-        self._regex = re.compile(rf"(([   \t\(]*([\d\.\s\-–−]|[xyznkabc+])*[   \t\)]*{tre_regex}[   \t\()]*([\d\.\s\-–−]|[xyznkabc+])*\)?" + r"[   \t\)]*[:\/\-]?){3,})", re.IGNORECASE | re.MULTILINE)
-        self._entries_regex = re.compile(rf"[   \t\(]*(?P<number1>\+?-?-?\d+\.?,?\d*[-–−]*?\d*\.?,?\d*|[xyznkabc+])*[   \t\)]*(?P<chemical>{tre_regex})[   \t\(]*(?P<number2>\+?-?-?\d+\.?,?\d*[-–−]*?\d*\.?,?\d*|[xyznkabc+])*[   \t\)]*[:\/\-]?", re.IGNORECASE | re.MULTILINE)
-        self._single_ratio_regex = re.compile(rf"(?P<chemical1>{tre_regex})[ \t]*[/]+[ \t]*(?P<chemical2>{tre_regex})[ \t]*(=|is|was)[ \t]*(?P<value>[\d\.-–−]+)", re.IGNORECASE | re.MULTILINE)
-        self._single_value_regex = re.compile(rf"(?P<chemical>{tre_regex})[ \t]*(=|is|was)[ \t]*(?P<value>[\d\.-–−]+)", re.IGNORECASE | re.MULTILINE)
+        self._regex = re.compile(rf"(([   \t\(]*([\d\.\s\-–−]|[xyznkabc\+])*[   \t\)]*({tre_regex})[   \t\()]*([\d\.\s\-–−]|[xyznkabc\+])*\)?" + r"[   \t\)]*[:\/\-]?){3,})", re.IGNORECASE | re.MULTILINE)
+        self._entries_regex = re.compile(rf"[   \t\(]*(?P<number1>\+?-?-?\d+\.?,?\d*[-–−]*?\d*\.?,?\d*|[xXyYzZnkaAbBcC\+]\d?)*[   \t\-)]*(?P<chemical>({tre_regex}))[   \t\(-]*(?P<number2>\+?-?-?\d+\.?,?\d*[-–−]*?\d*\.?,?\d*|[xXyYzZnkaAbBcC\+]\d?)*[   \t\)]*[:\/\-]?", re.MULTILINE)
+        self._single_ratio_regex = re.compile(rf"(?P<chemical1>({tre_regex}))[ \t]*[/]+[ \t]*(?P<chemical2>({tre_regex}))[ \t]*(=|is|was)[ \t]*(?P<value>[\d\.-–−]+)", re.IGNORECASE | re.MULTILINE)
+        self._single_value_regex = re.compile(rf"(?P<chemical>({tre_regex}))[ \t]*(=|is|was)[ \t]*(?P<value>[\d\.-–−]+)", re.IGNORECASE | re.MULTILINE)
 
     def find_molar_ratio(self, text:str) -> List[Any]:
         if self._regex is None:
@@ -588,10 +588,12 @@ class MolarRatioFinder(BaseModel):
         chemicals_list: List[re.Match[str]] = self._entries_regex.finditer(text)
         final_dict: Dict[str, str] = {}
         for chemical in chemicals_list:
+            print(chemical)
             chemical_name: str = chemical.group("chemical").replace(" ", "")
             number: Optional[str] = None
             if chemical.group("number1") is not None:
                 number = chemical.group("number1")
+                print(number)
                 found_values = True
             elif chemical.group("number2") is not None:
                 number = chemical.group("number2")
@@ -634,7 +636,7 @@ class NumberFinder(BaseModel):
 
     
 class VariableFinder(BaseModel):
-    _value_regex: str = rf"\s?(=|at|is|was|were|are)\s?(?P<value>[\d\.]+(?:[ \t]*(,|and)[ \t]*[\d\.]+)*)"
+    _value_regex: str = rf"[  \t ]*(=|at|is|was|were|are)[  \t]*(?P<value>[\d\.]+(?:[  \t]*(,|and|-|–)[  \t]*[\d\.]+)*)"
 
     def find_value(self, variable: str, text: str):
         regex_string: str = variable + self._value_regex
@@ -700,15 +702,16 @@ MATERIAL_SEPARATORS_REGISTRY: List[str] = [
         "ESIMS"
     ]
 
-MOLAR_RATIO_REGISTRY: List[str] = ["TBP OH", 
+MOLAR_RATIO_REGISTRY: List[str] = ["TBP OH",
+                                   "NaAlO2",
                                    "P2O5", 
                                    "Mor", 
                                    "TEAOH",
                                    "TEOS",
+                                   "TBPOH",
                                    "[Cu(NH2CH2CH2NH2)2]2+",
                                    "Al(NO3)3",
                                    "CTAB", 
-                                   "Al", 
                                    "TPOA",
                                    "TMAda",
                                    "Si/28", 
@@ -727,8 +730,8 @@ MOLAR_RATIO_REGISTRY: List[str] = ["TBP OH",
                                    "TiO2", 
                                    "TPAOH", 
                                    "H2O", 
-                                   "Mn\(NO3\)2•4H2O", 
-                                   "Fe\(NO3\)3•9H2O", 
+                                   "Mn(NO3)2•4H2O", 
+                                   "Fe(NO3)3•9H2O", 
                                    "TEPA", 
                                    "Al2O3", 
                                    "OPA", 
@@ -745,5 +748,25 @@ MOLAR_RATIO_REGISTRY: List[str] = ["TBP OH",
                                    "template",
                                    "K2O",
                                    "Al (OH)3",
-                                   "NH4F"
+                                   "NH4F",
+                                   "Al",
+                                   "TPA Br",
+                                   "Fe2O3",
+                                   "Mn",
+                                   "OH",
+                                   "TPA20",
+                                   "F127",
+                                   "TBAOH",
+                                   "SnCl4",
+                                   "RN-OH",
+                                   "DEA",
+                                   "Au",
+                                   "C16IMZ",
+                                   "Cs2O",
+                                   "TMAdaOH",
+                                   "CTAB(DTAB)",
+                                   "IPA",
+                                   "T-40",
+                                   "SDA",
+                                   "B2O3"
                                    ]
