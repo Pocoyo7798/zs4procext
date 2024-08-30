@@ -19,9 +19,13 @@ class Evaluator(BaseModel):
         self._keyword_parser.model_post_init(False)
 
     def evaluate(self, tp: int, fp:int, fn:int) -> Dict[str, float]:
-        precision: float = tp / (tp + fp)
-        recall: float = tp / (tp + fn)
-        f_score: float = 2 * precision * recall / (precision + recall)
+        if tp == 0:
+            precision: float = 0
+            recall: float = 0
+            f_score: float = 0
+        precision = tp / (tp + fp)
+        recall = tp / (tp + fn)
+        f_score = 2 * precision * recall / (precision + recall)
         return {"precision": precision, "recall": recall, "f-score": f_score}
 
     def transform_chemical_name(self, name: str):
@@ -31,7 +35,7 @@ class Evaluator(BaseModel):
             name = name.replace(keyword, CHEMICALS_REGISTRY[keyword])
         return name.replace(" ", "")
     
-    def evaluate_string_list(test_list: List[str], ref_list: List[str], threshold: float = 0.9) -> Dict[str, int]:
+    def evaluate_string_list(self, test_list: List[str], ref_list: List[str], threshold: float = 0.9) -> Dict[str, int]:
         tp: int = 0
         fp: int = len(test_list)
         fn: int = len(ref_list)
@@ -276,7 +280,7 @@ class Evaluator(BaseModel):
             "%%extra": actions_extra,
         }
     
-    def evaluate_chemicals_in_ratios(self, chemicals_list: List[str], molar_ratios_list: List[Dict[str, str]], threshold: int=0.9) -> Dict[str, int]:
+    def evaluate_chemicals_in_ratios(self, chemicals_list: List[str], molar_ratios_list: List[Dict[str, str]], threshold: float=0.9) -> Dict[str, int]:
         if len(molar_ratios_list) == 0:
             raise AttributeError("The molar ratio list is empty, nothing to evaluate")
         i: int = 0
@@ -306,19 +310,19 @@ class Evaluator(BaseModel):
             i += 1
         return {"true_positive": tp_best, "false_positive": fp_best, "false_negative": fn_best, "index": i_best}
     
-    def evaluate_ratio(self, test_ratio: Dict[str, Any], ref_ratio: Dict[str, Any], threshold: int=0.9):
+    def evaluate_ratio(self, test_ratio: Dict[str, Any], ref_ratio: Dict[str, Any], threshold: float=0.9):
         test_keys: List[str] = list(test_ratio.keys())
         ref_keys: List[str] = list(ref_ratio.keys())
         tp: int = 0
         fp: int = len(test_keys)
         fn: int = len(ref_keys)
         for test_key in test_keys:
-            test_value: str = test_ratio[test_key]
+            test_value: str = str(test_ratio[test_key])
             i = 0
             ref_value: Optional[str] = None 
             for ref_key in ref_keys:
                 if test_key == ref_key:
-                    ref_value = ref_ratio[ref_key]
+                    ref_value = str(ref_ratio[ref_key])
                     del ref_keys[i]
                 i += 1
             if ref_value is None:
@@ -330,7 +334,7 @@ class Evaluator(BaseModel):
         return {"true_positive": tp, "false_positive": max(0, fp), "false_negative": max(0, fn)}
     
 
-    def evaluate_molar_ratio_list(self, test_list: List[Dict[str, str]], ref_list: List[Dict[str, str]], threshold: int = 0.9):
+    def evaluate_molar_ratio_list(self, test_list: List[Dict[str, str]], ref_list: List[Dict[str, str]], threshold: float=0.9):
         fp: int = len(test_list)
         fn: int = len(ref_list)
         tp_chemicals: int = 0
@@ -381,9 +385,6 @@ class Evaluator(BaseModel):
         tp_equations: int = 0
         fp_equations: int = 0
         fn_equations: int = 0
-        tp_letters: int = 0
-        fp_letters: int = 0
-        fn_letters: int = 0
         for molar_dict in test_dataset:
             ref_molar_dict: Dict[str, Any] = ast.literal_eval(
                 reference_dataset[i]
@@ -395,11 +396,8 @@ class Evaluator(BaseModel):
             molar_ratio_ref: List[Dict[str,str]] = ref_molar_dict["molar_ratios"]
             equations_test: List[str] = test_molar_dict["equations"]
             equations_ref: List[str] = ref_molar_dict["equations"]
-            letters_test: List[str] = test_molar_dict["letters"]
-            letters_ref: List[str] = ref_molar_dict["letters"]
-            chemicals_results, ratios_results = self.evaluate_molar_ratio_list(molar_ratio_test, molar_ratio_ref)
+            chemicals_results, ratios_results = self.evaluate_molar_ratio_list(molar_ratio_test, molar_ratio_ref, threshold=0.9)
             equations_results: Dict[str, Any] = self.evaluate_string_list(equations_test, equations_ref)
-            letters_results: Dict[str, Any] = self.evaluate_string_list(letters_test, letters_ref)
             tp_chemicals += chemicals_results["true_positive"]
             fp_chemicals += chemicals_results["false_positive"]
             fn_chemicals += chemicals_results["false_negative"]
@@ -409,10 +407,8 @@ class Evaluator(BaseModel):
             tp_equations += equations_results["true_positive"]
             fp_equations += equations_results["false_positive"]
             fn_equations += equations_results["false_negative"]
-            tp_letters += letters_results["true_positive"]
-            fp_letters += letters_results["false_positive"]
-            fn_letters += letters_results["false_negatives"]
-        return {"chemicals" : self.evaluate(tp_chemicals, fp_chemicals, fn_chemicals), "ratios" : self.evaluate(tp_ratios, fp_ratios, fn_ratios), "equations" : self.evaluate(tp_equations, fp_equations, fn_equations), "letters" : self.evaluate(tp_letters, fp_letters, fn_letters)}
+            i += 1
+        return {"chemicals" : self.evaluate(tp_chemicals, fp_chemicals, fn_chemicals), "ratios" : self.evaluate(tp_ratios, fp_ratios, fn_ratios), "equations" : self.evaluate(tp_equations, fp_equations, fn_equations)}
 
 CHEMICALS_REGISTRY = {"solution": "",
                       "phosphoric acid": "h3po4",

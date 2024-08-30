@@ -639,7 +639,7 @@ class VariableFinder(BaseModel):
     _value_regex: str = rf"[  \t ]*(=|at|is|was|were|are)[  \t]*(?P<value>[\d\.]+(?:[  \t]*(,|and|-|–)[  \t]*[\d\.]+)*)"
 
     def find_value(self, variable: str, text: str):
-        regex_string: str = variable + self._value_regex
+        regex_string: str = r"[^+\/][  \t ]+" + variable + self._value_regex
         pattern: Optional[re.Match] = re.search(regex_string, text, re.MULTILINE)
         if pattern is None:
             value: Optional[str] = None
