@@ -290,5 +290,10 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         importlib_resources.files("zs4procext")
         / "resources"
         / "ibm_granite_default_template.json"
+    ),
+    "meta-llama/Meta-Llama-3.1-8B-Instruct": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "llama3_default_instruct_template.json"
     )
 }

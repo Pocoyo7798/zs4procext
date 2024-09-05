@@ -35,6 +35,7 @@ class ParagraphClassifier(BaseModel):
     def classify_paragraph(self, text) -> bool:
         prompt: str = self._prompt.format_prompt(text)
         response: str = self._llm_model.run_single_prompt(prompt).strip()
+        print(response)
         yes_amount: List[str] = re.findall(r"\b(yes|Yes)\b", response)
         if len(yes_amount) > 0:
             result: bool = True
