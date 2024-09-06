@@ -31,7 +31,7 @@ from zs4procext.prompt import TEMPLATE_REGISTRY
     default=None,
     help="Parameters of the LLM used to get the actions",
 )
-def text2samples(
+def paragraph_classifier(
     text_file_path: str,
     output_file_path: str,
     prompt_structure_path: Optional[str],
@@ -45,7 +45,13 @@ def text2samples(
         prompt_schema_path = str(
         importlib_resources.files("zs4procext")
         / "resources"
-        / "ibm_granite_default_template.json"
+        / "classify_n2_physisorption_schema.json"
+    )
+    elif type == "ftir_pyridine":
+        prompt_schema_path = str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "classify_ftiv_pyridine_schema.json"
     )
     extractor: ParagraphClassifier = ParagraphClassifier(
         prompt_structure_path=prompt_structure_path,
@@ -70,7 +76,7 @@ def text2samples(
 
 
 def main():
-    text2samples()
+    paragraph_classifier()
 
 
 if __name__ == "__main__":

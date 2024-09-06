@@ -8,7 +8,7 @@
               "Heat" : "Heating the mixture Indicate the new temperature;",
               "Stir" : "Agitation of a mixture. Indicate time and temperature;",
               "NewSolution" : "Create a new solution;",
-              "Separate" : "Component separation by filtration or centrifugation. Indicate the phase colected;",
+              "Separate" : "Component separation by filtration or centrifugation or evaporation. Indicate the phase colected;",
               "IonExchange" : "Cation exchange on a solid product;",
               "Wash" : "Cleaning of a compound;",
               "Repeat" : "Indication that there is a repetition of the previous actions. Indicate the amount of repetitions;",
