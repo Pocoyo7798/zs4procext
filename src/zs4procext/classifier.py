@@ -31,6 +31,7 @@ class ParagraphClassifier(BaseModel):
             llm_param_path = self.llm_model_parameters_path
         self._llm_model = ModelLLM(model_name=self.llm_model_name)
         self._llm_model.load_model_parameters(llm_param_path)
+        self._llm_model.vllm_load_model()
 
     def classify_paragraph(self, text) -> bool:
         prompt: str = self._prompt.format_prompt(text)
