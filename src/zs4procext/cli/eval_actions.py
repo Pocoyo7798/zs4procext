@@ -3,6 +3,7 @@ from typing import Any, Dict
 from zs4procext.parser import KeywordSearching
 
 import click
+import pandas as pd
 
 from zs4procext.evaluator import Evaluator
 
@@ -31,19 +32,19 @@ def eval_actions(
     
     evaluator = Evaluator(reference_dataset_path=reference_dataset_path)
     evaluator.model_post_init(None)
-    results: Dict[str, Any] = {
-        "actions": evaluator.evaluate_actions(
-            evaluated_dataset_path, threshold=action_similarity_threshold
-        ),
-        "sequence": evaluator.evaluate_actions_order(evaluated_dataset_path),
-        "chemicals": evaluator.evaluate_chemicals(evaluated_dataset_path, threshold=chemical_similarity_threshold),
+    actions: Dict[str, Any] = {**{"sequence": evaluator.evaluate_actions_order(evaluated_dataset_path)}, **evaluator.evaluate_actions(evaluated_dataset_path, threshold=action_similarity_threshold)}
+    chemicals: Dict[str, Any] = evaluator.evaluate_chemicals(evaluated_dataset_path, threshold=chemical_similarity_threshold)
+    metadata: Dict[str, Any] = {
         "action_threshold": action_similarity_threshold,
         "chemical_threshold": chemical_similarity_threshold,
     }
-    results_json = json.dumps(results, indent=4)
-    with open(output_file_path, "w") as f:
-        f.write(results_json)
-
+    writer: pd.ExcelWriter = pd.ExcelWriter(output_file_path)
+    df_actions: pd.DataFrame = pd.DataFrame(actions, index=[0])
+    df_chemicals: pd.DataFrame = pd.DataFrame(chemicals, index=[0])
+    df_metadata: pd.DataFrame = pd.DataFrame(metadata, index=[0])
+    df_actions.to_excel(writer, sheet_name="actions", index=False)
+    df_chemicals.to_excel(writer, sheet_name="chemicals", index=False)
+    df_metadata.to_excel(writer, sheet_name="metadata", index=False)
 
 def main():
     eval_actions()
