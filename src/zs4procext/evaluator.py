@@ -426,6 +426,7 @@ class Evaluator(BaseModel):
                 false_positive += 1
             else:
                 false_negative += 1
+            i += 1
         return self.evaluate (true_positive, false_positive, false_negative)
 
 

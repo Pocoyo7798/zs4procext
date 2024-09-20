@@ -3,7 +3,7 @@ from typing import Any, Dict
 from zs4procext.parser import KeywordSearching
 
 import click
-import csv
+import pandas as pd
 
 from zs4procext.evaluator import Evaluator
 
@@ -21,10 +21,8 @@ def eval_classifier(
     
     evaluator = Evaluator(reference_dataset_path=reference_dataset_path)
     results: Dict[str, Any] = evaluator.evaluate_classifier(evaluated_dataset_path)
-    with open(output_file_path, "w", newline="") as f:
-        w = csv.DictWriter(f, results.keys())
-        w.writeheader()
-        w.writerow(results)
+    df = pd.DataFrame(results, index=[0])
+    df.to_excel(output_file_path, index=False,)
 
 def main():
     eval_classifier()
