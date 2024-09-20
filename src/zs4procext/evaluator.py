@@ -410,6 +410,25 @@ class Evaluator(BaseModel):
             i += 1
         return {"chemicals" : self.evaluate(tp_chemicals, fp_chemicals, fn_chemicals), "ratios" : self.evaluate(tp_ratios, fp_ratios, fn_ratios), "equations" : self.evaluate(tp_equations, fp_equations, fn_equations)}
 
+    def evaluate_classifier(self, test_dataset_path: str):
+        with open(self.reference_dataset_path, "r") as f:
+            reference_dataset: List[str] = f.readlines()
+        with open(test_dataset_path, "r") as f:
+            test_dataset: List[str] = f.readlines()
+        true_positive: int = 0
+        false_positive: int = 0
+        false_negative: int = 0
+        i: int = 0
+        for test in test_dataset:
+            if test == reference_dataset[i]:
+                true_positive += 1
+            elif test == "True\n":
+                false_positive += 1
+            else:
+                false_negative += 1
+        return self.evaluate (true_positive, false_positive, false_negative)
+
+
 CHEMICALS_REGISTRY = {"solution": "",
                       "phosphoric acid": "h3po4",
                       "aqueous": "",
