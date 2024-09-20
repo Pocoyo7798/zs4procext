@@ -4,5 +4,5 @@
   "objective":"Analyse the following paragraph:",
   "actions": {},
   "answer_schema": {},
-  "conclusion":  "This paragraph present any information about Fourier Transformed Infrared spectroscopy with adsorbed pyridine? Answer yes or no with no justification."
+  "conclusion":  "This paragraph present any information about the Fourier Transformed Infrared spectroscopy with adsorbed pyridine experimental procedure? Answer yes or no with no justification."
 }
