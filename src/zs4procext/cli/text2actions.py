@@ -106,7 +106,7 @@ def text2actions(
         llm_model_parameters_path=llm_model_parameters_path,
         elementar_actions=elementar_actions
     )
-    extractor.model_post_init(None)
+    #extractor.model_post_init(None)
     with open(text_file_path, "r") as f:
         text_lines: List[str] = f.readlines()
     size = len(text_lines)

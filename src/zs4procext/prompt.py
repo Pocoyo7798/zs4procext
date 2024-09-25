@@ -241,6 +241,11 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         / "resources"
         / "phi_default_instruct_template.json"
     ),
+        "microsoft/Phi-3-medium-128k-instruct": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "phi_default_instruct_template.json"
+    ),
     "microsoft/Phi-3-mini-4k-instruct": str(
         importlib_resources.files("zs4procext")
         / "resources"
@@ -295,5 +300,11 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         importlib_resources.files("zs4procext")
         / "resources"
         / "llama31_default_instruct_template.json"
+    )
+    ,
+    "upstage/SOLAR-10.7B-Instruct-v1.0": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "solar_default_template.json"
     )
 }
