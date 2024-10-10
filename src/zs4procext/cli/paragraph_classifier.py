@@ -53,6 +53,12 @@ def paragraph_classifier(
         / "resources"
         / "classify_ftiv_pyridine_schema.json"
     )
+    elif type == "multi_sample":
+        prompt_schema_path = str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "classify_multi_sample_schema.json"
+    )
     extractor: ParagraphClassifier = ParagraphClassifier(
         prompt_structure_path=prompt_structure_path,
         prompt_schema_path=prompt_schema_path,
