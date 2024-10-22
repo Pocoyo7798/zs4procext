@@ -17,6 +17,7 @@ class Amount(BaseModel):
 class ComplexConditions(BaseModel):
     stirring_speed: List[str] = []
     heat_ramp: List[str] = []
+    concentration: List[str] = []
     flow_rate: List[str] = []
 
 class Conditions(BaseModel):
@@ -45,6 +46,7 @@ class Parameters(BaseModel):
 class ComplexParameters(BaseModel):
     stirring_units: List[str] = []
     heat_ramp_units: List[str] = []
+    concentration_units: List[str] = []
     flow_rate_units: List[str] = []
 
 
@@ -325,11 +327,13 @@ class ComplexParametersParser(BaseModel):
         parser_params = ComplexParameters(**parser_params_dict)
         stirring_units_list: List[str] =  parser_params.stirring_units
         heating_ramp_units_list: List[str] = parser_params.heat_ramp_units
+        concentration_units_list: List[str] = parser_params.concentration_units
         flow_rate_units_list: List[str] = parser_params.flow_rate_units
         stirring_units_tre: re.Pattern[str] = correct_tre(stirring_units_list)
         heating_ramp_units_tre: re.Pattern[str] = correct_tre(heating_ramp_units_list)
+        concentration_units_tre: re.Pattern[str] = correct_tre(concentration_units_list)
         flow_rate_units_tre: re.Pattern[str] = correct_tre(flow_rate_units_list)
-        regex: str = rf"([\"'\(\[\s,](?P<number1>\+?-?-?\d+\.?,?\d*)-*(?P<number2>\d*\.?,?\d*)\s*((?P<stirring_speed>[^-\),\[\]\d\s]?\s*{stirring_units_tre})|(?P<heat_ramp>.?\s*{heating_ramp_units_tre})|(?P<flow_rate>[^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))(?=[\)\]\s,\"'\(\.]))"
+        regex: str = rf"([\"'\(\[\s,](?P<number1>\+?-?-?\d+\.?,?\d*)-*(?P<number2>\d*\.?,?\d*)\s*((?P<stirring_speed>[^-\),\[\]\d\s]?\s*{stirring_units_tre})|(?P<heat_ramp>.?\s*{heating_ramp_units_tre})|(?P<concentration>.?\s*{concentration_units_tre})|(?P<flow_rate>[^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))(?=[\)\]\s,\"'\(\.]))"
         self._regex = re.compile(regex, re.IGNORECASE | re.MULTILINE)
 
     def generate_value(self, match: re.Match) -> Dict[str, str]:
@@ -343,6 +347,9 @@ class ComplexParametersParser(BaseModel):
         if match.group("heat_ramp") is not None:
             unit = f"{match.group('heat_ramp')}"
             condition_type = "heat_ramp"
+        if match.group("concentration") is not None:
+            unit = f"{match.group('concentration')}"
+            condition_type = "concentration"
         if match.group("flow_rate") is not None:
             unit = f"{match.group('flow_rate')}"
             condition_type = "flow_rate"
@@ -366,6 +373,8 @@ class ComplexParametersParser(BaseModel):
                 conditions.stirring_speed.append(value)  # type: ignore
             elif condition_type == "heat_ramp":
                 conditions.heat_ramp.append(value)  # type: ignore
+            elif condition_type == "concentration":
+                conditions.concentration.append(value)
             elif condition_type == "flow_rate":
                 conditions.flow_rate.append(value)  # type: ignore
         return conditions
