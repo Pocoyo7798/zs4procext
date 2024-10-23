@@ -438,7 +438,7 @@ class Add(ActionsWithChemicalAndConditions):
     material: Optional[Chemical] = None
     dropwise: bool = False
     temperature: Optional[str] = None
-    atmosphere: Optional[List[str]] = None
+    atmosphere: List[str] = []
     duration: Optional[str] = None
     pressure: Optional[str] = None
 
@@ -518,7 +518,7 @@ class Concentrate(Actions):
 
 
 class Degas(ActionsWithConditons):
-    atmosphere: Optional[List[str]] = None
+    atmosphere: List[str] = []
     duration: Optional[str] = None
 
     @classmethod
@@ -539,7 +539,7 @@ class DrySolid(ActionsWithConditons):
 
     duration: Optional[str] = None
     temperature: Optional[str] = None
-    atmosphere: Optional[List[str]] = None
+    atmosphere: List[str] = []
 
     @classmethod
     def generate_action(
@@ -654,7 +654,7 @@ class MakeSolution(ActionsWithChemicalAndConditions):
     materials: List[Chemical] = []
     dropwise: bool = False
     temperature: Optional[str] = None
-    atmosphere: Optional[List[str]] = None
+    atmosphere: List[str] = []
     duration: Optional[str] = None
     pressure: Optional[str] = None
 
@@ -804,7 +804,7 @@ class Quench(ActionsWithChemicalAndConditions):
 class Recrystallize(ActionsWithChemicalAndConditions):
     solvent: Optional[Chemical] = None
     temperature: Optional[str] = None
-    atmosphere: Optional[List[str]] = None
+    atmosphere: List[str] = []
     duration: Optional[str] = None
     pressure: Optional[str] = None
 
@@ -837,7 +837,7 @@ class Recrystallize(ActionsWithChemicalAndConditions):
 class Reflux(ActionsWithConditons):
     duration: Optional[str] = None
     dean_stark: bool = False
-    atmosphere: Optional[List[str]] = None
+    atmosphere: List[str] = []
 
     @classmethod
     def generate_action(
@@ -851,7 +851,7 @@ class Reflux(ActionsWithConditons):
 class Stir(ActionsWithConditons):
     duration: Optional[str] = None
     temperature: Optional[str] = None
-    atmosphere: Optional[List[str]] = None
+    atmosphere: List[str] = []
     pressure: Optional[str] = None
 
     @classmethod
@@ -1010,7 +1010,7 @@ class Yield(ActionsWithchemicals):
 class AddMaterials(ActionsWithChemicalAndConditions):
     material: Optional[ChemicalsMaterials] = None
     dropwise: bool = False
-    atmosphere: Optional[List[str]] = None
+    atmosphere: List[str] = []
     temperature: Optional[str] = None
     duration: Optional[str] = None
     ph: Optional[str] = None
@@ -1046,7 +1046,7 @@ class AddMaterials(ActionsWithChemicalAndConditions):
         list_of_actions: List[Dict[str, Any]] = []
         if action.temperature is not None:
             list_of_actions.append(ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature).zeolite_dict())
-        if action.atmosphere is not None:
+        if action.atmosphere != []:
             list_of_actions.append(SetAtmosphere(action_name="SetAtmosphere", atmosphere= action.atmosphere).zeolite_dict())
         if len(chemicals_info.chemical_list) == 0:
             pass
@@ -1264,7 +1264,7 @@ class WaitMaterial(ActionsWithConditons):
 class DryMaterial(ActionsWithConditons):
     temperature: Optional[str] = None
     duration: Optional[str] = None
-    atmosphere: Optional[List[str]] = None
+    atmosphere: List[str] = []
 
     @classmethod
     def generate_action(
@@ -1278,7 +1278,7 @@ class ThermalTreatment(ActionsWithConditons):
     temperature: Optional[str] = None
     duration: Optional[str] = None
     heat_ramp: Optional[str] = None
-    atmosphere: Optional[List[str]] = None
+    atmosphere: List[str] = []
     flow_rate: Optional[str] = None
     @classmethod
     def generate_action(
@@ -1461,7 +1461,7 @@ class Cool(ActionsWithConditons):
             return [action.zeolite_dict()]
 
 class SetAtmosphere(Actions):
-    atmosphere: Optional[List[str]] = None
+    atmosphere: List[str] = []
     pressure: Optional[str] = None
     flow_rate: Optional[str] = None
 
@@ -1621,12 +1621,13 @@ MATERIAL_ACTION_REGISTRY: Dict[str, Any] = {
 SAC_ACTION_REGISTRY: Dict[str, Any] = {
     "add": AddMaterials,
     "makesolution": NewSolution,
-    "recrystallization": Crystallization,
+    "degas": Degas,
     "centrifugate": Separate,
     "filter": Separate,
     "concentrate": Separate,
     "wash": WashSAC,
     "extract": WashSAC,
+    "leach": WashSAC,
     "wait": WaitMaterial,
     "reflux": WaitMaterial,
     "drysolid": DryMaterial,
@@ -1634,17 +1635,18 @@ SAC_ACTION_REGISTRY: Dict[str, Any] = {
     "posttreatment": ThermalTreatment,
     "stir": StirMaterial,
     "sonicate": SonicateMaterial,
-    "ionexchange": IonExchange,
-    "alkalinetreatment": AlkalineTreatment,
-    "acidtreatment": AcidTreatment,
     "repeat": Repeat,
     "settemperature": ChangeTemperatureSAC,
     "grind": Grind,
     "sieve": Sieve,
     "synthesisproduct": None,
+    "synthesismethod": None,
+    "synthesisvariant": None,
     "yield": None,
     "noaction": None,
     "transfer": None,
+    "invalidaction": None,
+    "recrystallize": None,
     "followotherprocedure": None
 
 }
