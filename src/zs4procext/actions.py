@@ -1072,7 +1072,7 @@ class NewSolution(ActionsWithChemicalAndConditions):
         )
         if chemicals_info.final_solution is not None:
             banned_words = banned_parser.find_keywords(chemicals_info.final_solution.name)
-            if len(banned_words) > 0:
+            if len(banned_words) == 0:
                 action.solution = chemicals_info.final_solution
         list_of_actions: List[Dict[str, Any]] = []
         list_of_actions.append(action.zeolite_dict())

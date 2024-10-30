@@ -44,13 +44,6 @@ def eval_actions(
     }
     results: Dict[str, Any] = {**{"sequence": evaluator.evaluate_actions_order(evaluated_dataset_path)["accuracy"]}, **evaluator.evaluate_actions(evaluated_dataset_path, threshold=action_similarity_threshold), **chemicals_dict, **metadata}
     print(results)
-    #writer: pd.ExcelWriter = pd.ExcelWriter(output_file_path)
-    #df_actions: pd.DataFrame = pd.DataFrame(actions, index=[0])
-    #df_chemicals: pd.DataFrame = pd.DataFrame(chemicals, index=[0])
-    #df_metadata: pd.DataFrame = pd.DataFrame(metadata, index=[0])
-    #df_actions.to_excel(writer, sheet_name="actions", index=False)
-    #df_chemicals.to_excel(writer, sheet_name="chemicals", index=False)
-    #df_metadata.to_excel(writer, sheet_name="metadata", index=False)
     df = pd.DataFrame(results, index=[0])
     df.to_excel(output_file_path, index=False,)
 

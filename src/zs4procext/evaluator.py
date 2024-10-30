@@ -30,9 +30,12 @@ class Evaluator(BaseModel):
 
     def transform_chemical_name(self, name: str):
         name = name.lower()
+        name = name.replace("(", "")
+        name = name.replace(")", "")
         list_keywords: List[str] = self._keyword_parser.find_keywords(name)
         for keyword in list_keywords:
             name = name.replace(keyword, CHEMICALS_REGISTRY[keyword])
+        name = "".join(dict.fromkeys(name))
         return name.replace(" ", "")
     
     def evaluate_string_list(self, test_list: List[str], ref_list: List[str], threshold: float = 0.9) -> Dict[str, int]:
@@ -221,6 +224,9 @@ class Evaluator(BaseModel):
                     found = found + 1
                     del reference_chemicals[index]
                 else:
+                    print("############")
+                    print(material)
+                    print(reference_chemicals)
                     not_found = not_found + 1
             tp = tp + found
             fp = fp + not_found
@@ -438,6 +444,7 @@ CHEMICALS_REGISTRY = {"solution": "",
                       "concentrated": "",
                       "sodium": "na",
                       "cetyl trimethyl ammonium bromide" : "ctab",
+                      "sodiu metasilicate": "na2sio3",
                       "cetrimonium bromide": "ctab",
                       "water": "h2o",
                       "hydroxide": "oh",
@@ -448,6 +455,7 @@ CHEMICALS_REGISTRY = {"solution": "",
                       "tetramethylammonium": "tma",
                       "tetrapropylammonium": "tpa",
                       "tetrabutylammonium": "tba",
+                      "aluminum sulfate": "al2(so4)3",
                       "ammonium": "nh4",
                       "nitrate": "no3",
                       "bromide": "br",
@@ -456,6 +464,7 @@ CHEMICALS_REGISTRY = {"solution": "",
                       "aluminate": "alo2",
                       "silica": "sio4",
                       "metasilicate": "sio3",
+                      "penta": "5",
                       "silicate": "sio3",
                       "tetraethylorthosilicate": "teos",
                       "tetraethyl": "te",
