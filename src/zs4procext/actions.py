@@ -1051,7 +1051,7 @@ class AddMaterials(ActionsWithChemicalAndConditions):
         if len(chemicals_info.chemical_list) == 0:
             pass
         elif len(chemicals_info.chemical_list) == 1:
-            banned_names: List[str] = banned_parser.find_keywords(chemicals_info.chemical_list[0].name)
+            banned_names: List[str] = banned_parser.find_keywords(chemicals_info.chemical_list[0].name.lower())
             if len(banned_names) == 0:
                 action.material = chemicals_info.chemical_list[0]
                 action.dropwise = chemicals_info.dropwise[0]
@@ -1088,7 +1088,7 @@ class NewSolution(ActionsWithChemicalAndConditions):
             schemas, schema_parser, amount_parser, action.action_context, complex_parser=complex_parser
         )
         if chemicals_info.final_solution is not None:
-            banned_words = banned_parser.find_keywords(chemicals_info.final_solution.name)
+            banned_words = banned_parser.find_keywords(chemicals_info.final_solution.name.lower())
             if len(banned_words) == 0:
                 action.solution = chemicals_info.final_solution
         list_of_actions: List[Dict[str, Any]] = []
@@ -1485,7 +1485,6 @@ class Sieve(ActionsWithConditons):
 
 BANNED_CHEMICALS_REGISTRY: List[str] = [
     "newsolution",
-    "new solution",
     "extract",
     "heated",
     "cooled",
@@ -1520,6 +1519,7 @@ BANNED_CHEMICALS_REGISTRY: List[str] = [
     "name",
     "Polytetrafluoroethylene",
     "PTFE",
+    "mixture",
 ]
 
 ACTION_REGISTRY: Dict[str, Any] = {

@@ -225,6 +225,7 @@ class Evaluator(BaseModel):
                     del reference_chemicals[index]
                 else:
                     print("############")
+                    print(action["action"])
                     print(material)
                     print(reference_chemicals)
                     not_found = not_found + 1
@@ -437,6 +438,7 @@ class Evaluator(BaseModel):
 
 
 CHEMICALS_REGISTRY = {"solution": "",
+                      "tri": "3",
                       "phosphoric acid": "h3po4",
                       "aqueous": "",
                       "sample": "",
@@ -447,8 +449,12 @@ CHEMICALS_REGISTRY = {"solution": "",
                       "sodiu metasilicate": "na2sio3",
                       "cetrimonium bromide": "ctab",
                       "water": "h2o",
+                      "fluoride": "f",
                       "hydroxide": "oh",
                       "sulfuric acid": "h2so4",
+                      "ii": "",
+                      "iii": "",
+                      "iv": "",
                       "nitric acid": "hno3",
                       "hydrochloric acid": "hcl",
                       "hydrofluoric acid": "hf",
@@ -456,6 +462,10 @@ CHEMICALS_REGISTRY = {"solution": "",
                       "tetrapropylammonium": "tpa",
                       "tetrabutylammonium": "tba",
                       "aluminum sulfate": "al2(so4)3",
+                      "aluminum sulphate": "al2(so4)3",
+                      "titanium(IV) n-butoxide": "ti(obu)4",
+                      "n-butoxide": "obu",
+                      "titanium": "ti",
                       "ammonium": "nh4",
                       "nitrate": "no3",
                       "bromide": "br",
