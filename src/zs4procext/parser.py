@@ -36,18 +36,16 @@ class Parameters(BaseModel):
     pressure_units: List[str] = []
     quantity_units: List[str] = []
     size_units: List[str] = []
+    stirring_units: List[str] = []
+    heat_ramp_units: List[str] = []
+    concentration_units: List[str] = []
+    flow_rate_units: List[str] = []
     time_words: List[str] = []
     temperature_words: List[str] = []
     pressure_words: List[str] = []
     atmosphere_words: List[str] = []
     amount_words: List[str] = []
     size_words: List[str] = []
-
-class ComplexParameters(BaseModel):
-    stirring_units: List[str] = []
-    heat_ramp_units: List[str] = []
-    concentration_units: List[str] = []
-    flow_rate_units: List[str] = []
 
 
 class ParametersParser(BaseModel):
@@ -311,12 +309,22 @@ class ParametersParser(BaseModel):
         conditions.amount = amount.__dict__
         return conditions
 
+class ListParametersParser(BaseModel):
+    parser_params_path: str = str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "synthesis_parsing_parameters.json"
+    )
+    _regex: Optional[re.Pattern[str]] = PrivateAttr(default=None)
+
+    def model_post_init(self, __context: Any) -> None:
+        self._regex = r"([\d\.xyz\-–−]+[ \t]*(min)*)+(?:[ \t]*(,|and|:|\/)[ \t]*[\d\.xyz\-–−]+[ \t]*(min)*)+"
 
 class ComplexParametersParser(BaseModel):
     parser_params_path: str = str(
         importlib_resources.files("zs4procext")
         / "resources"
-        / "synthesis_parsing_complex_parameters.json"
+        / "synthesis_parsing_parameters.json"
     )
     _regex: Optional[re.Pattern[str]] = PrivateAttr(default=None)
 
@@ -324,7 +332,7 @@ class ComplexParametersParser(BaseModel):
         """initialize the parser object by compiling a regex code"""
         with open(self.parser_params_path, "r") as f:
             parser_params_dict = json.load(f)
-        parser_params = ComplexParameters(**parser_params_dict)
+        parser_params = Parameters(**parser_params_dict)
         stirring_units_list: List[str] =  parser_params.stirring_units
         heating_ramp_units_list: List[str] = parser_params.heat_ramp_units
         concentration_units_list: List[str] = parser_params.concentration_units

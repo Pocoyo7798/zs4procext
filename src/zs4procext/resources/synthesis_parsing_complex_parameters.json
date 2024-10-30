@@ -1,7 +1,0 @@
-{
-    "stirring_units" : ["rpm"],
-    "heat_ramp_units" : ["C min-1", "C/min", "K min-1", "K/min", "C\u00b7min", "deg\u00b7min\u22121", "C min\u22121", "C\u00b7min\u22121", "℃ per minute", "C per minute", "K per minute", "°C min-1", "°C/min", "°C\u00b7min", "°C min\u22121", "°C\u00b7min\u22121",  "°C per minute"],
-    "concentration_units" : ["M", "mol/L", "mol/cm3", "mol L\u22121", "mol cm\u22123", "mol\u00b7L\u22121", "mol\u00b7cm\u22123", "%", "wt.%"],
-    "flow_rate_units" : ["cm3 min-1", "cm3/min", "cm3 min\u22121", "cm3\u00b7min\u22121", "cm3\u00b7min", "ml min-1", "ml/min", "ml min\u22121", "ml\u00b7min\u22121", "ml\u00b7min"]
-
-}
