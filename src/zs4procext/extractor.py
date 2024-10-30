@@ -270,7 +270,10 @@ class ActionExtractorFromText(BaseModel):
             elif action["action"] == "NewSolution":
                 add_new_solution = False
                 temperature = None
-                i = i + 1
+                if action_list[i + 1]["action"] not in set(["Add", "ChangeTemperature", "SetAtmosphere", "Repetition"]):
+                    del action_list[i]
+                else:
+                    i = i + 1
             elif action["action"] == "ChangeTemperature":
                 content = action["content"]
                 if content["temperature"] in set(["heat", "cool"]):
