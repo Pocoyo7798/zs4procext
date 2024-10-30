@@ -270,7 +270,9 @@ class ActionExtractorFromText(BaseModel):
             elif action["action"] == "NewSolution":
                 add_new_solution = False
                 temperature = None
-                if action_list[i + 1]["action"] not in set(["Add", "ChangeTemperature", "SetAtmosphere", "Repetition"]):
+                if i == len(action_list) - 1:
+                    del action_list[i]
+                elif action_list[i + 1]["action"] not in set(["Add", "ChangeTemperature", "SetAtmosphere", "Repetition"]):
                     del action_list[i]
                 else:
                     i = i + 1
