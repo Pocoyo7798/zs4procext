@@ -236,7 +236,7 @@ class ActionsWithConditons(Actions):
                     new_value = conditions[atribute][0]
             except Exception:
                 if atribute == "action_name":
-                    pass
+                    new_value = self.__dict__[atribute]
                 elif len(conditions["other"]) > 0 and add_others is True:
                     new_value = conditions["other"][0]
                 else:
@@ -299,7 +299,9 @@ class ActionsWithChemicalAndConditions(Actions):
                 else:
                     new_value = conditions[atribute][0]
             except Exception:
-                if len(conditions["other"]) > 0 and add_others is True:
+                if atribute == "action_name":
+                    new_value = self.__dict__[atribute]
+                elif len(conditions["other"]) > 0 and add_others is True:
                     new_value = conditions["other"][0]
                 else:
                     new_value = self.__dict__[atribute]
