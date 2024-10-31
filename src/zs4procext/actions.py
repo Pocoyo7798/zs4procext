@@ -235,7 +235,9 @@ class ActionsWithConditons(Actions):
                 else:
                     new_value = conditions[atribute][0]
             except Exception:
-                if len(conditions["other"]) > 0 and add_others is True:
+                if atribute == "action_name":
+                    pass
+                elif len(conditions["other"]) > 0 and add_others is True:
                     new_value = conditions["other"][0]
                 else:
                     new_value = self.__dict__[atribute]
