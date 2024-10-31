@@ -143,6 +143,10 @@ class Actions(BaseModel):
             action_dict = self.model_dump(
                 exclude={"action_name", "action_context", "atmosphere", "temperature"}
             )
+        elif type(self) is Grind:
+            action_dict = self.model_dump(
+                exclude={"action_name", "action_context", "size"}
+            )
         else:
             action_dict = self.model_dump(
                 exclude={"action_name", "action_context"}
@@ -1472,18 +1476,23 @@ class SetAtmosphere(Actions):
 class MicrowaveMaterial(ActionsWithConditons):
     pass
 
-class Grind(Actions):
+class Grind(ActionsWithConditons):
+    size: Optional[str] = None
 
     @classmethod
-    def generate_action(cls, context: str):
+    def generate_action(cls, context: str, conditions_parser: ParametersParser):
         action: Grind = cls(action_name="Grind", action_context=context)
-        return [action.zeolite_dict()]
+        action.validate_conditions(conditions_parser, add_others=True)
+        list_of_actions: List[Dict[str, Any]] = [action.zeolite_dict()]
+        if action.size is not None:
+            list_of_actions.append(Sieve(action_name="Sieve", size=action.size).zeolite_dict())
+        return list_of_actions
 
 class Sieve(ActionsWithConditons):
     size: Optional[str] = None
     @classmethod
     def generate_action(cls, context: str, conditions_parser: ParametersParser):
-        action = cls(action_name="Sieve", action_context=context)
+        action: Sieve = cls(action_name="Sieve", action_context=context)
         action.validate_conditions(conditions_parser, add_others=True)
         return [action.zeolite_dict()]
 

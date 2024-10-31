@@ -125,7 +125,7 @@ class ParametersParser(BaseModel):
         atmosphere_word_tre: re.Pattern[str] = correct_tre(atmosphere_word_list)
         amount_word_tre: re.Pattern[str] = correct_tre(amount_word_list)
         size_word_tre: re.Pattern[str] = correct_tre(size_word_list)
-        regex: str = rf"([\"'\(\[\s,]((?P<repetitions1>\d+\.?,?\d*)[xX×]+)?(?P<number1>\+?-?-?\d+\.?,?\d*)(?P<unit1>.?)-*(?P<number2>\d*\.?,?\d*)\s*(?P<unit2>.?\s*{units_tre})([xX×]+(?P<repetitions2>\d+\.?,?\d*))?(?=[\)\]\s,\"'\(\.])|\b(?P<word>(?P<time>{time_word_tre})|(?P<temperature>{temperature_word_tre})|(?P<pressure>{pressure_word_tre})|(?P<atmosphere>{atmosphere_word_tre})|(?P<amount>{amount_word_tre})|(?P<size>{size_word_tre}))\b)"
+        regex: str = rf"([\"'\(\[\s,]((?P<repetitions1>\d+\.?,?\d*)[xX×]+)?(?P<number1>\+?-?-?\d+\.?,?\d*)(?P<unit1>.?)(-*|to)\s*(?P<number2>\d*\.?,?\d*)\s*(?P<unit2>.?\s*{units_tre})([xX×]+(?P<repetitions2>\d+\.?,?\d*))?(?=[\)\]\s,\"'\(\.])|\b(?P<word>(?P<time>{time_word_tre})|(?P<temperature>{temperature_word_tre})|(?P<pressure>{pressure_word_tre})|(?P<atmosphere>{atmosphere_word_tre})|(?P<amount>{amount_word_tre})|(?P<size>{size_word_tre}))\b)"
         self._regex = re.compile(regex, re.IGNORECASE | re.MULTILINE)
 
     def transform_value(self, number: str, unit: str) -> tuple[str, str, str]:
@@ -315,10 +315,42 @@ class ListParametersParser(BaseModel):
         / "resources"
         / "synthesis_parsing_parameters.json"
     )
-    _regex: Optional[re.Pattern[str]] = PrivateAttr(default=None)
+    _individual_regex: Optional[re.Pattern[str]] = PrivateAttr(default=None)
+    _list_regex: Optional[re.Pattern[str]] = PrivateAttr(default=None)
 
     def model_post_init(self, __context: Any) -> None:
-        self._regex = r"([\d\.xyz\-–−]+[ \t]*(min)*)+(?:[ \t]*(,|and|:|\/)[ \t]*[\d\.xyz\-–−]+[ \t]*(min)*)+"
+        with open(self.parser_params_path, "r") as f:
+            parser_params_dict = json.load(f)
+        parser_params = Parameters(**parser_params_dict)
+        parser_params = Parameters(**parser_params_dict)
+        time_units_list: List[str] =  parser_params.time_units
+        temperature_units_list: List[str] = parser_params.temperature_units
+        pressure_units_list: List[str] = parser_params.pressure_units
+        quantity_units_list: List[str] = parser_params.quantity_units
+        stirring_units_list: List[str] =  parser_params.stirring_units
+        heating_ramp_units_list: List[str] = parser_params.heat_ramp_units
+        concentration_units_list: List[str] = parser_params.concentration_units
+        flow_rate_units_list: List[str] = parser_params.flow_rate_units
+        time_units_tre: re.Pattern[str] = correct_tre(time_units_list)
+        temperature_units_tre: re.Pattern[str] = correct_tre(temperature_units_list)
+        pressure_units_tre: re.Pattern[str] = correct_tre(pressure_units_list)
+        quantity_units_tre: re.Pattern[str] = correct_tre(quantity_units_list)
+        stirring_units_tre: re.Pattern[str] = correct_tre(stirring_units_list)
+        heating_ramp_units_tre: re.Pattern[str] = correct_tre(heating_ramp_units_list)
+        concentration_units_tre: re.Pattern[str] = correct_tre(concentration_units_list)
+        flow_rate_units_tre: re.Pattern[str] = correct_tre(flow_rate_units_list)
+        individual_regex = rf"(?P<value>[\d\.xyz\-–−])+[ \t]*((?P<time>.?\s*{time_units_tre})|(?P<temperature>.?\s*{temperature_units_tre})|(?P<pressure>.?\s*{pressure_units_tre})|(?P<quantity>.?\s*{quantity_units_tre})|(?P<stirring_speed>[^-\),\[\]\d\s]?\s*{stirring_units_tre})|(?P<heat_ramp>.?\s*{heating_ramp_units_tre})|(?P<concentration>.?\s*{concentration_units_tre})|(?P<flow_rate>[^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))"
+        list_regex = rf"([\d\.xyz\-–−]+[ \t]*((?P<time>.?\s*{time_units_tre})|(?P<temperature>.?\s*{temperature_units_tre})|(?P<pressure>.?\s*{pressure_units_tre})|(?P<quantity>.?\s*{quantity_units_tre})|(?P<stirring_speed>[^-\),\[\]\d\s]?\s*{stirring_units_tre})|(?P<heat_ramp>.?\s*{heating_ramp_units_tre})|(?P<concentration>.?\s*{concentration_units_tre})|(?P<flow_rate>[^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))*)+(?:[ \t]*(,|and|:|\/)[ \t]*[\d\.xyz\-–−]+[ \t]*((?P<time>.?\s*{time_units_tre})|(?P<temperature>.?\s*{temperature_units_tre})|(?P<pressure>.?\s*{pressure_units_tre})|(?P<quantity>.?\s*{quantity_units_tre})|(?P<stirring_speed>[^-\),\[\]\d\s]?\s*{stirring_units_tre})|(?P<heat_ramp>.?\s*{heating_ramp_units_tre})|(?P<concentration>.?\s*{concentration_units_tre})|(?P<flow_rate>[^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))*)+"
+        self._individual_regex = re.compile(individual_regex, re.IGNORECASE | re.MULTILINE)
+        self._list_regex = re.compile(list_regex, re.IGNORECASE | re.MULTILINE)
+
+    def find_lists(self, text: str) -> List[str]:
+        if self._list_regex is None:
+            raise ValueError(
+                "The regex was not initialize, initialize it by <object_name>.model_post_init(None)"
+            )
+        results: List[str] = self._list_regex.findall(text)
+        return results
 
 class ComplexParametersParser(BaseModel):
     parser_params_path: str = str(
