@@ -26,6 +26,8 @@ from zs4procext.actions import (
     Cool,
     Crystallization,
     ChangeTemperature,
+    ChangeTemperatureSAC,
+    CoolSAC,
     CollectLayer,
     Filter,
     MakeSolution,
@@ -33,12 +35,11 @@ from zs4procext.actions import (
     Quench,
     Separate,
     SetTemperature,
+    SonicateMaterial,
     StirMaterial,
     ThermalTreatment,
     WashMaterial,
     WashSAC,
-    ChangeTemperatureSAC,
-    CoolSAC
 )
 from zs4procext.llm import ModelLLM
 from zs4procext.parser import (
@@ -453,7 +454,7 @@ class ActionExtractorFromText(BaseModel):
                     context, self._condition_parser, self._complex_parser, self._microwave_parser
                 )
                 action_list.extend(new_action)
-            elif action in set([ThermalTreatment, StirMaterial]):
+            elif action in set([ThermalTreatment, StirMaterial, SonicateMaterial]):
                 new_action = action.generate_action(context, self._condition_parser, self._complex_parser)
                 action_list.extend(new_action)
             elif action in set([MakeSolution, Add, Quench, AddMaterials, NewSolution]):

@@ -1296,7 +1296,7 @@ class ThermalTreatment(ActionsWithConditons):
         action.validate_conditions(conditions_parser, complex_conditions_parser=complex_conditions_parser)
         return [action.zeolite_dict()]
 
-class StirMaterial(ActionsWithChemicalAndConditions):
+class StirMaterial(ActionsWithConditons):
     duration: Optional[str] = None
     stirring_speed: Optional[str] = None
     temperature: Optional[str] = None
@@ -1314,7 +1314,7 @@ class StirMaterial(ActionsWithChemicalAndConditions):
             list_of_actions.append(action.zeolite_dict())
         return list_of_actions
     
-class SonicateMaterial(ActionsWithChemicalAndConditions):
+class SonicateMaterial(ActionsWithConditons):
     duration: Optional[str] = None
     stirring_speed: Optional[str] = None
     temperature: Optional[str] = None
