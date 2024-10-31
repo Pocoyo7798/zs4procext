@@ -35,7 +35,10 @@ from zs4procext.actions import (
     SetTemperature,
     StirMaterial,
     ThermalTreatment,
-    WashMaterial
+    WashMaterial,
+    WashSAC,
+    ChangeTemperatureSAC,
+    CoolSAC
 )
 from zs4procext.llm import ModelLLM
 from zs4procext.parser import (
@@ -445,7 +448,7 @@ class ActionExtractorFromText(BaseModel):
                     context, self._condition_parser, self._microwave_parser
                 )
                 action_list.extend(new_action)
-            elif action in set([ChangeTemperature, Crystallization, Cool]):
+            elif action in set([ChangeTemperature, Crystallization, Cool, ChangeTemperatureSAC, CoolSAC]):
                 new_action: List[Dict[str, Any]] = action.generate_action(
                     context, self._condition_parser, self._complex_parser, self._microwave_parser
                 )
@@ -480,6 +483,15 @@ class ActionExtractorFromText(BaseModel):
                 schemas = self._schema_parser.parse_schema(chemical_response)
                 new_action = action.generate_action(
                     context, schemas, self._schema_parser, self._quantity_parser, self._centri_parser, self._filter_parser, self._banned_parser
+                )
+                action_list.extend(new_action)
+            elif action is WashSAC:
+                chemical_prompt = self._wash_chemical_prompt.format_prompt(context)
+                chemical_response = self._llm_model.run_single_prompt(chemical_prompt)
+                print(chemical_response)
+                schemas = self._schema_parser.parse_schema(chemical_response)
+                new_action = action.generate_action(
+                    context, schemas, self._schema_parser, self._quantity_parser, self._condition_parser, self._centri_parser, self._filter_parser, self._banned_parser
                 )
                 action_list.extend(new_action)
             elif action.type == "onlyconditions":
