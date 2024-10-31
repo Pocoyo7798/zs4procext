@@ -1438,7 +1438,10 @@ class ChangeTemperatureSAC(ActionsWithConditons):
         if len(keywords_list) > 0:
             action.microwave = True
         list_of_actions.append(action.zeolite_dict())
-        if action.duration is not None:
+        if action.stirring_speed is not None:
+            new_action = StirMaterial(action_name="Stir", duration=action.duration, stirring_speed=action.stirring_speed)
+            list_of_actions.append(new_action.zeolite_dict())
+        elif action.duration is not None:
             new_action = Wait(action_name="Wait", duration=action.duration)
             list_of_actions.append(new_action.zeolite_dict())
         return list_of_actions
@@ -1467,6 +1470,35 @@ class Cool(ActionsWithConditons):
             if action.temperature is None:
                 action.temperature = "Cool"
             return [action.zeolite_dict()]
+        
+class CoolSAC(ActionsWithConditons):
+    temperature: Optional[str] = None
+    microwave: bool = False
+    heat_ramp: Optional[str] = None
+    duration: Optional[str] = None
+    pressure: Optional[str] = None
+    stirring_speed: Optional[str] = None
+
+    @classmethod
+    def generate_action(
+        cls, context: str, conditions_parser: ParametersParser, complex_conditions_parser: ComplexParametersParser, microwave_parser: KeywordSearching
+    ) -> List[Dict[str, Any]]:
+        action = cls(action_name="ChangeTemperature", action_context=context)
+        action.validate_conditions(conditions_parser, complex_conditions_parser=complex_conditions_parser)
+        keywords_list = microwave_parser.find_keywords(context)
+        if len(keywords_list) > 0:
+            action.microwave = True
+        if action.temperature is None:
+            action.temperature = "Cool"
+        list_of_actions: List[Any] = []
+        list_of_actions.append(action.zeolite_dict())
+        if action.stirring_speed is not None:
+            new_action = StirMaterial(action_name="Stir", duration=action.duration, stirring_speed=action.stirring_speed)
+            list_of_actions.append(new_action.zeolite_dict())
+        elif action.duration is not None:
+            new_action = Wait(action_name="Wait", duration=action.duration)
+            list_of_actions.append(new_action.zeolite_dict())
+        return list_of_actions
 
 class SetAtmosphere(Actions):
     atmosphere: List[str] = []
@@ -1634,10 +1666,13 @@ MATERIAL_ACTION_REGISTRY: Dict[str, Any] = {
 SAC_ACTION_REGISTRY: Dict[str, Any] = {
     "add": AddMaterials,
     "makesolution": NewSolution,
+    "newsolution": NewSolution,
     "degas": Degas,
     "centrifugate": Separate,
     "filter": Separate,
     "concentrate": Separate,
+    "cool": CoolSAC,
+    "heat": ChangeTemperatureSAC,
     "wash": WashSAC,
     "extract": WashSAC,
     "leach": WashSAC,

@@ -324,6 +324,7 @@ class ListParametersParser(BaseModel):
         parser_params = Parameters(**parser_params_dict)
         parser_params = Parameters(**parser_params_dict)
         time_units_list: List[str] =  parser_params.time_units
+        print(time_units_list)
         temperature_units_list: List[str] = parser_params.temperature_units
         pressure_units_list: List[str] = parser_params.pressure_units
         quantity_units_list: List[str] = parser_params.quantity_units
@@ -339,8 +340,8 @@ class ListParametersParser(BaseModel):
         heating_ramp_units_tre: re.Pattern[str] = correct_tre(heating_ramp_units_list)
         concentration_units_tre: re.Pattern[str] = correct_tre(concentration_units_list)
         flow_rate_units_tre: re.Pattern[str] = correct_tre(flow_rate_units_list)
-        individual_regex = rf"(?P<value>[\d\.xyz\-–−])+[ \t]*((?P<time>.?\s*{time_units_tre})|(?P<temperature>.?\s*{temperature_units_tre})|(?P<pressure>.?\s*{pressure_units_tre})|(?P<quantity>.?\s*{quantity_units_tre})|(?P<stirring_speed>[^-\),\[\]\d\s]?\s*{stirring_units_tre})|(?P<heat_ramp>.?\s*{heating_ramp_units_tre})|(?P<concentration>.?\s*{concentration_units_tre})|(?P<flow_rate>[^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))"
-        list_regex = rf"([\d\.xyz\-–−]+[ \t]*((?P<time>.?\s*{time_units_tre})|(?P<temperature>.?\s*{temperature_units_tre})|(?P<pressure>.?\s*{pressure_units_tre})|(?P<quantity>.?\s*{quantity_units_tre})|(?P<stirring_speed>[^-\),\[\]\d\s]?\s*{stirring_units_tre})|(?P<heat_ramp>.?\s*{heating_ramp_units_tre})|(?P<concentration>.?\s*{concentration_units_tre})|(?P<flow_rate>[^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))*)+(?:[ \t]*(,|and|:|\/)[ \t]*[\d\.xyz\-–−]+[ \t]*((?P<time>.?\s*{time_units_tre})|(?P<temperature>.?\s*{temperature_units_tre})|(?P<pressure>.?\s*{pressure_units_tre})|(?P<quantity>.?\s*{quantity_units_tre})|(?P<stirring_speed>[^-\),\[\]\d\s]?\s*{stirring_units_tre})|(?P<heat_ramp>.?\s*{heating_ramp_units_tre})|(?P<concentration>.?\s*{concentration_units_tre})|(?P<flow_rate>[^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))*)+"
+        individual_regex = rf"(?P<value>[\d\.\-–−])+[ \t]*((?P<time>.?\s*{time_units_tre})|(?P<temperature>.?\s*{temperature_units_tre})|(?P<pressure>.?\s*{pressure_units_tre})|(?P<quantity>.?\s*{quantity_units_tre})|(?P<stirring_speed>[^-\),\[\]\d\s]?\s*{stirring_units_tre})|(?P<heat_ramp>.?\s*{heating_ramp_units_tre})|(?P<concentration>.?\s*{concentration_units_tre})|(?P<flow_rate>[^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))"
+        list_regex = rf"(([\d\.\-–−]+[ \t]*((?P<time1>.?\s*{time_units_tre})|(?P<temperature1>.?\s*{temperature_units_tre})|(?P<pressure1>.?\s*{pressure_units_tre})|(?P<quantity1>.?\s*{quantity_units_tre})|(?P<stirring_speed1>[^-\),\[\]\d\s]?\s*{stirring_units_tre})|(?P<heat_ramp1>.?\s*{heating_ramp_units_tre})|(?P<concentration1>.?\s*{concentration_units_tre})|(?P<flow_rate1>[^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))*)+(?:[ \t]*(,|:|\/|\bor\b|\band\b|,\s*and|,\s*or)[ \t]*[\d\.\-–−]+[ \t]*((?P<time2>.?\s*{time_units_tre})|(?P<temperature2>.?\s*{temperature_units_tre})|(?P<pressure2>.?\s*{pressure_units_tre})|(?P<quantity2>.?\s*{quantity_units_tre})|(?P<stirring_speed2>[^-\),\[\]\d\s]?\s*{stirring_units_tre})|(?P<heat_ramp2>.?\s*{heating_ramp_units_tre})|(?P<concentration2>.?\s*{concentration_units_tre})|(?P<flow_rate2>[^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))+)+)"
         self._individual_regex = re.compile(individual_regex, re.IGNORECASE | re.MULTILINE)
         self._list_regex = re.compile(list_regex, re.IGNORECASE | re.MULTILINE)
 

@@ -20,6 +20,7 @@ from zs4procext.actions import (
     PH_REGISTRY,
     PISTACHIO_ACTION_REGISTRY,
     PRECIPITATE_REGISTRY,
+    SAC_ACTION_REGISTRY,
     Add,
     AddMaterials,
     Cool,
@@ -155,6 +156,25 @@ class ActionExtractorFromText(BaseModel):
                     / "material_synthesis_actions_schema.json"
                 )
             self._action_dict = MATERIAL_ACTION_REGISTRY
+            self._ph_parser = KeywordSearching(keywords_list=PH_REGISTRY)
+            self._ph_parser.model_post_init(None)
+            self._filter_parser = KeywordSearching(keywords_list=FILTER_REGISTRY)
+            self._filter_parser.model_post_init(None)
+            self._centri_parser = KeywordSearching(keywords_list=CENTRIFUGATION_REGISTRY)
+            self._centri_parser.model_post_init(None)
+            self._evaporation_parser = KeywordSearching(keywords_list=EVAPORATION_REGISTRY)
+            self._evaporation_parser.model_post_init(None)
+            self._complex_parser = ComplexParametersParser()
+            self._complex_parser.model_post_init(None)
+            atributes = ["type", "name", "dropwise", "concentration", "amount"]
+        elif self.actions_type == "sac":
+            if self.action_prompt_schema_path is None:
+                self.action_prompt_schema_path = str(
+                    importlib_resources.files("zs4procext")
+                    / "resources"
+                    / "material_synthesis_actions_schema.json"
+                )
+            self._action_dict = SAC_ACTION_REGISTRY
             self._ph_parser = KeywordSearching(keywords_list=PH_REGISTRY)
             self._ph_parser.model_post_init(None)
             self._filter_parser = KeywordSearching(keywords_list=FILTER_REGISTRY)
