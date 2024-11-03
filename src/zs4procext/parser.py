@@ -352,6 +352,23 @@ class ListParametersParser(BaseModel):
             )
         results: List[str] = self._list_regex.findall(text)
         return results
+    
+    def get_units(self, parameter: re.Match[str]):
+        unit_type: str = ""
+        if parameter.group("time") is not None:
+            unit: str = parameter.group("time")
+            unit_type = "t"
+    
+    def find_parameters(self, text: str) -> Dict[str, Any]:
+        if self._individual_regex is None:
+            raise ValueError(
+                "The regex was not initialize, initialize it by <object_name>.model_post_init(None)"
+            )
+        results: Iterator[re.Match[str]] = self._list_regex.finditer(text)
+        results_dict: Dict[str, Any] = {}
+        results_dict["parameters"] = []
+        for result in results:
+            pass
 
 class ComplexParametersParser(BaseModel):
     parser_params_path: str = str(
