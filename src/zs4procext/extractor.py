@@ -302,9 +302,9 @@ class ActionExtractorFromText(BaseModel):
                     i = i + 1
             elif action["action"] == "Repeat":
                 post_action = action_list[i + 1]
-                amount = int(action["content"]["amount"])
+                amount = float(action["content"]["amount"])
                 if post_action["action"] =="Repeat":
-                    new_amount = int(post_action["content"]["amount"])
+                    new_amount = float(post_action["content"]["amount"])
                     if amount > new_amount:
                         del action_list[i]
                     else:
