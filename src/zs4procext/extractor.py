@@ -300,6 +300,17 @@ class ActionExtractorFromText(BaseModel):
                     del action_list[i]
                 else:
                     i = i + 1
+            elif action["action"] == "Repeat":
+                post_action = action_list[i + 1]
+                amount = int(action["content"]["amount"])
+                if post_action["action"] =="Repeat":
+                    new_amount = int(post_action["content"]["amount"])
+                    if amount > new_amount:
+                        del action_list[i]
+                    else:
+                        del action_list[i + 1]
+                else:
+                    i += 1
             elif action["action"] == "ChangeTemperature":
                 content = action["content"]
                 if content["temperature"] in set(["heat", "cool"]):
