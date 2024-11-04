@@ -353,11 +353,35 @@ class ListParametersParser(BaseModel):
         results: List[str] = self._list_regex.findall(text)
         return results
     
-    def get_units(self, parameter: re.Match[str]):
-        unit_type: str = ""
+    def get_units(self, parameter: re.Match[str]) -> Dict[str, str]:
+        result_dict: Dict[str, str] = {}
+        result_dict["unit"] = ""
+        result_dict["unit_type"] = ""
         if parameter.group("time") is not None:
-            unit: str = parameter.group("time")
-            unit_type = "t"
+            result_dict["unit"] = parameter.group("time")
+            result_dict["unit_type"] = "d"
+        elif parameter.group("temperature") is not None:
+            result_dict["unit"] = parameter.group("temperature")
+            result_dict["unit_type"] = "t"
+        elif parameter.group("pressure") is not None:
+            result_dict["unit"] = parameter.group("pressure")
+            result_dict["unit_type"] = "p"
+        elif parameter.group("quantity") is not None:
+            result_dict["unit"] = parameter.group("quantity")
+            result_dict["unit_type"] = "q"
+        elif parameter.group("stirring_speed") is not None:
+            result_dict["unit"] = parameter.group("stirring_speed")
+            result_dict["unit_type"] = "ss"
+        elif parameter.group("heat_ramp") is not None:
+            result_dict["unit"] = parameter.group("heat_ramp")
+            result_dict["unit_type"] = "hr"
+        elif parameter.group("concentration") is not None:
+            result_dict["unit"] = parameter.group("concentration")
+            result_dict["unit_type"] = "c"
+        elif parameter.group("flow_rate") is not None:
+            result_dict["unit"] = parameter.group("flow_rate")
+            result_dict["unit_type"] = "fr"
+        return result_dict
     
     def find_parameters(self, text: str) -> Dict[str, Any]:
         if self._individual_regex is None:
@@ -367,6 +391,7 @@ class ListParametersParser(BaseModel):
         results: Iterator[re.Match[str]] = self._list_regex.finditer(text)
         results_dict: Dict[str, Any] = {}
         results_dict["parameters"] = []
+        final_unit = self.get_units(results[-1])
         for result in results:
             pass
 
