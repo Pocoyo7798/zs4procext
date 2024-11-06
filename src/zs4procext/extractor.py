@@ -494,7 +494,7 @@ class ActionExtractorFromText(BaseModel):
                 print(chemical_response)
                 schemas = self._schema_parser.parse_schema(chemical_response)
                 new_action = action.generate_action(
-                    context, schemas, self._schema_parser, self._quantity_parser, self._centri_parser, self._filter_parser, self._ph_parser, self._banned_parser
+                    context, schemas, self._schema_parser, self._quantity_parser, self._centri_parser, self._filter_parser, self._banned_parser
                 )
                 action_list.extend(new_action)
             elif action is WashSAC:
@@ -503,7 +503,7 @@ class ActionExtractorFromText(BaseModel):
                 print(chemical_response)
                 schemas = self._schema_parser.parse_schema(chemical_response)
                 new_action = action.generate_action(
-                    context, schemas, self._schema_parser, self._quantity_parser, self._condition_parser, self._centri_parser, self._filter_parser, self._ph_parser, self._banned_parser
+                    context, schemas, self._schema_parser, self._quantity_parser, self._condition_parser, self._centri_parser, self._filter_parser, self._banned_parser
                 )
                 action_list.extend(new_action)
             elif action.type == "onlyconditions":

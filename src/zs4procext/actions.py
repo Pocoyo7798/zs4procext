@@ -1171,7 +1171,6 @@ class WashMaterial(ActionsWithchemicals):
         amount_parser: ParametersParser,
         centrifuge_parser: KeywordSearching,
         filter_parser: KeywordSearching,
-        ph_parser: KeywordSearching,
         banned_parser: KeywordSearching,
         complex_parser: ComplexParametersParser=None,
     ) -> List[Dict[str, Any]]:
@@ -1201,12 +1200,6 @@ class WashMaterial(ActionsWithchemicals):
                     list_of_actions.append(action.zeolite_dict())
         if chemicals_info.repetitions > 1:
             list_of_actions.append(Repeat(action_name="Repeat", amount=chemicals_info.repetitions).zeolite_dict())
-        elif len(ph_parser.find_keywords(context)) == 0:
-            dimensionless_values = DimensionlessParser.get_dimensionless_numbers(context)
-            if len(dimensionless_values) == 0:
-                pass
-            else:
-                list_of_actions.append(Repeat(action_name="Repeat", amount= dimensionless_values[0]).zeolite_dict())
         return list_of_actions
     
 class WashSAC(ActionsWithChemicalAndConditions):
@@ -1225,7 +1218,6 @@ class WashSAC(ActionsWithChemicalAndConditions):
         conditions_parser: ParametersParser,
         centrifuge_parser: KeywordSearching,
         filter_parser: KeywordSearching,
-        ph_parser: KeywordSearching,
         banned_parser: KeywordSearching,
         complex_parser: ComplexParametersParser=None,
     ) -> List[Dict[str, Any]]:
@@ -1258,12 +1250,6 @@ class WashSAC(ActionsWithChemicalAndConditions):
                     list_of_actions.append(action.zeolite_dict())
         if chemicals_info.repetitions > 1:
             list_of_actions.append(Repeat(action_name="Repeat", amount=chemicals_info.repetitions).zeolite_dict())
-        elif len(ph_parser.find_keywords(context)) == 0:
-            dimensionless_values = DimensionlessParser.get_dimensionless_numbers(context)
-            if len(dimensionless_values) == 0:
-                pass
-            else:
-                list_of_actions.append(Repeat(action_name="Repeat", amount= dimensionless_values[0]).zeolite_dict())
         return list_of_actions
 
 class WaitMaterial(ActionsWithConditons):
