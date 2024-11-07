@@ -315,6 +315,7 @@ class ListParametersParser(BaseModel):
         / "resources"
         / "synthesis_parsing_parameters.json"
     )
+    quantity_range: int = 100
     _individual_regex: Optional[re.Pattern[str]] = PrivateAttr(default=None)
     _list_regex: Optional[re.Pattern[str]] = PrivateAttr(default=None)
 
@@ -340,8 +341,8 @@ class ListParametersParser(BaseModel):
         heating_ramp_units_tre: re.Pattern[str] = correct_tre(heating_ramp_units_list)
         concentration_units_tre: re.Pattern[str] = correct_tre(concentration_units_list)
         flow_rate_units_tre: re.Pattern[str] = correct_tre(flow_rate_units_list)
-        individual_regex = rf"(?P<value>[\d\.\-–−])+[ \t]*((?P<time>.?\s*{time_units_tre})|(?P<temperature>.?\s*{temperature_units_tre})|(?P<pressure>.?\s*{pressure_units_tre})|(?P<quantity>.?\s*{quantity_units_tre})|(?P<stirring_speed>[^-\),\[\]\d\s]?\s*{stirring_units_tre})|(?P<heat_ramp>.?\s*{heating_ramp_units_tre})|(?P<concentration>.?\s*{concentration_units_tre})|(?P<flow_rate>[^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))"
-        list_regex = rf"(([\d\.\-–−]+[ \t]*((?P<time1>.?\s*{time_units_tre})|(?P<temperature1>.?\s*{temperature_units_tre})|(?P<pressure1>.?\s*{pressure_units_tre})|(?P<quantity1>.?\s*{quantity_units_tre})|(?P<stirring_speed1>[^-\),\[\]\d\s]?\s*{stirring_units_tre})|(?P<heat_ramp1>.?\s*{heating_ramp_units_tre})|(?P<concentration1>.?\s*{concentration_units_tre})|(?P<flow_rate1>[^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))*)+(?:[ \t]*(,|:|\/|\bor\b|\band\b|,\s*and|,\s*or)[ \t]*[\d\.\-–−]+[ \t]*((?P<time2>.?\s*{time_units_tre})|(?P<temperature2>.?\s*{temperature_units_tre})|(?P<pressure2>.?\s*{pressure_units_tre})|(?P<quantity2>.?\s*{quantity_units_tre})|(?P<stirring_speed2>[^-\),\[\]\d\s]?\s*{stirring_units_tre})|(?P<heat_ramp2>.?\s*{heating_ramp_units_tre})|(?P<concentration2>.?\s*{concentration_units_tre})|(?P<flow_rate2>[^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))+)+)"
+        individual_regex = rf"(?P<value>[\d\.\-–−]+)[ \t]*((?P<time>.?\s*{time_units_tre})|(?P<temperature>.?\s*{temperature_units_tre})|(?P<pressure>.?\s*{pressure_units_tre})|(?P<quantity>.?\s*{quantity_units_tre})|(?P<stirring_speed>[^-\),\[\]\d\s]?\s*{stirring_units_tre})|(?P<heat_ramp>.?\s*{heating_ramp_units_tre})|(?P<concentration>.?\s*{concentration_units_tre})|(?P<flow_rate>[^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))*"
+        list_regex = rf"[^\w\-]([\d\.\-–−]+[ \t]*((.?\s*{time_units_tre})|(.?\s*{temperature_units_tre})|(.?\s*{pressure_units_tre})|(.?\s*{quantity_units_tre})|([^-\),\[\]\d\s]?\s*{stirring_units_tre})|(.?\s*{heating_ramp_units_tre})|(.?\s*{concentration_units_tre})|([^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))*[ \t]*(,|\/|\bor\b|\band\b|,\s*and|,\s*or)[ \t])+([\d\.])+[ \t]*((.?\s*{time_units_tre})|(.?\s*{temperature_units_tre})|(.?\s*{pressure_units_tre})|(.?\s*{quantity_units_tre})|([^-\),\[\]\d\s]?\s*{stirring_units_tre})|(.?\s*{heating_ramp_units_tre})|(.?\s*{concentration_units_tre})|([^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))"
         self._individual_regex = re.compile(individual_regex, re.IGNORECASE | re.MULTILINE)
         self._list_regex = re.compile(list_regex, re.IGNORECASE | re.MULTILINE)
 
@@ -350,50 +351,96 @@ class ListParametersParser(BaseModel):
             raise ValueError(
                 "The regex was not initialize, initialize it by <object_name>.model_post_init(None)"
             )
-        results: List[str] = self._list_regex.findall(text)
-        return results
+        results: Iterator[re.Match[str]] = self._list_regex.finditer(text)
+        results_list: List[str] = []
+        for match in results:
+            results_list.append(match.group(0))
+        return results_list
     
     def get_units(self, parameter: re.Match[str]) -> Dict[str, str]:
         result_dict: Dict[str, str] = {}
         result_dict["unit"] = ""
         result_dict["unit_type"] = ""
-        if parameter.group("time") is not None:
-            result_dict["unit"] = parameter.group("time")
-            result_dict["unit_type"] = "d"
-        elif parameter.group("temperature") is not None:
-            result_dict["unit"] = parameter.group("temperature")
-            result_dict["unit_type"] = "t"
-        elif parameter.group("pressure") is not None:
-            result_dict["unit"] = parameter.group("pressure")
-            result_dict["unit_type"] = "p"
-        elif parameter.group("quantity") is not None:
-            result_dict["unit"] = parameter.group("quantity")
-            result_dict["unit_type"] = "q"
-        elif parameter.group("stirring_speed") is not None:
-            result_dict["unit"] = parameter.group("stirring_speed")
-            result_dict["unit_type"] = "ss"
-        elif parameter.group("heat_ramp") is not None:
-            result_dict["unit"] = parameter.group("heat_ramp")
-            result_dict["unit_type"] = "hr"
-        elif parameter.group("concentration") is not None:
-            result_dict["unit"] = parameter.group("concentration")
-            result_dict["unit_type"] = "c"
-        elif parameter.group("flow_rate") is not None:
-            result_dict["unit"] = parameter.group("flow_rate")
-            result_dict["unit_type"] = "fr"
+        groups_list: List[str] = list(self._individual_regex.groupindex.keys())
+        for group in groups_list:
+            if group == "value":
+                pass
+            elif parameter.group(group) is not None:
+                result_dict["unit"] = parameter.group(group)
+                result_dict["unit_type"] = UNITS_LETTER_REGISTRY[group]
         return result_dict
     
+    def verify_complementary_values(self, values_dict):
+        units_type: str = values_dict["units_type"]
+        units_type = units_type.replace(UNITS_LETTER_REGISTRY["quantity"], "")
+        units_type = units_type.replace(UNITS_LETTER_REGISTRY["concentration"], "")
+        test: bool = True
+        if units_type != "":
+            return False
+        i = 0
+        for value in values_dict["values"][:-1]:
+            value_unit: str = value["unit"]
+            for other_value in values_dict["values"][i + 1:]:
+                if value_unit == other_value["unit"]:
+                    test = False
+                    break
+            i += 1
+        return test
+    
+    def verify_value_range(self, values_dict):
+        test: bool = True
+        units_type: str = values_dict["units_type"]
+        units_type = units_type.replace(UNITS_LETTER_REGISTRY["quantity"], "")
+        if units_type == "":
+            sorted_values: List[Dict[str, Any]] = sorted(values_dict["values"], key=lambda d: float(d['value']))
+            min_value: float = float(sorted_values[0]["value"])
+            max_value: float = float(sorted_values[-1]["value"])
+            if max_value > self.quantity_range * min_value:
+                test = False
+        return test
+
+
+
+
     def find_parameters(self, text: str) -> Dict[str, Any]:
         if self._individual_regex is None:
             raise ValueError(
                 "The regex was not initialize, initialize it by <object_name>.model_post_init(None)"
             )
-        results: Iterator[re.Match[str]] = self._list_regex.finditer(text)
+        results: List[re.Match[str]] = list(self._individual_regex.finditer(text))
         results_dict: Dict[str, Any] = {}
-        results_dict["parameters"] = []
-        final_unit = self.get_units(results[-1])
+        results_dict["values"] = []
+        results_dict["units_type"] = ""
+        final_unit_info: Dict[str, Any] = self.get_units(results[-1])
+        final_unit: str = final_unit_info["unit"]
+        final_unit_type: str = final_unit_info["unit_type"]
         for result in results:
-            pass
+            result_info: Dict[str, Any] = {}
+            result_info["value"] = result.group("value")
+            unit_info: Dict[str, Any] = self.get_units(result)
+            result_info["unit"] = unit_info["unit"]
+            unit_type: str = unit_info["unit_type"]
+            if result_info["unit"] == "":
+                result_info["unit"] = final_unit
+                unit_type: str = final_unit_type
+            results_dict["units_type"] += unit_type
+            results_dict["values"].append(result_info)
+        return results_dict
+    
+    def generate_text(self, list_of_sequences: List[str], list_of_lists: List[List[Any]], text: str) -> List[str]:
+        if len(list_of_sequences) != len(list_of_lists):
+            raise AttributeError("Both lists must be of the same length")
+        text_list: List[str] = []
+        if len(list_of_lists) == 0:
+            return [text]
+        list_of_values: List[Any] = list_of_lists[0]
+        string = list_of_sequences[0]
+        for value in list_of_values:
+            value_string: str = " " + value["value"] + " " + value["unit"]
+            text = text.replace(string, value_string)
+            text_list += self.generate_text(list_of_sequences[1:], list_of_lists[1:], text)
+        return text_list
+
 
 class ComplexParametersParser(BaseModel):
     parser_params_path: str = str(
@@ -862,3 +909,14 @@ MOLAR_RATIO_REGISTRY: List[str] = ["TBP OH",
                                    "SDA",
                                    "B2O3"
                                    ]
+
+UNITS_LETTER_REGISTRY: Dict[str, str] = {
+    "time": "d",
+    "temperature": "t",
+    "pressure": "p",
+    "quantity": "q",
+    "stirring_speed": "s",
+    "heat_ramp": "h",
+    "concentration": "c",
+    "flow_rate": "f"
+}
