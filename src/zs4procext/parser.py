@@ -341,8 +341,8 @@ class ListParametersParser(BaseModel):
         heating_ramp_units_tre: re.Pattern[str] = correct_tre(heating_ramp_units_list)
         concentration_units_tre: re.Pattern[str] = correct_tre(concentration_units_list)
         flow_rate_units_tre: re.Pattern[str] = correct_tre(flow_rate_units_list)
-        individual_regex = rf"(?P<value>[\d\.\-–−]+)[ \t]*((?P<time>.?\s*{time_units_tre})|(?P<temperature>.?\s*{temperature_units_tre})|(?P<pressure>.?\s*{pressure_units_tre})|(?P<quantity>.?\s*{quantity_units_tre})|(?P<stirring_speed>[^-\),\[\]\d\s]?\s*{stirring_units_tre})|(?P<heat_ramp>.?\s*{heating_ramp_units_tre})|(?P<concentration>.?\s*{concentration_units_tre})|(?P<flow_rate>[^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))*"
-        list_regex = rf"[^\w\-]([\d\.\-–−]+[ \t]*((.?\s*{time_units_tre})|(.?\s*{temperature_units_tre})|(.?\s*{pressure_units_tre})|(.?\s*{quantity_units_tre})|([^-\),\[\]\d\s]?\s*{stirring_units_tre})|(.?\s*{heating_ramp_units_tre})|(.?\s*{concentration_units_tre})|([^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))*[ \t]*(,|\/|\bor\b|\band\b|,\s*and|,\s*or)[ \t])+([\d\.])+[ \t]*((.?\s*{time_units_tre})|(.?\s*{temperature_units_tre})|(.?\s*{pressure_units_tre})|(.?\s*{quantity_units_tre})|([^-\),\[\]\d\s]?\s*{stirring_units_tre})|(.?\s*{heating_ramp_units_tre})|(.?\s*{concentration_units_tre})|([^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))"
+        individual_regex = rf"(?P<value>[\d\.\-–−]+)[ \t]*((?P<time>.?{time_units_tre})|(?P<temperature>.?\s*{temperature_units_tre})|(?P<pressure>.?{pressure_units_tre})|(?P<quantity>.?{quantity_units_tre})|(?P<stirring_speed>[^-\),\[\]\d\s]?\s*{stirring_units_tre})|(?P<heat_ramp>.?\s*{heating_ramp_units_tre})|(?P<concentration>.?\s*{concentration_units_tre})|(?P<flow_rate>[^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))*"
+        list_regex = rf"[^\w\-]([\d\.\-–−]+[ \t]*((.?{time_units_tre})|(.?\s*{temperature_units_tre})|(.?{pressure_units_tre})|(.?{quantity_units_tre})|([^-\),\[\]\d\s]?\s*{stirring_units_tre})|(.?\s*{heating_ramp_units_tre})|(.?\s*{concentration_units_tre})|([^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))*[ \t]*(,|\/|\bor\b|\band\b|,\s*and|,\s*or)[ \t])+([\d\.])+[ \t]*((.?{time_units_tre})|(.?\s*{temperature_units_tre})|(.?{pressure_units_tre})|(.?{quantity_units_tre})|([^-\),\[\]\d\s]?{stirring_units_tre})|(.?\s*{heating_ramp_units_tre})|(.?{concentration_units_tre})|([^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))"
         self._individual_regex = re.compile(individual_regex, re.IGNORECASE | re.MULTILINE)
         self._list_regex = re.compile(list_regex, re.IGNORECASE | re.MULTILINE)
 
@@ -399,7 +399,44 @@ class ListParametersParser(BaseModel):
                 test = False
         return test
 
-
+    def indexes_heterogeneous_lists(self, list_of_types: List[str]) -> List[List[int]]:
+        i = 0
+        final_lists: List[List[int]] = []
+        while i < len(list_of_types):
+            type_sequence = list_of_types[i]
+            if len(set(type_sequence)) > 1:
+                list_of_index: List[int] =[i]
+                j = i + 1
+                while j < len(list_of_types):
+                    other_sequence = list_of_types[j]
+                    if type_sequence == other_sequence:
+                        list_of_index.append(j)
+                        del list_of_types[j]
+                    else:
+                        j += 1
+                del list_of_types[i]
+                final_lists.append(list_of_index)
+            else:
+                i += 1
+        return final_lists
+    
+    def indexes_complementary_lists(self, list_of_types: List[str], lists_of_values: List[Dict[str]]) -> List[List[int]]:
+        if len(list_of_types) != len(lists_of_values):
+            raise AttributeError("Both lists must be of the same length")
+        i = 0
+        final_lists: List[List[int]] = []
+        while i < list_of_types:
+            list_of_index: List[int] =[i]
+            sequence_type = list_of_types[i]
+            values_list = lists_of_values[i]
+            type_match: set = set(TYPE_COMPARISSON_REGISTRY[sequence_type[0]])
+            j = i + 1
+            while j < list_of_types and len(set(sequence_type)) == 1:
+                other_sequence_type = list_of_types[j]
+                other_values_list = lists_of_values[j]
+                if other_sequence_type[0] in type_match and len(sequence_type) == len(other_sequence_type):
+                    if len(values_list) > 1:
+                        pass
 
 
     def find_parameters(self, text: str) -> Dict[str, Any]:
@@ -919,4 +956,15 @@ UNITS_LETTER_REGISTRY: Dict[str, str] = {
     "heat_ramp": "h",
     "concentration": "c",
     "flow_rate": "f"
+}
+
+TYPE_COMPARISSON_REGISTRY: Dict[str, str] = {
+    "d": ["d"],
+    "d": ["t"],
+    "d": ["p"],
+    "d": ["q", "c"],
+    "d": ["s"],
+    "d": ["h"],
+    "d": ["q", "c"],
+    "d": ["f"]
 }
