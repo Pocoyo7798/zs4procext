@@ -420,7 +420,7 @@ class ListParametersParser(BaseModel):
                 i += 1
         return final_lists
     
-    def indexes_complementary_lists(self, list_of_types: List[str], lists_of_values: List[Dict[str]]) -> List[List[int]]:
+    def indexes_complementary_lists(self, list_of_types: List[str], lists_of_values: List[Dict[str, Any]]) -> List[List[int]]:
         if len(list_of_types) != len(lists_of_values):
             raise AttributeError("Both lists must be of the same length")
         i = 0
