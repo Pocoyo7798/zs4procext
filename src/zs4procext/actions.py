@@ -131,7 +131,7 @@ class Actions(BaseModel):
     
     def zeolite_dict(self) -> Dict[str, Any]:
         action_name: str = self.action_name
-        if type(self) in set([ChangeTemperature, Cool]):
+        if type(self) in set([ChangeTemperature, Cool, ChangeTemperatureSAC, CoolSAC]):
             action_dict = self.model_dump(
                 exclude={"action_name", "action_context", "pressure", "duration", "stirring_speed"}
             )
@@ -1442,7 +1442,7 @@ class ChangeTemperatureSAC(ActionsWithConditons):
             new_action = StirMaterial(action_name="Stir", duration=action.duration, stirring_speed=action.stirring_speed)
             list_of_actions.append(new_action.zeolite_dict())
         elif action.duration is not None:
-            new_action = Wait(action_name="Wait", duration=action.duration)
+            new_action = WaitMaterial(action_name="Wait", duration=action.duration)
             list_of_actions.append(new_action.zeolite_dict())
         return list_of_actions
         
@@ -1496,7 +1496,7 @@ class CoolSAC(ActionsWithConditons):
             new_action = StirMaterial(action_name="Stir", duration=action.duration, stirring_speed=action.stirring_speed)
             list_of_actions.append(new_action.zeolite_dict())
         elif action.duration is not None:
-            new_action = Wait(action_name="Wait", duration=action.duration)
+            new_action = WaitMaterial(action_name="Wait", duration=action.duration)
             list_of_actions.append(new_action.zeolite_dict())
         return list_of_actions
 
