@@ -3,6 +3,10 @@ from typing import Any, Dict, List, Optional
 import importlib_resources
 from langchain.prompts import BasePromptTemplate, load_prompt
 from pydantic import BaseModel, PrivateAttr
+from PIL import Image
+import base64
+from io import BytesIO
+from IPython.display import HTML, display
 
 
 class PromptFormatter(BaseModel):
@@ -133,7 +137,40 @@ class PromptFormatter(BaseModel):
             conclusion=self.conclusion,
         )
         return formatted_prompt
+    
+    def prepare_image(self, image_path: str = ""):
+        pil_image = Image.open(image_path)
+        buffered = BytesIO()
+        pil_image.save(buffered, format="JPEG")  # You can change the format if needed
+        img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
+        return img_str
 
+
+    def format_image_prompt(
+        self,
+        image_path: str = "",
+    ) -> str:
+        if self._loaded_prompt is None:
+            raise AttributeError(
+                "There is no prompt loaded, you need to post init the object."
+            )
+        formatted_prompt: str = self._loaded_prompt.format(
+            expertise=self.expertise,
+            initialization=self.initialization,
+            objective=self.objective,
+            context="",
+            actions=self._action_list,
+            answer_schema=self._answer_schema,
+            conclusion=self.conclusion,
+        )
+        pil_image = Image.open(image_path)
+        prompt: Dict[str, Any] = [
+            {
+                "prompt": formatted_prompt,
+                "multi_modal_data": {"image": pil_image},
+            }
+        ]
+        return prompt
 
 TEMPLATE_REGISTRY: Dict[str, str] = {
     "meta-llama/Llama-2-7b-chat-hf": str(
