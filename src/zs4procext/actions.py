@@ -131,9 +131,13 @@ class Actions(BaseModel):
     
     def zeolite_dict(self) -> Dict[str, Any]:
         action_name: str = self.action_name
-        if type(self) in set([ChangeTemperature, Cool, ChangeTemperatureSAC, CoolSAC]):
+        if type(self) in set([ChangeTemperature, Cool, CoolSAC]):
             action_dict = self.model_dump(
                 exclude={"action_name", "action_context", "pressure", "duration", "stirring_speed"}
+            )
+        elif type(self) is ChangeTemperatureSAC:
+            action_dict = self.model_dump(
+                exclude={"action_name", "action_context", "pressure", "duration", "stirring_speed", "atmosphere"}
             )
         elif type(self) in set([WaitMaterial, StirMaterial, WashSAC]):
             action_dict = self.model_dump(
@@ -1425,6 +1429,7 @@ class ChangeTemperatureSAC(ActionsWithConditons):
     heat_ramp: Optional[str] = None
     duration: Optional[str] = None
     pressure: Optional[str] = None
+    atmosphere: Optional[str] = None
     stirring_speed: Optional[str] = None
 
     @classmethod
@@ -1437,12 +1442,16 @@ class ChangeTemperatureSAC(ActionsWithConditons):
         list_of_actions: List[Any] = []
         if len(keywords_list) > 0:
             action.microwave = True
-        list_of_actions.append(action.zeolite_dict())
-        if action.stirring_speed is not None:
+        if action.atmosphere is not None:
+            new_action = ThermalTreatment(action_name="TermalTreatment", temperature=action.temperature, duration=action.duration, heat_ramp=action.heat_ramp, atmosphere=action.atmosphere)
+            list_of_actions.append(new_action.zeolite_dict())
+        elif action.stirring_speed is not None:
             new_action = StirMaterial(action_name="Stir", duration=action.duration, stirring_speed=action.stirring_speed)
+            list_of_actions.append(action.zeolite_dict())
             list_of_actions.append(new_action.zeolite_dict())
         elif action.duration is not None:
             new_action = WaitMaterial(action_name="Wait", duration=action.duration)
+            list_of_actions.append(action.zeolite_dict())
             list_of_actions.append(new_action.zeolite_dict())
         return list_of_actions
         
@@ -1690,6 +1699,8 @@ SAC_ACTION_REGISTRY: Dict[str, Any] = {
     "settemperature": ChangeTemperatureSAC,
     "grind": Grind,
     "sieve": Sieve,
+    "anneal": ThermalTreatment,
+    "calcine": ThermalTreatment,
     "synthesisproduct": None,
     "synthesismethod": None,
     "synthesisvariant": None,
