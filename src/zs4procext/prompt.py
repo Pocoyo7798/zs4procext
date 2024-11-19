@@ -6,7 +6,6 @@ from pydantic import BaseModel, PrivateAttr
 from PIL import Image
 import base64
 from io import BytesIO
-from IPython.display import HTML, display
 
 
 class PromptFormatter(BaseModel):
