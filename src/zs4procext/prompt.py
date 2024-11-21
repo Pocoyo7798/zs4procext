@@ -273,6 +273,16 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         / "resources"
         / "llama3_default_instruct_template.json"
     ),
+    "meta-llama/Meta-Llama-3-8B-Instruct": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "llama3_default_instruct_template.json"
+    ),
+    "models/Meta-Llama-3-8B-Instruct": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "llama3_default_instruct_template.json"
+    ),
     "microsoft/Phi-3-medium-4k-instruct": str(
         importlib_resources.files("zs4procext")
         / "resources"
@@ -284,6 +294,11 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         / "phi_default_instruct_template.json"
     ),
     "microsoft/Phi-3-mini-4k-instruct": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "phi_default_instruct_template.json"
+    ),
+    "models/Phi-3-mini-4k-instruct": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "phi_default_instruct_template.json"
