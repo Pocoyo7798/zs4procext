@@ -793,7 +793,7 @@ class TableExtractor(BaseModel):
             self._prompt_schema_path = str(
                 importlib_resources.files("zs4procext")
                 / "resources"
-                / "table_finding_schema.json"
+                / "table_extraction_schema.json"
             )
         with open(self._prompt_schema_path, "r") as f:
                 prompt_dict = json.load(f)
