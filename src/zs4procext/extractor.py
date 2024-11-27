@@ -51,6 +51,7 @@ from zs4procext.parser import (
     MOLAR_RATIO_REGISTRY,
     NumberFinder,
     ParametersParser,
+    TableParser,
     SchemaParser,
     VariableFinder
 )
@@ -768,3 +769,40 @@ class MolarRatioExtractorFromText(BaseModel):
             if len(new_ratio_dict.keys()) > 2:
                 molar_ratios_result.append(new_ratio_dict)
         return {"molar_ratios": molar_ratios_result, "equations": equations, "letters": conversion_dict}
+
+class TableExtractor(BaseModel):
+    table_type: str = "All"
+    prompt_structure_path: Optional[str] = None
+    prompt_schema_path: Optional[str] = None
+    vlm_model_name: Optional[str] = None
+    vlm_model_parameters_path: Optional[str] = None
+    _prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
+    _vlm_model: Optional[ModelLLM] = PrivateAttr(default=None)
+    _condition_parser: Optional[TableParser] = PrivateAttr(default=None)
+
+    def model_post_init(self, __context: Any) -> None:
+        if self.vlm_model_parameters_path is None:
+            vlm_param_path = str(
+                importlib_resources.files("zs4procext")
+                / "resources"
+                / "vllm_default_params.json"
+                )
+        else:
+            vlm_param_path = self.vlm_model_parameters_path
+        if self._prompt_schema_path is None:
+            self._prompt_schema_path = str(
+                importlib_resources.files("zs4procext")
+                / "resources"
+                / "table_finding_schema.json"
+            )
+        with open(self._prompt_schema_path, "r") as f:
+                prompt_dict = json.load(f)
+        self._prompt = PromptFormatter(**prompt_dict)
+        self._prompt.model_post_init(self.prompt_structure_path)
+        self._vlm_model.load_model_parameters(vlm_param_path)
+        self._vlm_model.vllm_load_model()
+
+    def extract_table_info(self, image_path: str):
+        print(self._prompt)
+        output = self._vlm_model.run_image_single_prompt(self._prompt, image_path)
+        print(output)

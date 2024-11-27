@@ -900,6 +900,80 @@ def correct_tre(word_list: List["str"]) -> re.Pattern[str]:
         i += 1
     return regex
 
+class TableParser(BaseModel):
+    table_type: str = "materials_characterization"
+    _words_registry: Optional[Dict[str, Any]] = PrivateAttr(default=None)
+    _word_searcher: Optional[Dict[str, KeywordSearching]] = PrivateAttr(default={})
+    _unit_searcher: Optional[Dict[str, KeywordSearching]] = PrivateAttr(default={})
+
+    def model_post_init(self, __context: Any):
+        if self.table_type == "materials_characterization":
+            self._words_registry = MATERIALS_CHARACTERIZATION_REGISTRY
+        if self._words_registry is None:
+            raise AttributeError(f"{self.table_type} is not a valid table_type")
+        for key in self._words_registry.keys():
+            self._word_searcher[key] = KeywordSearching(keywords_list=self._words_registry[key]["words"])
+            if self._words_registry[key]["units"] != []:
+                self._unit_searcher[key] = KeywordSearching(keywords_list=self._words_registry[key]["units"])
+            else:
+                self._unit_searcher[key] = KeywordSearching(keywords_list=["#%/daopdj21387921"])
+
+    def update_result(self, results: List[Dict[str, Any]], table_entries: List[List[str]], indexes_to_ignore: List[int], units: List[str], key: str, index: int):
+        if len(units) > 0:
+            unit: str = f" {units[0]}"
+        else:
+            unit = ""
+        j = 0
+        line_index = 0
+        for line in table_entries:
+            if line_index not in indexes_to_ignore:
+                entry = line[index]
+                try:
+                    results[j][key] = entry + unit
+                except IndexError:
+                    results.append({})
+                    results[j][key] = entry
+                j += 1
+            line_index += 1
+        return results
+
+    def extract_columns(self, table_entries: List[List[str]], collumn_headers):
+        results = []
+        headers: List[str] = []
+        for i in range(len(table_entries[0])):
+            header_string = ""
+            for index in collumn_headers:
+                header_string += table_entries[index][i]
+            headers.append(header_string.replace(" ", ""))
+        keys_to_use = list(self._words_registry.keys())
+        i = 0
+        for header in headers:
+            for key in keys_to_use:
+                keywords = self._word_searcher[key].find_keywords(header)
+                if len(keywords) > 0:
+                    units = self._unit_searcher[key].find_keywords(header)
+                    results = self.update_result(results, table_entries, collumn_headers, units, key, i)
+                    break
+            i += 1
+        return results
+            
+    
+    def find_infos(self, table_info: Dict[str, Any]):
+        table_entries: List[List[str]] = table_info["block"]
+        collumn_headers: List[int] = table_info["collumn_headers"]
+        row_indexes: List[int] = table_info["row_indexes"]
+        results: List[Dict[str, Any]] = self.extract_columns(table_entries, collumn_headers)
+        if len(results) == 0:
+            pass
+        elif len(results[0].keys()) < 2:
+            pass
+        else:
+            return results
+        new_table_entries = list(map(list, zip(*table_entries)))
+        results = self.extract_columns(new_table_entries, row_indexes)
+        return results
+
+
 PISTACHIO_SEPARATORS_REGISTRY: List[str] = [
         "Initialization",
         "Note",
@@ -1018,4 +1092,9 @@ TYPE_COMPARISSON_REGISTRY: Dict[str, str] = {
     "h": ["h"],
     "c": ["q", "c"],
     "f": ["f"]
+}
+
+MATERIALS_CHARACTERIZATION_REGISTRY: Dict[str, Any] = {
+    "surface_area": {"words": ["sbet"], "units": ["m2/g"]},
+    "sample": {"words": ["sample"], "units": []}
 }

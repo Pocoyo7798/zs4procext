@@ -3,6 +3,7 @@ from typing import Any, Dict, Optional
 
 from langchain_community.llms import VLLM
 from pydantic import BaseModel
+from PIL import Image
 
 
 class ModelLLM(BaseModel):
@@ -59,7 +60,18 @@ class ModelLLM(BaseModel):
         with open(file_path, "r") as f:
             self.model_parameters = json.load(f)
 
-    def run_single_prompt(self, prompt) -> str:
+    def run_single_prompt(self, prompt: str) -> str:
         if self.model is None:
             raise AttributeError("The LLM model is not loaded")
         return self.model(prompt)
+
+    def run_image_single_prompt(self, prompt: str, image_path: str) -> str:
+        pil_image = Image.open(image_path)
+        new_prompt: Dict[str, Any] = [
+            {
+                "prompt": prompt,
+                "multi_modal_data": {"image": pil_image},
+            }
+        ]
+        outputs = self.model.generate(new_prompt)
+        return outputs
