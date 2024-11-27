@@ -315,5 +315,10 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         importlib_resources.files("zs4procext")
         / "resources"
         / "solar_default_template.json"
+    ),
+    "llava-1.5-7b-hf": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "llava1.5_default_template.json"
     )
 }
