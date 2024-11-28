@@ -789,13 +789,13 @@ class TableExtractor(BaseModel):
                 )
         else:
             vlm_param_path = self.vlm_model_parameters_path
-        if self._prompt_schema_path is None:
-            self._prompt_schema_path = str(
+        if self.prompt_schema_path is None:
+            self.prompt_schema_path = str(
                 importlib_resources.files("zs4procext")
                 / "resources"
                 / "table_extraction_schema.json"
             )
-        with open(self._prompt_schema_path, "r") as f:
+        with open(self.prompt_schema_path, "r") as f:
                 prompt_dict = json.load(f)
         self._prompt = PromptFormatter(**prompt_dict)
         self._prompt.model_post_init(self.prompt_structure_path)
