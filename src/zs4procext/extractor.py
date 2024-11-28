@@ -799,6 +799,10 @@ class TableExtractor(BaseModel):
                 prompt_dict = json.load(f)
         self._prompt = PromptFormatter(**prompt_dict)
         self._prompt.model_post_init(self.prompt_structure_path)
+        if self.vlm_model_name is None:
+            self._vlm_model = ModelLLM(model_name="Llama2-70B-chat-hf")
+        else:
+            self._vlm_model = ModelLLM(model_name=self.vlm_model_name)
         self._vlm_model.load_model_parameters(vlm_param_path)
         self._vlm_model.vllm_load_model()
 
