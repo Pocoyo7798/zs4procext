@@ -56,7 +56,7 @@ def table2data(
     if os.path.isfile(output_file_path):
         os.remove(output_file_path)
     for file in file_list:
-        extension = ".".split(file)
+        extension = ".".split(file)[-1]
         if extension in {"png", "jpeg", "tiff"}:
             file_path = f"{image_folder}/{file}"
             extractor.extract_table_info(file_path)
