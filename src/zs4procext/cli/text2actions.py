@@ -86,12 +86,14 @@ def text2actions(
     start_time = time.time()
     if action_prompt_structure_path is None:
         try:
-            action_prompt_structure_path = TEMPLATE_REGISTRY[llm_model_name]
+            name = "/".split(llm_model_name)[-1]
+            action_prompt_structure_path = TEMPLATE_REGISTRY[name]
         except KeyError:
             pass
     if chemical_prompt_structure_path is None:
         try:
-            chemical_prompt_structure_path = TEMPLATE_REGISTRY[llm_model_name]
+            name = "/".split(llm_model_name)[-1]
+            chemical_prompt_structure_path = TEMPLATE_REGISTRY[name]
         except KeyError:
             pass
     extractor: ActionExtractorFromText = ActionExtractorFromText(

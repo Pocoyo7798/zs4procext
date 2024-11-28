@@ -144,160 +144,113 @@ class PromptFormatter(BaseModel):
         img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
         return img_str
 
-
-    def format_image_prompt(
-        self,
-        image_path: str = "",
-    ) -> str:
-        if self._loaded_prompt is None:
-            raise AttributeError(
-                "There is no prompt loaded, you need to post init the object."
-            )
-        formatted_prompt: str = self._loaded_prompt.format(
-            expertise=self.expertise,
-            initialization=self.initialization,
-            objective=self.objective,
-            context="",
-            actions=self._action_list,
-            answer_schema=self._answer_schema,
-            conclusion=self.conclusion,
-        )
-        pil_image = Image.open(image_path)
-        prompt: Dict[str, Any] = [
-            {
-                "prompt": formatted_prompt,
-                "multi_modal_data": {"image": pil_image},
-            }
-        ]
-        return prompt
-
 TEMPLATE_REGISTRY: Dict[str, str] = {
-    "meta-llama/Llama-2-7b-chat-hf": str(
+    "Llama-2-7b-chat-hf": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "llama2_default_chat_template.json"
     ),
-    "meta-llama/Llama-2-13b-chat-hf": str(
+    "Llama-2-13b-chat-hf": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "llama2_default_chat_template.json"
     ),
-    "meta-llama/Llama-2-70b-chat-hf": str(
+    "Llama-2-70b-chat-hf": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "llama2_default_chat_template.json"
     ),
-    "lmsys/vicuna-13b-v1.5-16k": str(
+    "vicuna-13b-v1.5-16k": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "vicuna_default_chat_template.json"
     ),
-    "lmsys/vicuna-33b-v1.3": str(
+    "vicuna-33b-v1.3": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "vicuna_default_chat_template.json"
     ),
-    "mistralai/Mistral-7B-Instruct-v0.1": str(
+    "Mistral-7B-Instruct-v0.1": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "mistral_instruct_default_template.json"
     ),
-    "mistralai/Mistral-7B-v0.1": str(
+    "Mistral-7B-v0.1": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "mistral_default_template.json"
     ),
-    "llm-agents/tora-13b-v1.0": str(
+    "tora-13b-v1.0": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "mistral_default_template.json"
     ),
-    "llm-agents/tora-70b-v1.0": str(
+    "tora-70b-v1.0": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "mistral_default_template.json"
     ),
-    "openlm-research/open_llama_7b": str(
+    "open_llama_7b": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "open_llama_default_template.json"
     ),
-    "openlm-research/open_llama_13b": str(
+    "open_llama_13b": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "open_llama_default_template.json"
     ),
-    "mosaicml/mpt-30b-chat": str(
+    "mpt-30b-chat": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "mpt_default_chat_template.json"
     ),
-    "mosaicml/mpt-30b": str(
+    "mpt-30b": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "mpt_default_template.json"
     ),
-    "mistralai/Mistral-7B-Instruct-v0.2": str(
+    "Mistral-7B-Instruct-v0.2": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "mistral_default_template.json"
     ),
-    "openchat/openchat_3.5" : str(
+    "openchat_3.5" : str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "open_chat_default_template.json"
     ),
-    "openchat/openchat-3.5-0106" : str(
+    "openchat-3.5-0106" : str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "open_chat_default_template.json"
     ),
-    "openchat/openchat-3.6-8b-20240522" : str(
+    "openchat-3.6-8b-20240522" : str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "open_chat_3.6_default_template.json"
     ),
-    "TheBloke/Mixtral-8x7B-Instruct-v0.1-AWQ": str(
+    "Mixtral-8x7B-Instruct-v0.1-AWQ": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "mistral_default_template.json"
     ),
-    "mistralai/Mixtral-8x7B-Instruct-v0.1": str(
+    "Mixtral-8x7B-Instruct-v0.1": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "mistral_instruct_default_template.json"
     ),
-    "meta-llama/Meta-Llama-3-8B-Instruct": str(
+    "Meta-Llama-3-8B-Instruct": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "llama3_default_instruct_template.json"
     ),
-    "meta-llama/Meta-Llama-3-8B-Instruct": str(
-        importlib_resources.files("zs4procext")
-        / "resources"
-        / "llama3_default_instruct_template.json"
-    ),
-    "models/Meta-Llama-3-8B-Instruct": str(
-        importlib_resources.files("zs4procext")
-        / "resources"
-        / "llama3_default_instruct_template.json"
-    ),
-    "microsoft/Phi-3-medium-4k-instruct": str(
+    "Phi-3-medium-128k-instruct": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "phi_default_instruct_template.json"
     ),
-        "microsoft/Phi-3-medium-128k-instruct": str(
-        importlib_resources.files("zs4procext")
-        / "resources"
-        / "phi_default_instruct_template.json"
-    ),
-    "microsoft/Phi-3-mini-4k-instruct": str(
-        importlib_resources.files("zs4procext")
-        / "resources"
-        / "phi_default_instruct_template.json"
-    ),
-    "models/Phi-3-mini-4k-instruct": str(
+    "Phi-3-mini-4k-instruct": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "phi_default_instruct_template.json"
@@ -307,55 +260,60 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         / "resources"
         / "qwen1.5_default_chat_template.json"
     ),
-    "berkeley-nest/Starling-LM-7B-alpha": str(
+    "Starling-LM-7B-alpha": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "starlinglm_default_template.json"
     ),
-    "SanjiWatsuki/Kunoichi-DPO-v2-7B": str(
+    "Kunoichi-DPO-v2-7B": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "kunoichi-dp_default_chat_template.json"
     ),
-    "HuggingFaceH4/zephyr-7b-beta": str(
+    "zephyr-7b-beta": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "zephyr_default_chat_template.json"
     ),
-    "google/gemma-1.1-7b-it": str(
+    "gemma-1.1-7b-it": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "gemma_default_it_template.json"
     ),
-    "google/gemma-1.1-2b-it": str(
+    "gemma-1.1-2b-it": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "gemma_default_it_template.json"
     ),
-    "dreamgen/WizardLM-2-7B": str(
+    "WizardLM-2-7B": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "wizardlm-2_default_template.json"
     ),
-    "ibm-granite/granite-7b-instruct": str(
+    "granite-7b-instruct": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "ibm_granite_default_template.json"
     ),
-    "ibm/merlinite-7b": str(
+    "merlinite-7b": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "ibm_granite_default_template.json"
     ),
-    "meta-llama/Meta-Llama-3.1-8B-Instruct": str(
+    "Meta-Llama-3.1-8B-Instruct": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "llama31_default_instruct_template.json"
     )
     ,
-    "upstage/SOLAR-10.7B-Instruct-v1.0": str(
+    "SOLAR-10.7B-Instruct-v1.0": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "solar_default_template.json"
+    ),
+    "llava-1.5-7b-hf": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "llava1.5_default_template.json"
     )
 }
