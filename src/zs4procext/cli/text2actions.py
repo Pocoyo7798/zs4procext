@@ -86,13 +86,13 @@ def text2actions(
     start_time = time.time()
     if action_prompt_structure_path is None:
         try:
-            name = "/".split(llm_model_name)[-1]
+            name = llm_model_name.split("/")[-1]
             action_prompt_structure_path = TEMPLATE_REGISTRY[name]
         except KeyError:
             pass
     if chemical_prompt_structure_path is None:
         try:
-            name = "/".split(llm_model_name)[-1]
+            name = llm_model_name.split("/")[-1]
             chemical_prompt_structure_path = TEMPLATE_REGISTRY[name]
         except KeyError:
             pass

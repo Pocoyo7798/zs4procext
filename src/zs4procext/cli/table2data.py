@@ -47,7 +47,7 @@ def table2data(
     start_time = time.time()
     if prompt_structure_path is None:
         try:
-            name = "/".split(vlm_model_name)[-1]
+            name = vlm_model_name.split("/")[-1]
             prompt_structure_path = TEMPLATE_REGISTRY[name]
         except KeyError:
             pass
