@@ -56,8 +56,10 @@ def table2data(
     if os.path.isfile(output_file_path):
         os.remove(output_file_path)
     for file in file_list:
-        extension = ".".split(file)
-        if extension in set(["png", "jpeg", "tiff"]):
+        extension = file.split(".")[-1]
+        print(extension)
+        if extension in {"png", "jpeg", "tiff"}:
+            print("cheguei")
             file_path = f"{image_folder}/{file}"
             extractor.extract_table_info(file_path)
     print(f"{(time.time() - start_time) / 60} minutes")

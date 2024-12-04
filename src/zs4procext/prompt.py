@@ -245,11 +245,6 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         / "resources"
         / "llama3_default_instruct_template.json"
     ),
-    "Phi-3-medium-4k-instruct": str(
-        importlib_resources.files("zs4procext")
-        / "resources"
-        / "phi_default_instruct_template.json"
-    ),
     "Phi-3-medium-128k-instruct": str(
         importlib_resources.files("zs4procext")
         / "resources"
@@ -260,7 +255,7 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         / "resources"
         / "phi_default_instruct_template.json"
     ),
-    "Qwen1.5-7B-Chat": str(
+    "Qwen/Qwen1.5-7B-Chat": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "qwen1.5_default_chat_template.json"
