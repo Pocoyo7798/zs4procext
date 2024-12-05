@@ -1442,7 +1442,9 @@ class ChangeTemperatureSAC(ActionsWithConditons):
         list_of_actions: List[Any] = []
         if len(keywords_list) > 0:
             action.microwave = True
-        if action.atmosphere is not None:
+        if action.temperature is None:
+            pass
+        elif action.atmosphere is not None:
             new_action = ThermalTreatment(action_name="TermalTreatment", temperature=action.temperature, duration=action.duration, heat_ramp=action.heat_ramp, atmosphere=action.atmosphere)
             list_of_actions.append(new_action.zeolite_dict())
         elif action.stirring_speed is not None:
@@ -1454,7 +1456,7 @@ class ChangeTemperatureSAC(ActionsWithConditons):
             list_of_actions.append(action.zeolite_dict())
             list_of_actions.append(new_action.zeolite_dict())
         return list_of_actions
-        
+
 class Cool(ActionsWithConditons):
     temperature: Optional[str] = None
     microwave: bool = False
@@ -1670,6 +1672,22 @@ MATERIAL_ACTION_REGISTRY: Dict[str, Any] = {
     "grind": Grind,
     "sieve": Sieve
 
+}
+
+ELEMENTARY_ACTION_REGISTRY: Dict[str, Any] = {
+    "add": AddMaterials,
+    "newsolution": NewSolution,
+    "makesolution": NewSolution,
+    "newmixture": NewSolution,
+    "separate": Separate,
+    "wash": WashMaterial,
+    "wait": WaitMaterial,
+    "stir": StirMaterial,
+    "repeat": Repeat,
+    "cool": Cool,
+    "heat": ChangeTemperatureSAC,
+    "grind": Grind,
+    "sieve": Sieve
 }
 
 SAC_ACTION_REGISTRY: Dict[str, Any] = {

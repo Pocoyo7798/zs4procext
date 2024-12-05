@@ -11,6 +11,7 @@ from zs4procext.actions import (
     AQUEOUS_REGISTRY,
     BANNED_CHEMICALS_REGISTRY,
     CENTRIFUGATION_REGISTRY,
+    ELEMENTARY_ACTION_REGISTRY,
     EVAPORATION_REGISTRY,
     FILTER_REGISTRY,
     FILTRATE_REGISTRY,
@@ -180,6 +181,25 @@ class ActionExtractorFromText(BaseModel):
                     / "material_synthesis_actions_schema.json"
                 )
             self._action_dict = SAC_ACTION_REGISTRY
+            self._ph_parser = KeywordSearching(keywords_list=PH_REGISTRY)
+            self._ph_parser.model_post_init(None)
+            self._filter_parser = KeywordSearching(keywords_list=FILTER_REGISTRY)
+            self._filter_parser.model_post_init(None)
+            self._centri_parser = KeywordSearching(keywords_list=CENTRIFUGATION_REGISTRY)
+            self._centri_parser.model_post_init(None)
+            self._evaporation_parser = KeywordSearching(keywords_list=EVAPORATION_REGISTRY)
+            self._evaporation_parser.model_post_init(None)
+            self._complex_parser = ComplexParametersParser()
+            self._complex_parser.model_post_init(None)
+            atributes = ["type", "name", "dropwise", "concentration", "amount"]
+        elif self.actions_type == "elementary":
+            if self.action_prompt_schema_path is None:
+                self.action_prompt_schema_path = str(
+                    importlib_resources.files("zs4procext")
+                    / "resources"
+                    / "material_synthesis_actions_schema.json"
+                )
+            self._action_dict = ELEMENTARY_ACTION_REGISTRY
             self._ph_parser = KeywordSearching(keywords_list=PH_REGISTRY)
             self._ph_parser.model_post_init(None)
             self._filter_parser = KeywordSearching(keywords_list=FILTER_REGISTRY)
@@ -554,7 +574,7 @@ class ActionExtractorFromText(BaseModel):
             i = i + 1
         if self.actions_type == "pistachio":
             final_actions_list: List[Any] = ActionExtractorFromText.eliminate_empty_sequence(action_list, 5)
-        elif self.actions_type in set(["materials", "sac"]):
+        elif self.actions_type in set(["materials", "sac", "elementary"]):
             final_actions_list = ActionExtractorFromText.correct_action_list(action_list, elementar_actions=self.elementar_actions)
         else:
             final_actions_list = action_list
