@@ -575,7 +575,7 @@ class ActionExtractorFromText(BaseModel):
         if self.actions_type == "pistachio":
             final_actions_list: List[Any] = ActionExtractorFromText.eliminate_empty_sequence(action_list, 5)
         elif self.actions_type in set(["materials", "sac", "elementary"]):
-            pass
+            final_actions_list = action_list
             #final_actions_list = ActionExtractorFromText.correct_action_list(action_list, elementar_actions=self.elementar_actions)
         else:
             final_actions_list = action_list
