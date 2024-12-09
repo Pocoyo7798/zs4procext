@@ -139,7 +139,7 @@ class Actions(BaseModel):
             action_dict = self.model_dump(
                 exclude={"action_name", "action_context", "pressure", "duration", "stirring_speed", "atmosphere"}
             )
-        elif type(self) in set([WaitMaterial, StirMaterial, WashSAC]):
+        elif type(self) in set([WaitMaterial, StirMaterial, WashSAC, Separate]):
             action_dict = self.model_dump(
                 exclude={"action_name", "action_context", "temperature"}
             )
@@ -1129,7 +1129,8 @@ class Crystallization(ActionsWithConditons):
             action.microwave = True
         return [action.zeolite_dict()]
 
-class Separate(Actions):
+class Separate(ActionsWithConditons):
+    temperature: Optional[str] = None
     phase_to_keep: str = "precipitate"
     method: Optional[str] = None
 
@@ -1137,6 +1138,7 @@ class Separate(Actions):
     def generate_action(
         cls,
         context: str,
+        conditions_parser: ParametersParser,
         filtrate_parser: KeywordSearching,
         precipitate_parser: KeywordSearching,
         centrifuge_parser: KeywordSearching,
@@ -1144,6 +1146,7 @@ class Separate(Actions):
         evaporation_parser: KeywordSearching
     ) -> List[Dict[str, Any]]:
         action: Separate = cls(action_name="Separate", action_context=context)
+        action.validate_conditions(conditions_parser)
         filtrate_results: List[str] = filtrate_parser.find_keywords(action.action_context)
         precipitate_results: List[str] = precipitate_parser.find_keywords(action.action_context)
         centrifuge_results: List[str] = centrifuge_parser.find_keywords(action.action_context)
@@ -1159,7 +1162,9 @@ class Separate(Actions):
             action.method = "centrifugation"
         elif len(evaporation_results) > 0:
             action.method = "evaporation"
-        return [action.transform_into_pistachio()]
+            if action.temperature is not None:
+                action = DryMaterial(action_name = "Dry", temperature=action.temperature)
+        return [action.zeolite_dict()]
         
 
 class WashMaterial(ActionsWithchemicals):

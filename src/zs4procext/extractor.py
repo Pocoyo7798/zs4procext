@@ -539,6 +539,11 @@ class ActionExtractorFromText(BaseModel):
                     context, schemas, self._schema_parser, self._quantity_parser
                 )
                 action_list.extend(new_action)
+            elif action is Separate:
+                new_action = action.generate_action(
+                    context, self._condition_parser, self._filtrate_parser, self._precipitate_parser,
+                    self._centri_parser, self._filter_parser, self._evaporation_parser
+                )
             elif action.type == "chemicalsandconditions":
                 chemical_prompt = self._chemical_prompt.format_prompt(context)
                 chemical_response = self._llm_model.run_single_prompt(chemical_prompt)
@@ -562,11 +567,6 @@ class ActionExtractorFromText(BaseModel):
                     context, self._aqueous_parser, self._organic_parser
                 )
                 action_list.extend(new_action)
-            elif action is Separate:
-                new_action = action.generate_action(
-                    context, self._filtrate_parser, self._precipitate_parser,
-                    self._centri_parser, self._filter_parser, self._evaporation_parser
-                )
                 action_list.extend(new_action)
             elif action.type is None:
                 new_action = action.generate_action(context)
