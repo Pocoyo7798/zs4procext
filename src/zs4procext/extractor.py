@@ -448,6 +448,7 @@ class ActionExtractorFromText(BaseModel):
         ):
             raise AttributeError("You need to post initilize the class")
         paragraph = self._molar_ratio_parser.substitute(paragraph)
+        print(paragraph)
         action_prompt: str = self._action_prompt.format_prompt(paragraph)
         actions_response: str = self._llm_model.run_single_prompt(action_prompt).strip()
         actions_response = actions_response.replace("\x03C", "°C")
