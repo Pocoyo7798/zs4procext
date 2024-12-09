@@ -1161,9 +1161,7 @@ class Separate(ActionsWithConditons):
         elif len(centrifuge_results) > 0:
             action.method = "centrifugation"
         elif len(evaporation_results) > 0:
-            action.method = "evaporation"
-            if action.temperature is not None:
-                action = DryMaterial(action_name = "Dry", temperature=action.temperature)
+            action = DryMaterial(action_name = "Dry", temperature=action.temperature)
         return [action.zeolite_dict()]
         
 
