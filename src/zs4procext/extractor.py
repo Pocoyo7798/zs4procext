@@ -533,6 +533,7 @@ class ActionExtractorFromText(BaseModel):
                     context, self._condition_parser, self._filtrate_parser, self._precipitate_parser,
                     self._centri_parser, self._filter_parser, self._evaporation_parser
                 )
+                action_list.extend(new_action)
             elif action.type == "onlyconditions":
                 new_action = action.generate_action(context, self._condition_parser)
                 action_list.extend(new_action)
