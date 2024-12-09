@@ -569,7 +569,6 @@ class ActionExtractorFromText(BaseModel):
                     context, self._aqueous_parser, self._organic_parser
                 )
                 action_list.extend(new_action)
-                action_list.extend(new_action)
             elif action.type is None:
                 new_action = action.generate_action(context)
                 action_list.extend(new_action)
