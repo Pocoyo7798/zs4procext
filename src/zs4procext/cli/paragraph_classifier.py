@@ -59,6 +59,12 @@ def paragraph_classifier(
         / "resources"
         / "classify_multi_sample_schema.json"
     )
+    if action_prompt_structure_path is None:
+        try:
+            name = llm_model_name.split("/")[-1]
+            action_prompt_structure_path = TEMPLATE_REGISTRY[name]
+        except KeyError:
+            pass
     extractor: ParagraphClassifier = ParagraphClassifier(
         prompt_structure_path=prompt_structure_path,
         prompt_schema_path=prompt_schema_path,

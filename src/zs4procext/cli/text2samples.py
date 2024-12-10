@@ -40,9 +40,10 @@ def text2samples(
 ):
     torch.cuda.empty_cache()
     start_time = time.time()
-    if prompt_structure_path is None:
+    if action_prompt_structure_path is None:
         try:
-            prompt_structure_path = TEMPLATE_REGISTRY[llm_model_name]
+            name = llm_model_name.split("/")[-1]
+            action_prompt_structure_path = TEMPLATE_REGISTRY[name]
         except KeyError:
             pass
     extractor: SamplesExtractorFromText = SamplesExtractorFromText(

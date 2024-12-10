@@ -448,6 +448,7 @@ class ActionExtractorFromText(BaseModel):
         ):
             raise AttributeError("You need to post initilize the class")
         paragraph = self._molar_ratio_parser.substitute(paragraph)
+        print(paragraph)
         action_prompt: str = self._action_prompt.format_prompt(paragraph)
         actions_response: str = self._llm_model.run_single_prompt(action_prompt).strip()
         actions_response = actions_response.replace("\x03C", "°C")
@@ -527,6 +528,12 @@ class ActionExtractorFromText(BaseModel):
                     context, schemas, self._schema_parser, self._quantity_parser, self._condition_parser, self._centri_parser, self._filter_parser, self._banned_parser
                 )
                 action_list.extend(new_action)
+            elif action is Separate:
+                new_action = action.generate_action(
+                    context, self._condition_parser, self._filtrate_parser, self._precipitate_parser,
+                    self._centri_parser, self._filter_parser, self._evaporation_parser
+                )
+                action_list.extend(new_action)
             elif action.type == "onlyconditions":
                 new_action = action.generate_action(context, self._condition_parser)
                 action_list.extend(new_action)
@@ -560,12 +567,6 @@ class ActionExtractorFromText(BaseModel):
             elif action is CollectLayer:
                 new_action = action.generate_action(
                     context, self._aqueous_parser, self._organic_parser
-                )
-                action_list.extend(new_action)
-            elif action is Separate:
-                new_action = action.generate_action(
-                    context, self._filtrate_parser, self._precipitate_parser,
-                    self._centri_parser, self._filter_parser, self._evaporation_parser
                 )
                 action_list.extend(new_action)
             elif action.type is None:
