@@ -1228,7 +1228,8 @@ class WashSAC(ActionsWithChemicalAndConditions):
         action: WashSAC = cls(action_name="Wash", action_context=context)
         action.validate_conditions(conditions_parser)
         chemicals_info: ChemicalInfoMaterials = action.validate_chemicals_materials(
-            schemas, schema_parser, amount_parser, action.action_context,complex_parser=complex_parser
+            schemas, schema_parser, amount_parser, 
+            action.action_context,complex_parser=complex_parser
         )
         centrifuge_results: List[str] = centrifuge_parser.find_keywords(action.action_context)
         filter_results: List[str] = filter_parser.find_keywords(action.action_context)
@@ -1699,11 +1700,12 @@ SAC_ACTION_REGISTRY: Dict[str, Any] = {
     "centrifugate": Separate,
     "filter": Separate,
     "concentrate": Separate,
-    "cool": CoolSAC,
-    "heat": ChangeTemperatureSAC,
-    "wash": WashSAC,
-    "extract": WashSAC,
-    "leach": WashSAC,
+    "quench": Cool,
+    "cool": Cool,
+    "heat": ChangeTemperature,
+    "wash": WashMaterial,
+    "extract": WashMaterial,
+    "leach": WashMaterial,
     "wait": WaitMaterial,
     "reflux": WaitMaterial,
     "drysolid": DryMaterial,
@@ -1714,7 +1716,7 @@ SAC_ACTION_REGISTRY: Dict[str, Any] = {
     "stir": StirMaterial,
     "sonicate": SonicateMaterial,
     "repeat": Repeat,
-    "settemperature": ChangeTemperatureSAC,
+    "settemperature": ChangeTemperature,
     "grind": Grind,
     "sieve": Sieve,
     "anneal": ThermalTreatment,
