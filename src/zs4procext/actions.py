@@ -1062,9 +1062,13 @@ class AddMaterials(ActionsWithChemicalAndConditions):
             list_of_actions.append(SetAtmosphere(action_name="SetAtmosphere", atmosphere= action.atmosphere).zeolite_dict())
         if len(chemicals_info.chemical_list) == 0:
             pass
+        elif len(chemicals_info.chemical_list[0].name.lower()) < 2:
+            pass
         elif len(chemicals_info.chemical_list) == 1:
             banned_names: List[str] = banned_parser.find_keywords(chemicals_info.chemical_list[0].name.lower())
             if len(banned_names) == 0:
+                if chemicals_info.chemical_list[0].name.lower() == "aqueous solution":
+                    chemicals_info.chemical_list[0].name = "water"
                 action.material = chemicals_info.chemical_list[0]
                 action.dropwise = chemicals_info.dropwise[0]
                 list_of_actions.append(action.zeolite_dict())

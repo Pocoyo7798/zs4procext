@@ -438,6 +438,7 @@ class Evaluator(BaseModel):
 
 
 CHEMICALS_REGISTRY = {"solution": "",
+                      "salt": "",
                       "tri": "3",
                       "phosphoric acid": "h3po4",
                       "aqueous": "",
