@@ -62,6 +62,7 @@ def paragraph_classifier(
     if action_prompt_structure_path is None:
         try:
             name = llm_model_name.split("/")[-1]
+            print(name)
             action_prompt_structure_path = TEMPLATE_REGISTRY[name]
         except KeyError:
             pass
