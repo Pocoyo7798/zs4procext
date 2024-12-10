@@ -293,8 +293,7 @@ class ActionExtractorFromText(BaseModel):
         return action_list
     
     @staticmethod
-    def correct_action_list(action_list: List[Dict[str, Any]], elementar_actions: bool=False):
-        print(action_list)
+    def correct_action_list(action_list: List[Dict[str, Any]]):
         for action in action_list:
             print(action)
         i = 0
@@ -351,86 +350,90 @@ class ActionExtractorFromText(BaseModel):
                 content = action["content"]
                 if content["temperature"] is not None:
                     temperature = content["temperature"]
-                if elementar_actions is True:
-                    content = action["content"]
-                    new_actions = []
-                    b = 2
-                    if content["temperature"] is not None:
-                        temp = {'action': 'ChangeTemperature', 'content': {'temperature': content["temperature"], 'microwave': content["microwave"], 'heat_ramp': None}}
-                    else:
-                        temp = {'action': 'ChangeTemperature', 'content': {'temperature': "Heat", 'microwave': content["microwave"], 'heat_ramp': None}}
-                    new_actions.append(temp)
-                    if content["pressure"] is not None:
-                        atm = {'action': 'SetAtmosphere', 'content': {'atmosphere': None, 'pressure': content["pressure"], "flow_rate": None}}
-                    else:
-                        atm = {'action': 'SetAtmosphere', 'content': {'atmosphere': None, 'pressure': "autogeneous", "flow_rate": None}}
-                    new_actions.append(atm)
-                    if content["duration"] is not None:
-                        if content["stirring_speed"] is not None:
-                            stir = {'action': 'Stir', 'content': {'duration': content["duration"], 'stirring_speed': content["stirring_speed"]}}
-                        else:
-                            stir = {'action': 'Wait', 'content': {'duration': content["duration"]}}
-                        new_actions.append(stir)
-                        b += 1
-                    action_list = action_list[:i] + new_actions + action_list[i + 1:]
-                    i += b
-                else:
-                    i = i + 1
+                i = i + 1
             elif action["action"] == "Dry":
                 i_new_solution = i + 1
                 content = action["content"]
                 if content["temperature"] is not None:
                     temperature = content["temperature"]
-                if elementar_actions is True:
-                    content = action["content"]
-                    new_actions = []
-                    b = 1
-                    if content["temperature"] is not None:
-                        temp = {'action': 'ChangeTemperature', 'content': {'temperature': content["temperature"], 'microwave': None, 'heat_ramp': None}}
-                    else:
-                        temp = {'action': 'ChangeTemperature', 'content': {'temperature': "Heat", 'microwave': None, 'heat_ramp': None}}
-                    new_actions.append(temp)
-                    if content["atmosphere"] is not None:
-                        atm = {'action': 'SetAtmosphere', 'content': {'atmosphere': content["atmosphere"], 'pressure': None, "flow_rate": None}}
-                        new_actions.append(atm)
-                        b += 1
-                    if content["duration"] is not None:
-                        stir = {'action': 'Wait', 'content': {'duration': content["duration"]}}
-                        new_actions.append(stir)
-                        b += 1
-                    action_list = action_list[:i] + new_actions + action_list[i + 1:]
-                    i += b
-                else:
-                    i = i + 1
+                i = i + 1
             elif action["action"] == "ThermalTreatment":
                 i_new_solution = i + 1
                 content = action["content"]
                 if content["temperature"] is not None:
                     temperature = content["temperature"]
-                if elementar_actions is True:
-                    content = action["content"]
-                    new_actions = []
-                    b = 1
-                    if content["temperature"] is not None:
-                        temp = {'action': 'ChangeTemperature', 'content': {'temperature': content["temperature"], 'microwave': None, 'heat_ramp': content["heat_ramp"]}}
-                    else:
-                        temp = {'action': 'ChangeTemperature', 'content': {'temperature': "Heat", 'microwave': None, 'heat_ramp': content["heat_ramp"]}}
-                    new_actions.append(temp)
-                    if content["atmosphere"] is not None or content["flow_rate"] is not None:
-                        atm = {'action': 'SetAtmosphere', 'content': {'atmosphere': content["atmosphere"], 'pressure': None, "flow_rate": content["flow_rate"]}}
-                        new_actions.append(atm)
-                        b += 1
-                    if content["duration"] is not None:
-                        stir = {'action': 'Wait', 'content': {'duration': content["duration"]}}
-                        new_actions.append(stir)
-                        b += 1
-                    action_list = action_list[:i] + new_actions + action_list[i + 1:]
-                    i += b
-                else:
-                    i = i + 1
+                i = i + 1
             else:
                 i = i + 1
         return action_list
+    
+    @staticmethod
+    def transform_elementary(action_dict: List[Dict[str, Any]]):
+        for action in action_dict:
+            if action["action"] == "Crystallization":
+                content = action["content"]
+                new_actions = []
+                b = 2
+                if content["temperature"] is not None:
+                    temp = {'action': 'ChangeTemperature', 'content': {'temperature': content["temperature"], 'microwave': content["microwave"], 'heat_ramp': None}}
+                else:
+                    temp = {'action': 'ChangeTemperature', 'content': {'temperature': "Heat", 'microwave': content["microwave"], 'heat_ramp': None}}
+                new_actions.append(temp)
+                if content["pressure"] is not None:
+                    atm = {'action': 'SetAtmosphere', 'content': {'atmosphere': [], 'pressure': content["pressure"], "flow_rate": None}}
+                else:
+                    atm = {'action': 'SetAtmosphere', 'content': {'atmosphere': [], 'pressure': "autogeneous", "flow_rate": None}}
+                new_actions.append(atm)
+                if content["duration"] is not None:
+                    if content["stirring_speed"] is not None:
+                        stir = {'action': 'Stir', 'content': {'duration': content["duration"], 'stirring_speed': content["stirring_speed"]}}
+                    else:
+                        stir = {'action': 'Wait', 'content': {'duration': content["duration"]}}
+                    new_actions.append(stir)
+                    b += 1
+                action_dict = action_dict[:i] + new_actions + action_dict[i + 1:]
+                i += b
+            elif action["action"] == "Dry":
+                content = action["content"]
+                new_actions = []
+                b = 1
+                if content["temperature"] is not None:
+                    temp = {'action': 'ChangeTemperature', 'content': {'temperature': content["temperature"], 'microwave': None, 'heat_ramp': None}}
+                else:
+                    temp = {'action': 'ChangeTemperature', 'content': {'temperature': "Heat", 'microwave': None, 'heat_ramp': None}}
+                new_actions.append(temp)
+                if content["atmosphere"] != []:
+                    atm = {'action': 'SetAtmosphere', 'content': {'atmosphere': content["atmosphere"], 'pressure': None, "flow_rate": None}}
+                    new_actions.append(atm)
+                    b += 1
+                if content["duration"] is not None:
+                    stir = {'action': 'Wait', 'content': {'duration': content["duration"]}}
+                    new_actions.append(stir)
+                    b += 1
+                action_dict = action_dict[:i] + new_actions + action_dict[i + 1:]
+                i += b
+            elif action["action"] == "ThermalTreatment":
+                content = action["content"]
+                new_actions = []
+                b = 1
+                if content["temperature"] is not None:
+                    temp = {'action': 'ChangeTemperature', 'content': {'temperature': content["temperature"], 'microwave': False, 'heat_ramp': content["heat_ramp"]}}
+                else:
+                    temp = {'action': 'ChangeTemperature', 'content': {'temperature': "Heat", 'microwave': False, 'heat_ramp': content["heat_ramp"]}}
+                new_actions.append(temp)
+                if content["atmosphere"] != [] or content["flow_rate"] is not None:
+                    atm = {'action': 'SetAtmosphere', 'content': {'atmosphere': content["atmosphere"], 'pressure': None, "flow_rate": content["flow_rate"]}}
+                    new_actions.append(atm)
+                    b += 1
+                if content["duration"] is not None:
+                    stir = {'action': 'Wait', 'content': {'duration': content["duration"]}}
+                    new_actions.append(stir)
+                    b += 1
+                action_dict = action_dict[:i] + new_actions + action_dict[i + 1:]
+                i += b
+            else:
+                i += 1
+        return action_dict
 
     def retrieve_actions_from_text(
         self, paragraph: str, stop_words: List[str]
@@ -575,12 +578,12 @@ class ActionExtractorFromText(BaseModel):
             i = i + 1
         if self.actions_type == "pistachio":
             final_actions_list: List[Any] = ActionExtractorFromText.eliminate_empty_sequence(action_list, 5)
-        elif self.actions_type in set(["materials", "sac", "elementary"]):
-            final_actions_list = action_list
-            #final_actions_list = ActionExtractorFromText.correct_action_list(action_list, elementar_actions=self.elementar_actions)
+        elif self.actions_type in set(["materials", "sac"]):
+            final_actions_list = ActionExtractorFromText.correct_action_list(action_list)
         else:
             final_actions_list = action_list
-
+        if self.elementar_actions is True:
+            final_actions_list = ActionExtractorFromText.transform_elementary(final_actions_list)
         return final_actions_list
 
 class SamplesExtractorFromText(BaseModel):
