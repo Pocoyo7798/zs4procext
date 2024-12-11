@@ -369,6 +369,7 @@ class ActionExtractorFromText(BaseModel):
     
     @staticmethod
     def transform_elementary(action_dict: List[Dict[str, Any]]):
+        i: int = 0
         for action in action_dict:
             if action["action"] == "Crystallization":
                 content = action["content"]
