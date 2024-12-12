@@ -1096,5 +1096,9 @@ TYPE_COMPARISSON_REGISTRY: Dict[str, str] = {
 
 MATERIALS_CHARACTERIZATION_REGISTRY: Dict[str, Any] = {
     "surface_area": {"words": ["sbet"], "units": ["m2/g"]},
-    "sample": {"words": ["sample"], "units": []}
+    "sample": {"words": ["sample"], "units": []},
+    "external_area": {"words": ["sext"], "units": ["m2/g"]},
+    "micropore_volume": {"words": ["vmicro"], "units": ["cm3/g"]},
+    "mesopore_volume": {"words": ["vmeso"], "units": ["cm3/g"]},
+    "sio2/al2o3": {"words": ["siO2/al2o3"], "units": []}
 }

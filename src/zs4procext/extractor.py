@@ -48,6 +48,7 @@ from zs4procext.parser import (
     ComplexParametersParser,
     EquationFinder,
     KeywordSearching,
+    ListParametersParser,
     MolarRatioFinder,
     MOLAR_RATIO_REGISTRY,
     NumberFinder,
@@ -593,6 +594,7 @@ class SamplesExtractorFromText(BaseModel):
     llm_model_name: Optional[str] = None
     llm_model_parameters_path: Optional[str] = None
     _schema_parser: Optional[SchemaParser] = PrivateAttr(default=None)
+    _list_parser: Optional[ListParametersParser] = PrivateAttr(default=None)
     _prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
     _llm_model: Optional[ModelLLM] = PrivateAttr(default=None)
 
@@ -623,10 +625,13 @@ class SamplesExtractorFromText(BaseModel):
         self._llm_model.vllm_load_model()
         atributes = ["name", "preparation", "yield"]
         self._schema_parser = SchemaParser(atributes_list=atributes)
-        self._schema_parser.model_post_init(None)
+        self._list_parser = ListParametersParser()
     
     def retrieve_samples_from_text(self, paragraph: str) -> List[Any]:
-        prompt: str = self._prompt.format_prompt(paragraph)
+        lists_in_text: List[str] = self._list_parser.find_lists(paragraph)
+        for list in lists_in_text:
+            parameters_dict = None
+        """prompt: str = self._prompt.format_prompt(paragraph)
         response: str = self._llm_model.run_single_prompt(prompt)
         print(response)
         schemas: List[str] = self._schema_parser.parse_schema(response)
@@ -656,8 +661,8 @@ class SamplesExtractorFromText(BaseModel):
                     sample_dict["yield"] = yield_list[0]
             else:
                 sample_dict["yield"] = None
-            samples_list.append(sample_dict)
-        return samples_list
+            samples_list.append(sample_dict)"""
+        return parameters_dict
     
 class MolarRatioExtractorFromText(BaseModel):
     chemicals_path: Optional[str] = None
