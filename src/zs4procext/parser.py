@@ -346,8 +346,8 @@ class ListParametersParser(BaseModel):
         lookbehind: str = r""
         for word in banned_words:
             lookbehind += rf"(?<!{word})"
-        individual_regex = rf"(?P<value>[\d\.\-–−]+|{temperature_word_tre})[ \t]*((?P<time>.?{time_units_tre})|(?P<temperature>[^C]?\s*{temperature_units_tre})|(?P<pressure>.?{pressure_units_tre})|(?P<quantity>.?{quantity_units_tre})|(?P<stirring_speed>[^-\),\[\]\d\s]?\s*{stirring_units_tre})|(?P<heat_ramp>.?\s*{heating_ramp_units_tre})|(?P<concentration>.?\s*{concentration_units_tre})|(?P<flow_rate>[^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))*"
-        list_regex = lookbehind + rf"[^\w\-](([\d\.\-–−]+|{temperature_word_tre})[ \t]*(({time_units_tre})|(.?{quantity_units_tre})|([^C]?\s*{temperature_units_tre})|(.?{pressure_units_tre})|([^-\),\[\]\d\s]?\s*{stirring_units_tre})|(.?\s*{heating_ramp_units_tre})|(.?\s*{concentration_units_tre})|([^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))*[ \t]*(,|\/|\bor\b|\band\b|,\s*and|,\s*or)[ \t])+([\d\.])+[ \t]*(({time_units_tre})|(.?{quantity_units_tre})|([^C]?\s*{temperature_units_tre})\s|(.?{pressure_units_tre})|([^-\),\[\]\d\s]?{stirring_units_tre})|(.?\s*{heating_ramp_units_tre})|(.?{concentration_units_tre})|([^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))"
+        individual_regex = rf"(?P<value>[\d\.\-–−]+|{temperature_word_tre})\s*((?P<time>.?{time_units_tre})|(?P<temperature>\s*[^C]?\s*{temperature_units_tre})|(?P<pressure>.?{pressure_units_tre})|(?P<quantity>.?{quantity_units_tre})|(?P<stirring_speed>[^-\),\[\]\d\s]?\s*{stirring_units_tre})|(?P<heat_ramp>.?\s*{heating_ramp_units_tre})|(?P<concentration>.?\s*{concentration_units_tre})|(?P<flow_rate>[^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))*"
+        list_regex = lookbehind + rf"[^\w\-](([\d\.\-–−]+|{temperature_word_tre})\s*(({time_units_tre})|(.?{quantity_units_tre})|(\s*[^C]?\s*{temperature_units_tre})|(.?{pressure_units_tre})|([^-\),\[\]\d\s]?\s*{stirring_units_tre})|(.?\s*{heating_ramp_units_tre})|(.?\s*{concentration_units_tre})|([^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))*\s*(,|\/|\bor\b|\band\b|,\s*and|,\s*or)\s*)+([\d\.])+\s*(({time_units_tre})|(.?{quantity_units_tre})|(\s*[^C]?\s*{temperature_units_tre})|(.?{pressure_units_tre})|([^-\),\[\]\d\s]?{stirring_units_tre})|(.?\s*{heating_ramp_units_tre})|(.?{concentration_units_tre})|([^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))[^\w\-]"
         self._individual_regex = re.compile(individual_regex, re.IGNORECASE | re.MULTILINE)
         self._list_regex = re.compile(list_regex, re.IGNORECASE | re.MULTILINE)
 
@@ -421,24 +421,28 @@ class ListParametersParser(BaseModel):
     def indexes_heterogeneous_lists(self, list_of_types: List[str], list_of_text: List[str], text: str) -> List[List[int]]:
         i = 0
         final_lists: List[List[int]] = []
+        initial_index = 0
         while i < len(list_of_types):
             type_sequence: str = list_of_types[i]
             if len(set(type_sequence)) > 1:
-                list_of_index: List[int] =[i]
+                list_of_index: List[int] =[initial_index]
                 position: int = text.find(list_of_text[i])
                 j = i + 1
+                new_index = initial_index + 1
                 while j < len(list_of_types):
                     other_sequence: str = list_of_types[j]
                     other_position: int = text.find(list_of_text[j])
                     if type_sequence == other_sequence and position > other_position - 10:
-                        list_of_index.append(j)
+                        list_of_index.append(new_index)
                         del list_of_types[j]
                     else:
                         j += 1
+                    new_index += 1
                 del list_of_types[i]
                 final_lists.append(list_of_index)
             else:
                 i += 1
+            initial_index += 1
         return final_lists
     
     def values_are_equal(self, values_list1: List[Dict[str, Any]], values_list2: List[Dict[str, Any]]) -> bool:
@@ -451,13 +455,13 @@ class ListParametersParser(BaseModel):
             i += 1
         return test
     
-    def indexes_complementary_lists(self, list_of_types: List[str], lists_of_values: List[Dict[str, Any]]) -> List[List[int]]:
+    def indexes_complementary_lists(self, list_of_types: List[str], lists_of_values: List[List[Dict[str, Any]]]) -> List[List[int]]:
         if len(list_of_types) != len(lists_of_values):
             raise AttributeError("Both lists must be of the same length")
         i = 0
         final_lists: List[List[int]] = []
         while i < len(list_of_types):
-            list_of_index: List[int] =[i]
+            list_of_index: List[int] = [i]
             sequence_type: str = list_of_types[i]
             values_list: Dict[str, Any] = lists_of_values[i]
             type_match: set = set(TYPE_COMPARISSON_REGISTRY[sequence_type[0]])
@@ -509,7 +513,7 @@ class ListParametersParser(BaseModel):
             results_dict["values"].append(result_info)
         return results_dict
     
-    def generate_text(self, list_of_sequences: List[str], list_of_lists: List[List[Any]], text: str) -> List[str]:
+    def generate_text_by_value(self, list_of_sequences: List[str], list_of_lists: List[List[Any]], text: str) -> List[str]:
         if len(list_of_sequences) != len(list_of_lists):
             raise AttributeError("Both lists must be of the same length")
         text_list: List[str] = []
@@ -526,9 +530,23 @@ class ListParametersParser(BaseModel):
                 else:
                     value_string: str = " " + value["value"]
                 text = text.replace(string, value_string)
-            text_list += self.generate_text(list_of_sequences[1:], list_of_lists[1:], text)
+            text_list += self.generate_text_by_value(list_of_sequences[1:], list_of_lists[1:], text)
         return text_list
-
+    
+    def generate_text_by_list(self,  list_of_lists: List[List[Any]], text: str) -> List[str]:
+        text_list: List[str] = []
+        for text_list in list_of_lists:
+            i = 0
+            for text_keep in text_list:
+                j = 0
+                new_text = text
+                for text_remove in text_list:
+                    if i != j:
+                        new_text = new_text.replace(text_remove, "")
+                    j += 1
+                text_list.append(new_text)
+                i += 1
+        return text_list
 
 class ComplexParametersParser(BaseModel):
     parser_params_path: str = str(

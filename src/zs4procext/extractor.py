@@ -621,16 +621,75 @@ class SamplesExtractorFromText(BaseModel):
             self._llm_model = ModelLLM(model_name="Llama2-70B-chat-hf")
         else:
             self._llm_model = ModelLLM(model_name=self.llm_model_name)
-        self._llm_model.load_model_parameters(llm_param_path)
-        self._llm_model.vllm_load_model()
+        #self._llm_model.load_model_parameters(llm_param_path)
+        #self._llm_model.vllm_load_model()
         atributes = ["name", "preparation", "yield"]
         self._schema_parser = SchemaParser(atributes_list=atributes)
         self._list_parser = ListParametersParser()
     
     def retrieve_samples_from_text(self, paragraph: str) -> List[Any]:
+        paragraph = paragraph.replace("\x03C", "°C")
+        paragraph = paragraph.replace("oC", "°C") 
+        paragraph = paragraph.replace("8C", "°C")
+        paragraph = paragraph.replace("1C", "°C")
+        paragraph = paragraph.replace("0C", "°C")
+        paragraph = paragraph.replace("∘C", "°C")
+        paragraph = paragraph.replace("◦C", "°C")
+        paragraph = paragraph.replace("ºC", "°C")
+        paragraph = paragraph.replace("C", "°C")
+        paragraph = paragraph.replace("C", "°C")
+        paragraph = paragraph.replace("℃", "°C")
+        paragraph = paragraph.replace( "\x03C", "°C")
+        print(paragraph)
+        new_paragraphs_list: List[str] = []
         lists_in_text: List[str] = self._list_parser.find_lists(paragraph)
-        for list in lists_in_text:
-            parameters_dict = None
+        print(lists_in_text)
+        list_of_text: List[str] = []
+        list_of_types : List[str] = []
+        list_of_values : List[List[Dict[str, Any]]] = []
+        for text_list in lists_in_text:
+            parameters_dict = self._list_parser.find_parameters(text_list)
+            if self._list_parser.verify_complementary_values(parameters_dict):
+                pass
+            elif self._list_parser.verify_equal_values(parameters_dict):
+                pass
+            elif self._list_parser.verify_value_range(parameters_dict):
+                list_of_text.append(text_list)
+                list_of_types.append(parameters_dict["units_type"])
+                list_of_values.append(parameters_dict["values"])
+        heteregeneous_indexes = self._list_parser.indexes_heterogeneous_lists(list(list_of_types), list_of_text, paragraph)
+        text_to_combine: List[List[str]] = []
+        for index_list in heteregeneous_indexes:
+            if len(index_list) == 1:
+                index = index_list[0]
+            elif len(index_list) > 1:
+                text: List[str] = []
+                for index in index_list:
+                    text.append(list_of_text[index])
+                text_to_combine.append(text)
+        for index_list in heteregeneous_indexes:
+            for index in index_list:
+                del list_of_text[index]
+                del list_of_types[index]
+                del list_of_values[index]
+        new_paragraphs_list += self._list_parser.generate_text_by_list(text_to_combine, paragraph)
+        complementary_indexes = self._list_parser.indexes_complementary_lists(list_of_types, list_of_values)
+        new_list_of_values: List[List[Dict[str, Any]]] = []
+        new_list_of_text: List[List[str]] = []
+        for index_list in complementary_indexes:
+            values: List[Dict[str, Any]] = []
+            lists: List[str] = []
+            for index in index_list:
+                values.append(list_of_values[index])
+                lists.append(list_of_text[index])
+            new_list_of_values.append(values)
+            new_list_of_text.append(lists)
+        print(new_list_of_text)
+        new_paragraphs_list += self._list_parser.generate_text_by_value(new_list_of_text, new_list_of_values, paragraph)
+        return new_paragraphs_list
+
+
+
         """prompt: str = self._prompt.format_prompt(paragraph)
         response: str = self._llm_model.run_single_prompt(prompt)
         print(response)
@@ -662,8 +721,7 @@ class SamplesExtractorFromText(BaseModel):
             else:
                 sample_dict["yield"] = None
             samples_list.append(sample_dict)"""
-        return parameters_dict
-    
+
 class MolarRatioExtractorFromText(BaseModel):
     chemicals_path: Optional[str] = None
     _finder: Optional[MolarRatioFinder] = PrivateAttr(default=None)
