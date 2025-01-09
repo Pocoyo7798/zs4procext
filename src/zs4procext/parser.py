@@ -346,7 +346,7 @@ class ListParametersParser(BaseModel):
         lookbehind: str = r""
         for word in banned_words:
             lookbehind += rf"(?<!{word})"
-        individual_regex = rf"(?P<value>[\d\.\-–−]+|{temperature_word_tre})\s*((?P<time>.?{time_units_tre})|(?P<temperature>\s*[^C]?\s*{temperature_units_tre})|(?P<pressure>.?{pressure_units_tre})|(?P<quantity>.?{quantity_units_tre})|(?P<stirring_speed>[^-\),\[\]\d\s]?\s*{stirring_units_tre})|(?P<heat_ramp>.?\s*{heating_ramp_units_tre})|(?P<concentration>.?\s*{concentration_units_tre})|(?P<flow_rate>[^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))*"
+        individual_regex = rf"(?P<value>[\d\.\-–−]+|{temperature_word_tre})\s*((?P<time>{time_units_tre})|(?P<temperature>\s*[^C]?\s*{temperature_units_tre})|(?P<pressure>.?{pressure_units_tre})|(?P<quantity>.?{quantity_units_tre})|(?P<stirring_speed>[^-\),\[\]\d\s]?\s*{stirring_units_tre})|(?P<heat_ramp>.?\s*{heating_ramp_units_tre})|(?P<concentration>.?\s*{concentration_units_tre})|(?P<flow_rate>[^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))*"
         list_regex = lookbehind + rf"[^\w\-](([\d\.\-–−]+|{temperature_word_tre})\s*(({time_units_tre})|(.?{quantity_units_tre})|(\s*[^C]?\s*{temperature_units_tre})|(.?{pressure_units_tre})|([^-\),\[\]\d\s]?\s*{stirring_units_tre})|(.?\s*{heating_ramp_units_tre})|(.?\s*{concentration_units_tre})|([^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))*\s*(,|\/|\bor\b|\band\b|,\s*and|,\s*or)\s*)+([\d\.])+\s*(({time_units_tre})|(.?{quantity_units_tre})|(\s*[^C]?\s*{temperature_units_tre})|(.?{pressure_units_tre})|([^-\),\[\]\d\s]?{stirring_units_tre})|(.?\s*{heating_ramp_units_tre})|(.?{concentration_units_tre})|([^-\),\[\]\d\s]?\s*{flow_rate_units_tre}))[^\w\-]"
         self._individual_regex = re.compile(individual_regex, re.IGNORECASE | re.MULTILINE)
         self._list_regex = re.compile(list_regex, re.IGNORECASE | re.MULTILINE)
@@ -414,7 +414,7 @@ class ListParametersParser(BaseModel):
             sorted_values: List[Dict[str, Any]] = sorted(values_dict["values"], key=lambda d: float(d['value']))
             min_value: float = float(sorted_values[0]["value"])
             max_value: float = float(sorted_values[-1]["value"])
-            if max_value > self.quantity_range * min_value:
+            if max_value > self.quantity_range * min_value and min_value != 0:
                 test = False
         return test
 
@@ -493,7 +493,11 @@ class ListParametersParser(BaseModel):
             raise ValueError(
                 "The regex was not initialize, initialize it by <object_name>.model_post_init(None)"
             )
-        results: List[re.Match[str]] = list(self._individual_regex.finditer(text))
+        if text[-1] == ".":
+            text_to_analyse: str = text[:-1]
+        else:
+            text_to_analyse: str = text
+        results: List[re.Match[str]] = list(self._individual_regex.finditer(text_to_analyse))
         results_dict: Dict[str, Any] = {}
         results_dict["values"] = []
         results_dict["units_type"] = ""
