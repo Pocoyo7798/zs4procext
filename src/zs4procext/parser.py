@@ -417,6 +417,25 @@ class ListParametersParser(BaseModel):
             if max_value > self.quantity_range * min_value and min_value != 0:
                 test = False
         return test
+    
+    """def verify_value_range(self, values_dict):
+        test: bool = True
+        units_type: str = values_dict["units_type"]
+        units_type = units_type.replace(UNITS_LETTER_REGISTRY["quantity"], "")
+        if units_type == "":
+            values_to_be_sorted: List[float] = []
+            for value_info in values_dict["values"]:
+                try:
+                    new_value: float = float(value_info["value"])
+                except ValueError:
+                    new_value = 0
+                values_to_be_sorted.append(new_value)
+            values_to_be_sorted.sort()
+            min_value: float = float(values_to_be_sorted[0])
+            max_value: float = float(values_to_be_sorted[-1])
+            if max_value > self.quantity_range * min_value and min_value != 0:
+                test = False
+        return test"""
 
     def indexes_heterogeneous_lists(self, list_of_types: List[str], list_of_text: List[str], text: str) -> List[List[int]]:
         i = 0
@@ -511,8 +530,12 @@ class ListParametersParser(BaseModel):
             result_info["unit"] = unit_info["unit"]
             unit_type: str = unit_info["unit_type"]
             if result_info["unit"] == "":
-                result_info["unit"] = final_unit
-                unit_type: str = final_unit_type
+                if bool(re.search(r'\d', result_info["value"])) is False:
+                    result_info["unit"] =  ""
+                    unit_type: str = "t"
+                else:
+                    result_info["unit"] = final_unit
+                    unit_type: str = final_unit_type
             results_dict["units_type"] += unit_type
             results_dict["values"].append(result_info)
         return results_dict

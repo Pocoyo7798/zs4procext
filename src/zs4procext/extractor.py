@@ -599,7 +599,7 @@ class SamplesExtractorFromText(BaseModel):
     _llm_model: Optional[ModelLLM] = PrivateAttr(default=None)
 
     def model_post_init(self, __context: Any) -> None:
-        if self.prompt_schema_path is None:
+        """if self.prompt_schema_path is None:
             self.prompt_schema_path = str(
                 importlib_resources.files("zs4procext")
                 / "resources"
@@ -622,7 +622,7 @@ class SamplesExtractorFromText(BaseModel):
         else:
             self._llm_model = ModelLLM(model_name=self.llm_model_name)
         #self._llm_model.load_model_parameters(llm_param_path)
-        #self._llm_model.vllm_load_model()
+        #self._llm_model.vllm_load_model()"""
         atributes = ["name", "preparation", "yield"]
         self._schema_parser = SchemaParser(atributes_list=atributes)
         self._list_parser = ListParametersParser()
@@ -642,6 +642,7 @@ class SamplesExtractorFromText(BaseModel):
         paragraph = paragraph.replace( "\x03C", "°C")
         new_paragraphs_list: List[str] = []
         lists_in_text: List[str] = self._list_parser.find_lists(paragraph)
+        print(lists_in_text)
         list_of_text: List[str] = []
         list_of_types : List[str] = []
         list_of_values : List[List[Dict[str, Any]]] = []

@@ -1,6 +1,7 @@
 import time
 from typing import List, Optional
 import torch
+import os
 
 import click
 
@@ -22,7 +23,7 @@ from zs4procext.prompt import TEMPLATE_REGISTRY
 )
 @click.option(
     "--llm_model_name",
-    default=None,
+    default="meta-llama/Meta-Llama-3-8B-Instruct",
     help="Name of the LLM used to get the actions",
 )
 @click.option(
@@ -40,10 +41,10 @@ def text2samples(
 ):
     torch.cuda.empty_cache()
     start_time = time.time()
-    if action_prompt_structure_path is None:
+    if prompt_structure_path is None:
         try:
             name = llm_model_name.split("/")[-1]
-            action_prompt_structure_path = TEMPLATE_REGISTRY[name]
+            prompt_structure_path = TEMPLATE_REGISTRY[name]
         except KeyError:
             pass
     extractor: SamplesExtractorFromText = SamplesExtractorFromText(
@@ -55,6 +56,8 @@ def text2samples(
     extractor.model_post_init(None)
     with open(text_file_path, "r") as f:
         text_lines: List[str] = f.readlines()
+    if os.path.isfile(output_file_path):
+        os.remove(output_file_path)
     size = len(text_lines)
     count = 1
     for text in text_lines:
