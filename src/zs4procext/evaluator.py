@@ -434,8 +434,29 @@ class Evaluator(BaseModel):
             else:
                 false_negative += 1
             i += 1
-        return self.evaluate (true_positive, false_positive, false_negative)
+        return self.evaluate(true_positive, false_positive, false_negative)
 
+    def evaluate_samples(self, test_dataset_path: str):
+        with open(self.reference_dataset_path, "r") as f:
+            reference_dataset: List[str] = f.readlines()
+        with open(test_dataset_path, "r") as f:
+            test_dataset: List[str] = f.readlines()
+        i = 0
+        true_positive: int = 0
+        false_positive: int = 0
+        false_negative: int = 0
+        for sample_list in test_dataset:
+            ref_sample_list: Dict[str, Any] = ast.literal_eval(
+                reference_dataset[i]
+            )
+            test_sample_list: Dict[str, Any] = ast.literal_eval(
+                sample_list
+            )
+            true_positive += abs(len(ref_sample_list) - len(test_sample_list))
+            false_positive += max(0, len(test_sample_list) - len(ref_sample_list))
+            false_negative += max(0, len(ref_sample_list) - len(test_sample_list))
+            i += 1
+        return self.evaluate(true_positive, false_positive, false_negative)
 
 CHEMICALS_REGISTRY = {"solution": "",
                       "powder": "",

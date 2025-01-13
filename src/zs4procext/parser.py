@@ -451,7 +451,9 @@ class ListParametersParser(BaseModel):
                 while j < len(list_of_types):
                     other_sequence: str = list_of_types[j]
                     other_position: int = text.find(list_of_text[j])
-                    if type_sequence == other_sequence and position > other_position - 10:
+                    if position == other_position:
+                        del list_of_types[j]
+                    elif type_sequence == other_sequence and position > other_position - 10:
                         list_of_index.append(new_index)
                         del list_of_types[j]
                     else:

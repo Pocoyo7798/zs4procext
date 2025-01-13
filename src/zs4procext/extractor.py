@@ -642,7 +642,6 @@ class SamplesExtractorFromText(BaseModel):
         paragraph = paragraph.replace( "\x03C", "°C")
         new_paragraphs_list: List[str] = []
         lists_in_text: List[str] = self._list_parser.find_lists(paragraph)
-        print(lists_in_text)
         list_of_text: List[str] = []
         list_of_types : List[str] = []
         list_of_values : List[List[Dict[str, Any]]] = []
@@ -655,7 +654,7 @@ class SamplesExtractorFromText(BaseModel):
             elif self._list_parser.verify_value_range(parameters_dict):
                 list_of_text.append(text_list)
                 list_of_types.append(parameters_dict["units_type"])
-                list_of_values.append(parameters_dict["values"])
+                list_of_values.append(parameters_dict["values"])       
         heteregeneous_indexes = self._list_parser.indexes_heterogeneous_lists(list(list_of_types), list(list_of_text), paragraph)
         text_to_combine: List[List[str]] = []
         indexes_to_delete: List[int] = []
@@ -694,7 +693,7 @@ class SamplesExtractorFromText(BaseModel):
             sample_dict["procedure"] = procedure
             samples_list.append(sample_dict)
             sample_index += 1
-        return new_paragraphs_list
+        return samples_list
 
 
 
