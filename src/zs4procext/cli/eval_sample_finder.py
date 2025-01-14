@@ -1,4 +1,4 @@
-import json
+import pandas as pd
 from typing import Any, Dict
 from zs4procext.parser import KeywordSearching
 
@@ -21,9 +21,9 @@ def eval_molar_ratio(
     evaluator = Evaluator(reference_dataset_path=reference_dataset_path)
     evaluator.model_post_init(None)
     results: Dict[str, Any] = evaluator.evaluate_samples(evaluated_dataset_path)
-    results_json = json.dumps(results, indent=4)
-    with open(output_file_path, "w") as f:
-        f.write(results_json)
+    print(results)
+    df = pd.DataFrame(results, index=[0])
+    df.to_excel(output_file_path, index=False,)
 
 
 def main():

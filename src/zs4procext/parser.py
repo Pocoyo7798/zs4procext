@@ -554,12 +554,12 @@ class ListParametersParser(BaseModel):
             for j in range(len(list_of_values)):
                 string: str = list_of_strings[j]
                 value: Dict[str, str] = list_of_values[j][i]
-                if value["value"].isnumeric():
-                    value_string: str = " " + value["value"] + value["unit"]
+                if value["value"].isdigit() or re.match(r'^-?\d+(?:[\.,]\d+)$', value["value"]) is not None:
+                    value_string: str = " " + value["value"] + value["unit"] + " "
                 else:
-                    value_string: str = " " + value["value"]
-                text = text.replace(string, value_string)
-            text_list += self.generate_text_by_value(list_of_sequences[1:], list_of_lists[1:], text)
+                    value_string: str = " " + value["value"] + " "
+                new_text = text.replace(string, value_string)
+            text_list += self.generate_text_by_value(list_of_sequences[1:], list_of_lists[1:], new_text)
         return text_list
     
     def generate_text_by_list(self,  list_of_lists: List[List[Any]], text: str) -> List[str]:

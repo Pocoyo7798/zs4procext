@@ -642,6 +642,7 @@ class SamplesExtractorFromText(BaseModel):
         paragraph = paragraph.replace( "\x03C", "°C")
         new_paragraphs_list: List[str] = []
         lists_in_text: List[str] = self._list_parser.find_lists(paragraph)
+        print(lists_in_text)
         list_of_text: List[str] = []
         list_of_types : List[str] = []
         list_of_values : List[List[Dict[str, Any]]] = []
@@ -684,7 +685,10 @@ class SamplesExtractorFromText(BaseModel):
                 lists.append(list_of_text[index])
             new_list_of_values.append(values)
             new_list_of_text.append(lists)
+        print(new_list_of_values)
+        print(new_list_of_text)
         new_paragraphs_list += self._list_parser.generate_text_by_value(new_list_of_text, new_list_of_values, paragraph)
+        #print(new_paragraphs_list)
         samples_list: List[Dict[str, Any]] = []
         sample_index = 1
         for procedure in new_paragraphs_list:

@@ -445,16 +445,28 @@ class Evaluator(BaseModel):
         true_positive: int = 0
         false_positive: int = 0
         false_negative: int = 0
+        size = len(test_dataset)
+        count = 1
         for sample_list in test_dataset:
-            ref_sample_list: Dict[str, Any] = ast.literal_eval(
+            print(f"text processed: {count}/{size}")
+            ref_sample_list: List[Dict[str, Any]] = ast.literal_eval(
                 reference_dataset[i]
             )
-            test_sample_list: Dict[str, Any] = ast.literal_eval(
+            test_sample_list: List[Dict[str, Any]] = ast.literal_eval(
                 sample_list
             )
+            if max(0, len(ref_sample_list) - len(test_sample_list)) > 0:
+                print(max(0, len(ref_sample_list) - len(test_sample_list)))
+                print("Reference Samples")
+                for ref_sample in ref_sample_list:
+                    print(ref_sample["procedure"])
+                print("Test Samples")
+                for test_sample in test_sample_list:
+                    print(test_sample["procedure"])
             true_positive += abs(len(ref_sample_list) - len(test_sample_list))
             false_positive += max(0, len(test_sample_list) - len(ref_sample_list))
             false_negative += max(0, len(ref_sample_list) - len(test_sample_list))
+            count += 1
             i += 1
         return self.evaluate(true_positive, false_positive, false_negative)
 
