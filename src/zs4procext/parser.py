@@ -703,6 +703,7 @@ class ActionsParser(BaseModel):
 
 class KeywordSearching(BaseModel):
     keywords_list: List[str]
+    limit_words: bool = True
     _regex: Optional[re.Pattern[str]] = PrivateAttr(default=None)
 
     @validator("keywords_list")
@@ -716,7 +717,7 @@ class KeywordSearching(BaseModel):
     def model_post_init(self, __context: Any) -> None:
         """initialize the parser object by compiling a regex code"""
         tre_regex: re.Pattern[str] = correct_tre(self.keywords_list)
-        if __context is False:
+        if self.limit_words is False:
             self._regex = re.compile(f"{tre_regex}", re.IGNORECASE | re.MULTILINE)
         else:
             self._regex = re.compile(f"\\b{tre_regex}\\b", re.IGNORECASE | re.MULTILINE)
@@ -959,7 +960,7 @@ class TableParser(BaseModel):
         if self._words_registry is None:
             raise AttributeError(f"{self.table_type} is not a valid table_type")
         for key in self._words_registry.keys():
-            self._word_searcher[key] = KeywordSearching(keywords_list=self._words_registry[key]["words"])
+            self._word_searcher[key] = KeywordSearching(keywords_list=self._words_registry[key]["words"], limit_words=False)
             if self._words_registry[key]["units"] != []:
                 self._unit_searcher[key] = KeywordSearching(keywords_list=self._words_registry[key]["units"])
             else:
@@ -973,15 +974,29 @@ class TableParser(BaseModel):
         j = 0
         line_index = 0
         for line in table_entries:
-            if line_index not in indexes_to_ignore:
+            """if line_index not in indexes_to_ignore:
                 entry = line[index]
                 try:
                     results[j][key] = entry + unit
                 except IndexError:
                     results.append({})
                     results[j][key] = entry
+                j += 1"""
+            if line_index not in indexes_to_ignore:
+                entry = line[index]
+                try:
+                    test = results[j]
+                    new_entry =  entry + unit
+                except IndexError:
+                    results.append({})
+                    new_entry = entry + unit
+                if key in results[j].keys():
+                    results[j][key].append(new_entry)
+                else:
+                    results[j][key] = [new_entry]
                 j += 1
             line_index += 1
+        
         return results
 
     def extract_columns(self, table_entries: List[List[str]], collumn_headers):
@@ -1142,10 +1157,24 @@ TYPE_COMPARISSON_REGISTRY: Dict[str, str] = {
 }
 
 MATERIALS_CHARACTERIZATION_REGISTRY: Dict[str, Any] = {
-    "surface_area": {"words": ["sbet"], "units": ["m2/g"]},
-    "sample": {"words": ["sample"], "units": []},
-    "external_area": {"words": ["sext"], "units": ["m2/g"]},
-    "micropore_volume": {"words": ["vmicro"], "units": ["cm3/g"]},
-    "mesopore_volume": {"words": ["vmeso"], "units": ["cm3/g"]},
-    "sio2/al2o3": {"words": ["siO2/al2o3"], "units": []}
+    "sample": {"words": ["sample", "catalyst"], "units": []},
+    "surface_area": {"words": ["sbet"], "units": ["m2/g", "m2/g", "m2g-1"]},
+    "external_area": {"words": ["sext", "smeso"], "units": ["m2/g", "m2/g", "m2g-1"]},
+    "micropore_area": {"words": ["smicro"], "units": ["m2/g", "m2/g", "m2g-1"]},
+    "micropore_volume": {"words": ["vmicro"], "units": ["cm3/g", "cm3g-1"]},
+    "mesopore_volume": {"words": ["vmeso"], "units": ["cm3/g", "cm3g-1"]},
+    "total_volume": {"words": ["vp"], "units": ["cm3/g", "cm3g-1"]},
+    "sio2/al2o_gel": {"words": ["siO2/al2o3gel", "gelsiO2/al2o3"], "units": []},
+    "sio2/al2o3": {"words": ["siO2/al2o3"], "units": []},
+    "si/al_filtrate": {"words": ["si/alfiltrate", "filtratesi/al", "Si/Alﬁltrate"], "units": []},
+    "si/al": {"words": ["si/al"], "units": []},
+    "b/l ratio": {"words": ["b/l"], "units": []},
+    "l/b ratio": {"words": ["l/b"], "units": []},
+    "naoh_c": {"words": ["naoh"], "units": ["m"]},
+    "crystallinity": {"words": ["crystallinity"], "units": ["%"]},
+    "yield": {"words": ["yield"], "units": ["%"]},
+    "Si": {"words": ["si"], "units": ["wt%"]},
+    "Al": {"words": ["al"], "units": ["wt%"]},
+    "bronsted_sites": {"words": ["b"], "units": ["μmol/g"]},
+    "lewis_sites": {"words": ["l"], "units": ["μmol/g"]},
 }
