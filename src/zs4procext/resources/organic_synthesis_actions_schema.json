@@ -26,9 +26,7 @@
               "Partition" : "Addition of 2 immiscible solvents for a phase separation;",
               "Sonicate" : "Agitation with soundwaves;",
               "Triturate" : "Triturate the residue;",
-              "FinalProduct" : "Final product obtained with the synthesis procedure and yield;",
-              "Wait" : "Time passing with no action;",
-              "FollowOtherProcedure" : "Other procedure used, specify the procedure."
+              "Wait" : "Time passing with no action;"
               },
   "answer_schema": {},
   "conclusion":  "Good Luck!"
