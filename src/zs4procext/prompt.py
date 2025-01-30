@@ -325,5 +325,10 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         importlib_resources.files("zs4procext")
         / "resources"
         / "llava1.5_default_template.json"
+    ),
+    "deepseek-llm-7b-chat": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "deepseek_chat_default_instruct_template.json"
     )
 }
