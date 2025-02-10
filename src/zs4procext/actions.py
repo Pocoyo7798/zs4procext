@@ -662,6 +662,8 @@ class Filter(Actions):
             action.phase_to_keep = "filtrate"
         elif len(precipitate_results) > 0:
             action.phase_to_keep = "precipitate"
+        else:
+            action.phase_to_keep = "filtrate"
         return [action.transform_into_pistachio()]
     
 class Centrifuge(Actions):
@@ -932,10 +934,10 @@ class Stir(ActionsWithConditons):
         action = cls(action_name="Stir", action_context=context)
         action.validate_conditions(conditions_parser)
         action_list: List[Dict[str, Any]] = []
-        if action.duration is not None:
-            action_list.append(action.transform_into_pistachio())
         if action.temperature is not None:
             action_list.append(SetTemperature(action_name= "SetTemperature", temperature=action.temperature))
+        if action.duration is not None:
+            action_list.append(action.transform_into_pistachio())
         return action_list
 
 
@@ -1723,7 +1725,7 @@ ACTION_REGISTRY: Dict[str, Any] = {
     "wait": Wait,
     "finalproduct": Yield,
 }
-ORGANIC_REGISTRY: Dict[str, Any] = {
+ORGANIC_ACTION_REGISTRY: Dict[str, Any] = {
     "add": Add,
     "cool": ReduceTemperature,
     "heat": SetTemperature,

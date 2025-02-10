@@ -21,6 +21,7 @@ from zs4procext.actions import (
     PH_REGISTRY,
     PISTACHIO_ACTION_REGISTRY,
     PRECIPITATE_REGISTRY,
+    ORGANIC_ACTION_REGISTRY,
     SAC_ACTION_REGISTRY,
     Add,
     AddMaterials,
@@ -33,7 +34,9 @@ from zs4procext.actions import (
     Filter,
     MakeSolution,
     NewSolution,
+    PhaseSeparation,
     Quench,
+    ReduceTemperature,
     Separate,
     SetTemperature,
     SonicateMaterial,
@@ -149,11 +152,24 @@ class ActionExtractorFromText(BaseModel):
                 )
             self._action_dict = PISTACHIO_ACTION_REGISTRY
             self._ph_parser = KeywordSearching(keywords_list=["&^%#@&#@(*)"])
-            self._ph_parser.model_post_init(None)
             self._aqueous_parser = KeywordSearching(keywords_list=AQUEOUS_REGISTRY)
-            self._aqueous_parser.model_post_init(None)
             self._organic_parser = KeywordSearching(keywords_list=ORGANIC_REGISTRY)
-            self._organic_parser.model_post_init(None)
+            self._centri_parser = KeywordSearching(keywords_list=CENTRIFUGATION_REGISTRY)
+            self._filter_parser = KeywordSearching(keywords_list=FILTER_REGISTRY)
+            atributes = ["name", "dropwise"]
+        if self.actions_type == "organic":
+            if self.action_prompt_schema_path is None:
+                self.action_prompt_schema_path = str(
+                    importlib_resources.files("zs4procext")
+                    / "resources"
+                    / "organic_synthesis_actions_schema.json"
+                )
+            self._action_dict = ORGANIC_ACTION_REGISTRY
+            self._ph_parser = KeywordSearching(keywords_list=["&^%#@&#@(*)"])
+            self._aqueous_parser = KeywordSearching(keywords_list=AQUEOUS_REGISTRY)
+            self._organic_parser = KeywordSearching(keywords_list=ORGANIC_REGISTRY)
+            self._centri_parser = KeywordSearching(keywords_list=CENTRIFUGATION_REGISTRY)
+            self._filter_parser = KeywordSearching(keywords_list=FILTER_REGISTRY)
             atributes = ["name", "dropwise"]
         elif self.actions_type == "materials":
             if self.action_prompt_schema_path is None:
@@ -369,6 +385,10 @@ class ActionExtractorFromText(BaseModel):
         return action_list
     
     @staticmethod
+    def correct_action_list(action_list: List[Dict[str, Any]]):
+        return action_list
+    
+    @staticmethod
     def transform_elementary(action_dict: List[Dict[str, Any]]):
         i: int = 0
         for action in action_dict:
@@ -482,7 +502,7 @@ class ActionExtractorFromText(BaseModel):
                 print(action_name)
                 if action_name.lower() in stop_words:
                     break
-            elif action in set([SetTemperature]):
+            elif action in set([SetTemperature, ReduceTemperature]):
                 new_action: List[Dict[str, Any]] = action.generate_action(
                     context, self._condition_parser, self._microwave_parser
                 )
@@ -539,6 +559,12 @@ class ActionExtractorFromText(BaseModel):
                     self._centri_parser, self._filter_parser, self._evaporation_parser
                 )
                 action_list.extend(new_action)
+            elif action is PhaseSeparation:
+                new_action = action.generate_action(
+                    context, self._filtrate_parser, self._precipitate_parser,
+                    self._centri_parser, self._filter_parser
+                )
+                action_list.extend(new_action)
             elif action.type == "onlyconditions":
                 new_action = action.generate_action(context, self._condition_parser)
                 action_list.extend(new_action)
@@ -548,7 +574,7 @@ class ActionExtractorFromText(BaseModel):
                 print(chemical_response)
                 schemas = self._schema_parser.parse_schema(chemical_response)
                 new_action = action.generate_action(
-                    context, schemas, self._schema_parser, self._quantity_parser
+                    context, schemas, self._schema_parser, self._quantity_parser, self._banned_parser
                 )
                 action_list.extend(new_action)
             elif action.type == "chemicalsandconditions":
@@ -562,6 +588,7 @@ class ActionExtractorFromText(BaseModel):
                     self._schema_parser,
                     self._quantity_parser,
                     self._condition_parser,
+                    self._banned_parser
                 )
                 action_list.extend(new_action)
             elif action is Filter:
@@ -580,6 +607,8 @@ class ActionExtractorFromText(BaseModel):
             i = i + 1
         if self.actions_type == "pistachio":
             final_actions_list: List[Any] = ActionExtractorFromText.eliminate_empty_sequence(action_list, 5)
+        if self.actions_type == "pistachio":
+            final_actions_list: List[Any] = ActionExtractorFromText.correct_organic_action_list(action_list)
         elif self.actions_type in set(["materials", "sac"]):
             final_actions_list = ActionExtractorFromText.correct_action_list(action_list)
         else:
