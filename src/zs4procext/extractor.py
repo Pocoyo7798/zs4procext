@@ -409,7 +409,7 @@ class ActionExtractorFromText(BaseModel):
                     new_add = {'action': 'Add', 'content': {'material': chemical, 'dropwise': False, 'atmosphere': None, 'duration': None}}
                     new_action_list.append(new_add)
             elif action_name == "Partition":
-                materials_list = [content["material_1"], content["material_2"]]
+                materials_list = [str(content["material_1"]), str(content["material_2"])]
                 sorted_material_list = sorted(materials_list, key=lambda d: d["name"])
                 content["material_1"] = sorted_material_list[0]
                 content["material_2"] = sorted_material_list[1]
