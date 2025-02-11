@@ -964,15 +964,15 @@ class SetTemperature(ActionsWithConditons):
         action_list: List[Dict[str, Any]] = []
         if action.temperature is None:
             if action.duration is not None:
-                action_list.append(Wait(action_name="Wait", duration=action.duration))
+                action_list.append(Wait(action_name="Wait", duration=action.duration).transform_into_pistachio())
         elif action.temperature.lower() == "reflux":
-            action_list.append(Reflux(action_name="Reflux", duration=action.duration))
+            action_list.append(Reflux(action_name="Reflux", duration=action.duration).transform_into_pistachio())
         elif len(microwave_parser.find_keywords(context)) > 0:
             return Microwave.generate_action(context, conditions_parser)
         else:
             action_list.append(action.transform_into_pistachio())
             if action.duration is not None:
-                action_list.append(Wait(action_name="Wait", duration=action.duration))
+                action_list.append(Wait(action_name="Wait", duration=action.duration).transform_into_pistachio())
         return action_list
 
 
@@ -997,14 +997,14 @@ class ReduceTemperature(ActionsWithConditons):
         if action.temperature is None:
             action.temperature == "room temperature"
         elif action.temperature.lower() == "reflux":
-            action_list.append(Reflux(action_name="Reflux", duration=action.duration))
+            action_list.append(Reflux(action_name="Reflux", duration=action.duration).transform_into_pistachio())
         elif len(microwave_parser.find_keywords(context)) > 0:
             return Microwave.generate_action(context, conditions_parser)
         else:
             if action.temperature is not None:
                 action_list.append(action.transform_into_pistachio())
             if action.duration is not None:
-                action_list.append(Wait(action_name="Wait", duration=action.duration))
+                action_list.append(Wait(action_name="Wait", duration=action.duration).transform_into_pistachio())
         return action_list
 
 class Sonicate(ActionsWithConditons):
@@ -1066,8 +1066,6 @@ class Wait(ActionsWithConditons):
         action_list: List[Dict[str, Any]] = []
         if action.duration is not None:
             action_list.append(action.transform_into_pistachio())
-        if action.temperature is not None:
-            action_list.append(SetTemperature(action_name= "SetTemperature", temperature=action.temperature))
         return action_list
 
 
