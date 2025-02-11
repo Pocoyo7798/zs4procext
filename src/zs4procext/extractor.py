@@ -385,8 +385,45 @@ class ActionExtractorFromText(BaseModel):
         return action_list
     
     @staticmethod
-    def correct_action_list(action_list: List[Dict[str, Any]]):
-        return action_list
+    def correct_organic_action_list(action_dict_list: List[Dict[str, Any]]):
+        new_action_list = []
+        initial_temp = None
+        for action in action_dict_list:
+            action_name = action["action"]
+            content = action["content"]
+            try:
+                new_temp: str = content["temperature"]
+                if new_temp.lower() in ["ice-bath", "ice bath"]:
+                    new_temp = "0 °C"
+                if new_temp != initial_temp and new_temp is not None:
+                    initial_temp = new_temp
+                    new_action_list.append({'action': 'SetTemperature', 'content': {'temperature': new_temp}})
+                del content["temperature"]
+            except KeyError:
+                pass
+            if action_name == "MakeSolution":
+                chemical_list = content["materials"]
+                for chemical in chemical_list:
+                    new_add = {'action': 'Add', 'content': {'material': chemical, 'dropwise': False, 'atmosphere': None, 'duration': None}}
+                    new_action_list.append(new_add)
+            elif action_name == "Partition":
+                materials_list = [content["material_1"], content["material_2"]]
+                sorted_material_list = sorted(materials_list, key=lambda d: d["name"])
+                content["material_1"] = sorted_material_list[0]
+                content["material_2"] = sorted_material_list[1]
+                new_action_list.append(action)
+            elif action_name == "Add":
+                if content["material"]["name"] == "SLN":
+                    pass
+                else:
+                    new_action_list.append(action)
+            elif action_name in ["CollectLayer", "Yield"]:
+                pass
+            elif action_name == "SetTemperature":
+                pass
+            else:
+                new_action_list.append(action)
+            return new_action_list
     
     @staticmethod
     def transform_elementary(action_dict: List[Dict[str, Any]]):
@@ -607,7 +644,7 @@ class ActionExtractorFromText(BaseModel):
             i = i + 1
         if self.actions_type == "pistachio":
             final_actions_list: List[Any] = ActionExtractorFromText.eliminate_empty_sequence(action_list, 5)
-        if self.actions_type == "pistachio":
+        if self.actions_type == "organic":
             final_actions_list: List[Any] = ActionExtractorFromText.correct_organic_action_list(action_list)
         elif self.actions_type in set(["materials", "sac"]):
             final_actions_list = ActionExtractorFromText.correct_action_list(action_list)
