@@ -996,7 +996,7 @@ class ReduceTemperature(ActionsWithConditons):
         action_list: List[Dict[str, Any]] = []
         if action.temperature is None:
             action.temperature == "room temperature"
-        if action.temperature.lower() == "reflux":
+        elif action.temperature.lower() == "reflux":
             action_list.append(Reflux(action_name="Reflux", duration=action.duration))
         elif len(microwave_parser.find_keywords(context)) > 0:
             return Microwave.generate_action(context, conditions_parser)
