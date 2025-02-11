@@ -426,6 +426,39 @@ class ActionExtractorFromText(BaseModel):
             else:
                 new_action_list.append(action)
             return new_action_list
+        
+    @staticmethod
+    def correct_sac_action_list(action_dict_list: List[Dict[str, Any]]):
+        new_action_list = []
+        initial_temp = None
+        for action in action_dict_list:
+            action_name = action["action"]
+            content = action["content"]
+            try:
+                new_temp: str = content["temperature"]
+                if new_temp is None:
+                    pass
+                elif new_temp.lower() in ["ice-bath", "ice bath"]:
+                    new_temp = "0 °C"
+                if new_temp != initial_temp and new_temp is not None:
+                    initial_temp = new_temp
+                    if action_name not in ["ThermalTreatment", "Dry"]:
+                        new_action_list.append({'action': 'SetTemperature', 'content': {'temperature': new_temp, 'microwave': False, "heat_ramp": None}})
+                del content["temperature"]
+            except KeyError:
+                pass
+            if action_name == "Add":
+                if content["material"]["name"] == "SLN":
+                    pass
+                else:
+                    new_action_list.append(action)
+            elif action_name in ["CollectLayer", "Yield"]:
+                pass
+            elif action_name == "SetTemperature":
+                pass
+            else:
+                new_action_list.append(action)
+            return new_action_list
     
     @staticmethod
     def transform_elementary(action_dict: List[Dict[str, Any]]):
