@@ -94,7 +94,7 @@ class Evaluator(BaseModel):
                     phase: str = action["content"]["phase_to_keep"]
                     if ref_phase == phase:
                         return True, i
-                elif action["action"] in set(["ChangeTemperature", "Crystallization", "Dry", "ThermalTreatment"]):
+                elif action["action"] in set(["ChangeTemperature", "Crystallization", "Dry", "ThermalTreatment", "SetTemperature"]):
                     ref_temp = str(ref_action["content"]["temperature"])
                     temp = str(action["content"]["temperature"])
                     if SequenceMatcher(None, temp.strip(), ref_temp.strip()).ratio() > 0.25:
@@ -202,19 +202,39 @@ class Evaluator(BaseModel):
                     reference_chemicals.append(ref_action["content"]["material"])
                 elif ref_action["action"] == "NewSolution":
                     reference_chemicals.append(ref_action["content"]["solution"])
+                elif ref_action["action"] == "DrySolution":
+                    reference_chemicals.append({'name': ref_action["content"]["material"], 'quantity': []})
+                elif ref_action["action"] == "Partition":
+                    reference_chemicals.append(ref_action["content"]["material_1"])
+                    reference_chemicals.append(ref_action["content"]["material_2"])
             fn = fn + len(reference_chemicals)
             found = 0
             not_found = 0
             for action in action_list_transformed:
+                test_2 = None
                 if action["action"] in set(["Add", "Wash"]):
                     material: Dict[str, Any] = action["content"]["material"]
                     test, index = self.exist_chemical_in_list(
                         material, reference_chemicals, threshold=threshold
                     )
                 elif action["action"] == "NewSolution":
-                    material: Dict[str, Any] = action["content"]["solution"]
+                    material = action["content"]["solution"]
                     test, index = self.exist_chemical_in_list(
                         material, reference_chemicals, threshold=threshold
+                    )
+                elif action["action"] == "DrySolution":
+                    material = {'name': action["content"]["material"], 'quantity': []}
+                    test, index = self.exist_chemical_in_list(
+                        material, reference_chemicals, threshold=threshold
+                    )
+                elif action["action"] == "Partition":
+                    material_1 = action["content"]["material_1"]
+                    test, index = self.exist_chemical_in_list(
+                        material_1, reference_chemicals, threshold=threshold
+                    )
+                    material_2 = action["content"]["material_2"]
+                    test_2, index_2 = self.exist_chemical_in_list(
+                        material_1, reference_chemicals, threshold=threshold
                     )
                 else:
                     test = None
@@ -223,6 +243,11 @@ class Evaluator(BaseModel):
                 elif test is True:
                     found = found + 1
                     del reference_chemicals[index]
+                if test_2 is None:
+                    pass
+                elif test_2 is True:
+                    found = found + 1
+                    del reference_chemicals[index_2]
                 else:
                     print("############")
                     print(action["action"])
