@@ -425,7 +425,7 @@ class ActionExtractorFromText(BaseModel):
                 pass
             else:
                 new_action_list.append(action)
-            return new_action_list
+        return new_action_list
         
     @staticmethod
     def correct_sac_action_list(action_dict_list: List[Dict[str, Any]]):
@@ -458,7 +458,7 @@ class ActionExtractorFromText(BaseModel):
                 pass
             else:
                 new_action_list.append(action)
-            return new_action_list
+        return new_action_list
     
     @staticmethod
     def transform_elementary(action_dict: List[Dict[str, Any]]):
