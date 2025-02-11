@@ -393,7 +393,9 @@ class ActionExtractorFromText(BaseModel):
             content = action["content"]
             try:
                 new_temp: str = content["temperature"]
-                if new_temp.lower() in ["ice-bath", "ice bath"]:
+                if new_temp is None:
+                    pass
+                elif new_temp.lower() in ["ice-bath", "ice bath"]:
                     new_temp = "0 °C"
                 if new_temp != initial_temp and new_temp is not None:
                     initial_temp = new_temp
