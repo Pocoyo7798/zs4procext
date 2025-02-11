@@ -415,6 +415,8 @@ class ActionExtractorFromText(BaseModel):
                     material_1 = content["material_2"]
                     content["material_1"] = material_1
                     content["material_2"] = None
+                elif content["material_2"] is None:
+                    pass
                 else:
                     materials_list = [content["material_1"], content["material_2"]]
                     sorted_material_list = sorted(materials_list, key=lambda d: d["name"])
