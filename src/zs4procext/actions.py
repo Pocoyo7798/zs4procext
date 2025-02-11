@@ -270,6 +270,7 @@ class ActionsWithChemicalAndConditions(Actions):
         schemas: List[str],
         schema_parser: SchemaParser,
         amount_parser: ParametersParser,
+        banned_parser: KeywordSearching,
         context: str,
     ) -> ChemicalInfo:
         chemical_info = ChemicalInfo()
@@ -277,7 +278,7 @@ class ActionsWithChemicalAndConditions(Actions):
         for schema in schemas:
             new_chemical: Chemical = Chemical()
             dropwise = new_chemical.get_chemical(schema, schema_parser)
-            print(new_chemical.name)
+            banned_names: List[str] = banned_parser.find_keywords(new_chemical.name.lower())
             if len(schemas) > 1:
                 repetitions = new_chemical.get_quantity(schema, amount_parser)
             else:
@@ -285,6 +286,8 @@ class ActionsWithChemicalAndConditions(Actions):
             if new_chemical.name == "":
                 pass
             elif new_chemical.name.strip().lower() == "n/a":
+                pass
+            elif len(banned_names) > 0:
                 pass
             else:
                 chemical_info.chemical_list.append(new_chemical)
