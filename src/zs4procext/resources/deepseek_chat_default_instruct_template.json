@@ -11,7 +11,7 @@
     "input_types": {},
     "output_parser": null,
     "partial_variables": {},
-    "template": "User: {{ {expertise}{initialization}{actions}{objective}{context}{answer_schema}{conclusion} }}\n\nAssistant:",
+    "template": "<｜begin▁of▁sentence｜>User: {{Hello, can you help me?}}\n\nAssistant: {{Yes, I am ready to help!}}<｜end▁of▁sentence｜>User: {{{expertise}{initialization}{actions}{objective}{context}{answer_schema}{conclusion}}}\n\nAssistant:",
     "template_format": "f-string",
     "validate_template": true,
     "_type": "prompt"
