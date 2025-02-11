@@ -1058,7 +1058,7 @@ class Wait(ActionsWithConditons):
     ) -> List[Dict[str, Any]]:
         action = cls(action_name="Wait", action_context=context)
         action.validate_conditions(conditions_parser)
-        action_list = List[Dict[str, Any]] = []
+        action_list: List[Dict[str, Any]] = []
         if action.duration is not None:
             action_list.append(action.transform_into_pistachio())
         if action.temperature is not None:
@@ -1083,18 +1083,19 @@ class Wash(ActionsWithchemicals):
         chemicals_info = action.validate_chemicals(
             schemas, schema_parser, amount_parser, banned_parser, action.action_context
         )
+        list_of_actions: List[Dict[str, Any]] = []
         if len(chemicals_info.chemical_list) == 0:
             pass
         elif len(schemas) == 1:
             action.material = chemicals_info.chemical_list[0]
             action.repetitions = chemicals_info.repetitions
+            list_of_actions.append(action.transform_into_pistachio())
         else:
-            action.material = chemicals_info.chemical_list[0]
-            action.repetitions = chemicals_info.repetitions
-            print(
-                "Warning: More than one Material found on Wash object, only the first one was considered"
-            )
-        return [action.transform_into_pistachio()]
+            for material in chemicals_info.chemical_list:
+                action.material = material
+                action.repetitions = chemicals_info.repetitions
+                list_of_actions.append(action.transform_into_pistachio())
+        return list_of_actions
 
 
 class Yield(ActionsWithchemicals):
@@ -1823,30 +1824,31 @@ ELEMENTARY_ACTION_REGISTRY: Dict[str, Any] = {
 }
 
 SAC_ACTION_REGISTRY: Dict[str, Any] = {
-    "add": AddMaterials,
-    "makesolution": NewSolution,
-    "newsolution": NewSolution,
+    "add": Add,
+    "makesolution": Add,
+    "newsolution": Add,
     "degas": Degas,
-    "separate": Separate,
-    "centrifugate": Separate,
-    "filter": Separate,
-    "concentrate": Separate,
+    "separate": PhaseSeparation,
+    "centrifugate": PhaseSeparation,
+    "filter": PhaseSeparation,
+    "concentrate": Concentrate,
     "cool": CoolSAC,
     "heat": ChangeTemperature,
-    "wash": WashSAC,
-    "extract": WashSAC,
-    "leach": WashSAC,
-    "wait": WaitMaterial,
-    "reflux": WaitMaterial,
+    "wash": Wash,
+    "extract": Extract,
+    "leach": Wash,
+    "wait": Wait,
+    "reflux": ChangeTemperature,
+    "purify": Purify,
+    "quench": Quench,
     "drysolid": DryMaterial,
     "drysolution": DryMaterial,
     "dry": DryMaterial,
     "posttreatment": ThermalTreatment,
     "thermaltreatment": ThermalTreatment,
     "stir": StirMaterial,
-    "sonicate": SonicateMaterial,
-    "repeat": Repeat,
-    "settemperature": ChangeTemperatureSAC,
+    "sonicate": Sonicate,
+    "settemperature": ChangeTemperature,
     "grind": Grind,
     "sieve": Sieve,
     "anneal": ThermalTreatment,
