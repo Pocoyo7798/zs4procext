@@ -1739,6 +1739,7 @@ ORGANIC_ACTION_REGISTRY: Dict[str, Any] = {
     "stir": Stir,
     "concentrate": Concentrate,
     "drysolution": DrySolution,
+    "dry": DrySolution,
     "extract": Extract,
     "wash": Wash,
     "makesolution": Add,
