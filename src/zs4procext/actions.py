@@ -475,7 +475,7 @@ class Add(ActionsWithChemicalAndConditions):
     ) -> List[Dict[str, Any]]:
         if len(ph_parser.find_keywords(context)) > 0:
             return PH.generate_action(
-                context, schemas, schema_parser, amount_parser, conditions_parser
+                context, schemas, schema_parser, amount_parser, conditions_parser, banned_parser
             )
         action = cls(action_name="Add", action_context=context)
         action.validate_conditions(conditions_parser)

@@ -212,7 +212,7 @@ class Evaluator(BaseModel):
             not_found = 0
             for action in action_list_transformed:
                 test_2 = None
-                if action["action"] in set(["Add", "Wash"]):
+                if action["action"] in set(["Add", "Wash", "PH"]):
                     material: Dict[str, Any] = action["content"]["material"]
                     test, index = self.exist_chemical_in_list(
                         material, reference_chemicals, threshold=threshold

@@ -681,8 +681,10 @@ class ActionExtractorFromText(BaseModel):
             final_actions_list: List[Any] = ActionExtractorFromText.eliminate_empty_sequence(action_list, 5)
         if self.actions_type == "organic":
             final_actions_list: List[Any] = ActionExtractorFromText.correct_organic_action_list(action_list)
-        elif self.actions_type in set(["materials", "sac"]):
+        elif self.actions_type == "materials":
             final_actions_list = ActionExtractorFromText.correct_action_list(action_list)
+        elif self.actions_type == "sac":
+            final_actions_list = ActionExtractorFromText.correct_sac_action_list(action_list)
         else:
             final_actions_list = action_list
         if self.elementar_actions is True:
