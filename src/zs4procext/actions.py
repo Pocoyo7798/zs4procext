@@ -937,8 +937,6 @@ class Stir(ActionsWithConditons):
         action = cls(action_name="Stir", action_context=context)
         action.validate_conditions(conditions_parser)
         action_list: List[Dict[str, Any]] = []
-        if action.temperature is not None:
-            action_list.append(SetTemperature(action_name= "SetTemperature", temperature=action.temperature))
         if action.duration is not None:
             action_list.append(action.transform_into_pistachio())
         return action_list
