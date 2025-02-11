@@ -443,7 +443,7 @@ class ActionExtractorFromText(BaseModel):
                 if new_temp != initial_temp and new_temp is not None:
                     initial_temp = new_temp
                     if action_name not in ["ThermalTreatment", "Dry"]:
-                        new_action_list.append({'action': 'SetTemperature', 'content': {'temperature': new_temp, 'microwave': False, "heat_ramp": None}})
+                        new_action_list.append({'action': 'ChangeTemperature', 'content': {'temperature': new_temp, 'microwave': False, "heat_ramp": None}})
                 del content["temperature"]
             except KeyError:
                 pass
@@ -454,7 +454,7 @@ class ActionExtractorFromText(BaseModel):
                     new_action_list.append(action)
             elif action_name in ["CollectLayer", "Yield"]:
                 pass
-            elif action_name == "SetTemperature":
+            elif action_name == "ChangeTemperature":
                 pass
             else:
                 new_action_list.append(action)
