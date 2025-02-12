@@ -1562,7 +1562,7 @@ class ChangeTemperatureSAC(ActionsWithConditons):
         if action.temperature is None:
             pass
         elif action.atmosphere is not None:
-            new_action = ThermalTreatment(action_name="TermalTreatment", temperature=action.temperature, duration=action.duration, heat_ramp=action.heat_ramp, atmosphere=action.atmosphere)
+            new_action = ThermalTreatment(action_name="ThermalTreatment", temperature=action.temperature, duration=action.duration, heat_ramp=action.heat_ramp, atmosphere=action.atmosphere)
             list_of_actions.append(new_action.zeolite_dict())
         elif action.stirring_speed is not None:
             new_action = StirMaterial(action_name="Stir", duration=action.duration, stirring_speed=action.stirring_speed)
