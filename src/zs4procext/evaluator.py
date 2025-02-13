@@ -232,15 +232,28 @@ class Evaluator(BaseModel):
                     test, index = self.exist_chemical_in_list(
                         material_1, reference_chemicals, threshold=threshold
                     )
+                    if test is None:
+                        pass
+                    elif test is True:
+                        found = found + 1
+                    test = None
                     material_2 = action["content"]["material_2"]
                     test_2, index_2 = self.exist_chemical_in_list(
-                        material_1, reference_chemicals, threshold=threshold
+                        material_2, reference_chemicals, threshold=threshold
                     )
+                    if test_2 is None:
+                        pass
+                    elif test_2 is True:
+                        found = found + 1
+                        del reference_chemicals[index_2]
+                    test_2 = None
                 else:
                     test = None
                 if test is None:
                     pass
                 elif test is True:
+                    print(material)
+                    print(reference_chemicals[index])
                     found = found + 1
                     del reference_chemicals[index]
                 if test_2 is None:
@@ -249,10 +262,10 @@ class Evaluator(BaseModel):
                     found = found + 1
                     del reference_chemicals[index_2]
                 else:
-                    print("############")
+                    """print("############")
                     print(action["action"])
                     print(material)
-                    print(reference_chemicals)
+                    print(reference_chemicals)"""
                     not_found = not_found + 1
             tp = tp + found
             fp = fp + not_found
