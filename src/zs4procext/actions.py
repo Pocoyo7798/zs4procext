@@ -571,7 +571,7 @@ class DrySolid(ActionsWithConditons):
         return [action.transform_into_pistachio()]
 
 
-class DrySolution(ActionsWithchemicals):
+class DrySolution(ActionsWithChemicalAndConditions):
     """Dry an organic solution with a desiccant"""
 
     material: Optional[str] = None
@@ -583,6 +583,7 @@ class DrySolution(ActionsWithchemicals):
         schemas: List[str],
         schema_parser: SchemaParser,
         amount_parser: ParametersParser,
+        conditions_parser: ParametersParser,
         banned_parser: KeywordSearching
     ) -> List[Dict[str, Any]]:
         action = cls(action_name="DrySolution", action_context=context)
@@ -590,7 +591,7 @@ class DrySolution(ActionsWithchemicals):
             schemas, schema_parser, amount_parser, banned_parser, action.action_context
         )
         if len(chemicals_info.chemical_list) == 0:
-            pass
+            return DrySolid.generate_action(context, conditions_parser)
         elif len(chemicals_info.chemical_list) == 1:
             action.material = chemicals_info.chemical_list[0].name
         else:
@@ -1727,7 +1728,7 @@ ACTION_REGISTRY: Dict[str, Any] = {
     "wait": Wait,
     "finalproduct": Yield,
 }
-ORGANIC_ACTION_REGISTRY: Dict[str, Any] = {
+PISTACHIO_ACTION_REGISTRY: Dict[str, Any] = {
     "add": Add,
     "cool": ReduceTemperature,
     "heat": SetTemperature,
@@ -1744,8 +1745,13 @@ ORGANIC_ACTION_REGISTRY: Dict[str, Any] = {
     "phaseseparation": PhaseSeparation,
     "partition": Partition,
     "wait": Wait,
+    "ph": Add,
+    "sonicate": Sonicate,
+    "degas": Degas,
+    "recrystallize": Recrystallize,
+    "triturate": Triturate
 }
-PISTACHIO_ACTION_REGISTRY: Dict[str, Any] = {
+ORGANIC_ACTION_REGISTRY: Dict[str, Any] = {
     "add": Add,
     "pour": Add,
     "dissolve": Add,
