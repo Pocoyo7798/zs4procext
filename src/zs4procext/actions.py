@@ -1694,6 +1694,15 @@ BANNED_CHEMICALS_REGISTRY: List[str] = [
     "Polytetrafluoroethylene",
     "PTFE",
     "mixture",
+    "derivative",
+    "layer",
+    "layers",
+    "step",
+    "residue",
+    "phase",
+    "prepared",
+    "neutralized",
+    "basified"
 ]
 
 ACTION_REGISTRY: Dict[str, Any] = {
