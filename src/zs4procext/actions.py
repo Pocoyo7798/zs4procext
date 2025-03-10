@@ -1833,7 +1833,7 @@ ELEMENTARY_ACTION_REGISTRY: Dict[str, Any] = {
 
 SAC_ACTION_REGISTRY: Dict[str, Any] = {
     "add": Add,
-    "makesolution": Add,
+    "makesolution": MakeSolution,
     "newsolution": Add,
     "separate": PhaseSeparation,
     "centrifugate": PhaseSeparation,

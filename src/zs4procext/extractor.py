@@ -732,7 +732,7 @@ class ActionExtractorFromText(BaseModel):
             print(action_list)
             final_actions_list: List[Any] = ActionExtractorFromText.correct_pistachio_action_list(action_list)
             print(final_actions_list)
-        if self.actions_type == "organic":
+        elif self.actions_type == "organic":
             final_actions_list = ActionExtractorFromText.correct_organic_action_list(action_list)
         elif self.actions_type == "materials":
             final_actions_list = ActionExtractorFromText.correct_action_list(action_list)
