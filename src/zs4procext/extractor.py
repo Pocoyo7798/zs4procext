@@ -236,9 +236,7 @@ class ActionExtractorFromText(BaseModel):
         self._llm_model.load_model_parameters(llm_param_path)
         self._llm_model.vllm_load_model()
         self._action_parser = ActionsParser(type=self.actions_type, separators=self._action_prompt._action_separators)
-        self._action_parser.model_post_init(None)
         self._condition_parser = ParametersParser(convert_units=False, amount=False)
-        self._condition_parser.model_post_init(None)
         self._quantity_parser = ParametersParser(
             convert_units=False,
             time=False,
@@ -247,19 +245,12 @@ class ActionExtractorFromText(BaseModel):
             atmosphere=False,
             size=False
         )
-        self._quantity_parser.model_post_init(None)
         self._schema_parser = SchemaParser(atributes_list=atributes)
-        self._schema_parser.model_post_init(None)
         self._filtrate_parser = KeywordSearching(keywords_list=FILTRATE_REGISTRY)
-        self._filtrate_parser.model_post_init(None)
         self._banned_parser = KeywordSearching(keywords_list=BANNED_CHEMICALS_REGISTRY)
-        self._banned_parser.model_post_init(None)
         self._precipitate_parser = KeywordSearching(keywords_list=PRECIPITATE_REGISTRY)
-        self._precipitate_parser.model_post_init(None)
         self._microwave_parser = KeywordSearching(keywords_list=MICROWAVE_REGISTRY)
-        self._microwave_parser.model_post_init(None)
         self._molar_ratio_parser = MolarRatioFinder(chemicals_list=MOLAR_RATIO_REGISTRY)
-        self._molar_ratio_parser.model_post_init(None)
 
     @staticmethod
     def empty_action(action: Dict[str, Any]):
@@ -738,7 +729,9 @@ class ActionExtractorFromText(BaseModel):
                 action_list.extend(new_action)
             i = i + 1
         if self.actions_type == "pistachio":
+            print(action_list)
             final_actions_list: List[Any] = ActionExtractorFromText.correct_pistachio_action_list(action_list)
+            print(final_actions_list)
         if self.actions_type == "organic":
             final_actions_list = ActionExtractorFromText.correct_organic_action_list(action_list)
         elif self.actions_type == "materials":
