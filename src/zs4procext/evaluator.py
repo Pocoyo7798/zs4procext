@@ -252,20 +252,24 @@ class Evaluator(BaseModel):
                 if test is None:
                     pass
                 elif test is True:
-                    print(material)
-                    print(reference_chemicals[index])
                     found = found + 1
                     del reference_chemicals[index]
+                else:
+                    print("############")
+                    print(action["action"])
+                    print(material)
+                    print(reference_chemicals)
+                    not_found = not_found + 1
                 if test_2 is None:
                     pass
                 elif test_2 is True:
                     found = found + 1
                     del reference_chemicals[index_2]
                 else:
-                    """print("############")
+                    print("############")
                     print(action["action"])
                     print(material)
-                    print(reference_chemicals)"""
+                    print(reference_chemicals)
                     not_found = not_found + 1
             tp = tp + found
             fp = fp + not_found
@@ -510,9 +514,13 @@ class Evaluator(BaseModel):
 
 CHEMICALS_REGISTRY = {"solution": "",
                       "powder": "",
+                      "hot": "",
                       "cyanide": "CN",
+                      "saturated": "",
                       "salt": "",
                       "nanorods": "",
+                      "dispersion": "",
+                      "of": "",
                       "phosphoric acid": "h3po4",
                       "chloroplatinic acid": "h2ptcl6∙6h2o",
                       "sodium tetrachloropalladate": "na2pdcl4",
@@ -522,14 +530,20 @@ CHEMICALS_REGISTRY = {"solution": "",
                       "cerium": "ce",
                       "tri": "3",
                       "carbon nanotube": "cnt",
+                      "crushed": "",
                       "aqueous": "",
                       "⋅": "",
                       "sample": "",
                       "dilute": "",
+                      "ethyl acetate": "etoac",
                       "concentrated": "",
                       "deionized" : "",
                       "anhydrous": "",
                       "sodium": "na",
+                      "dichloromethane": "dcm",
+                      "borohydride": "bh4",
+                      "bicarbonate": "hco3",
+                      "tetrahydrofuran": "thf",
                       "cetyl trimethyl ammonium bromide" : "ctab",
                       "sodiu metasilicate": "na2sio3",
                       "cetrimonium bromide": "ctab",
