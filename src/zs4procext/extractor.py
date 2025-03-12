@@ -31,6 +31,7 @@ from zs4procext.actions import (
     ChangeTemperatureSAC,
     CoolSAC,
     CollectLayer,
+    DrySolution,
     Filter,
     MakeSolution,
     NewSolution,
@@ -235,9 +236,7 @@ class ActionExtractorFromText(BaseModel):
         self._llm_model.load_model_parameters(llm_param_path)
         self._llm_model.vllm_load_model()
         self._action_parser = ActionsParser(type=self.actions_type, separators=self._action_prompt._action_separators)
-        self._action_parser.model_post_init(None)
         self._condition_parser = ParametersParser(convert_units=False, amount=False)
-        self._condition_parser.model_post_init(None)
         self._quantity_parser = ParametersParser(
             convert_units=False,
             time=False,
@@ -246,19 +245,12 @@ class ActionExtractorFromText(BaseModel):
             atmosphere=False,
             size=False
         )
-        self._quantity_parser.model_post_init(None)
         self._schema_parser = SchemaParser(atributes_list=atributes)
-        self._schema_parser.model_post_init(None)
         self._filtrate_parser = KeywordSearching(keywords_list=FILTRATE_REGISTRY)
-        self._filtrate_parser.model_post_init(None)
         self._banned_parser = KeywordSearching(keywords_list=BANNED_CHEMICALS_REGISTRY)
-        self._banned_parser.model_post_init(None)
         self._precipitate_parser = KeywordSearching(keywords_list=PRECIPITATE_REGISTRY)
-        self._precipitate_parser.model_post_init(None)
         self._microwave_parser = KeywordSearching(keywords_list=MICROWAVE_REGISTRY)
-        self._microwave_parser.model_post_init(None)
         self._molar_ratio_parser = MolarRatioFinder(chemicals_list=MOLAR_RATIO_REGISTRY)
-        self._molar_ratio_parser.model_post_init(None)
 
     @staticmethod
     def empty_action(action: Dict[str, Any]):
@@ -385,8 +377,139 @@ class ActionExtractorFromText(BaseModel):
         return action_list
     
     @staticmethod
-    def correct_action_list(action_list: List[Dict[str, Any]]):
-        return action_list
+    def correct_organic_action_list(action_dict_list: List[Dict[str, Any]]):
+        new_action_list = []
+        initial_temp = None
+        for action in action_dict_list:
+            action_name = action["action"]
+            content = action["content"]
+            try:
+                new_temp: str = content["temperature"]
+                if new_temp is None:
+                    pass
+                elif new_temp.lower() in ["ice-bath", "ice bath"]:
+                    new_temp = "0 °C"
+                if new_temp != initial_temp and new_temp is not None:
+                    initial_temp = new_temp
+                    new_action_list.append({'action': 'SetTemperature', 'content': {'temperature': new_temp}})
+                del content["temperature"]
+            except KeyError:
+                pass
+            if action_name == "Partition":
+                if content["material_1"] is None and content["material_2"] is None:
+                    pass
+                elif content["material_1"] is None:
+                    material_1 = content["material_2"]
+                    content["material_1"] = material_1
+                    content["material_2"] = None
+                elif content["material_2"] is None:
+                    pass
+                else:
+                    materials_list = [content["material_1"], content["material_2"]]
+                    sorted_material_list = sorted(materials_list, key=lambda d: d["name"])
+                    content["material_1"] = sorted_material_list[0]
+                    content["material_2"] = sorted_material_list[1]
+                new_action_list.append(action)
+            elif action_name == "Add":
+                if content["material"]["name"] == "SLN":
+                    pass
+                else:
+                    new_action_list.append(action)
+            elif action_name in ["CollectLayer", "Yield"]:
+                pass
+            elif action_name == "SetTemperature":
+                pass
+            else:
+                new_action_list.append(action)
+        return new_action_list
+    
+    @staticmethod
+    def correct_pistachio_action_list(action_dict_list: List[Dict[str, Any]]):
+        new_action_list = []
+        initial_temp = None
+        for action in action_dict_list:
+            action_name = action["action"]
+            content = action["content"]
+            try:
+                new_temp: str = content["temperature"]
+                if new_temp is None:
+                    pass
+                elif new_temp.lower() in ["ice-bath", "ice bath"]:
+                    new_temp = "0 °C"
+                if new_temp != initial_temp and new_temp is not None:
+                    initial_temp = new_temp
+                    new_action_list.append({'action': 'SetTemperature', 'content': {'temperature': new_temp}})
+                del content["temperature"]
+            except KeyError:
+                pass
+            if action_name == "MakeSolution":
+                chemical_list = content["materials"]
+                for chemical in chemical_list:
+                    new_add = {'action': 'Add', 'content': {'material': chemical, 'dropwise': False, 'atmosphere': None, 'duration': None}}
+                    new_action_list.append(new_add)
+            elif action_name == "Partition":
+                if content["material_1"] is None and content["material_2"] is None:
+                    pass
+                elif content["material_1"] is None:
+                    material_1 = content["material_2"]
+                    content["material_1"] = material_1
+                    content["material_2"] = None
+                elif content["material_2"] is None:
+                    pass
+                else:
+                    materials_list = [content["material_1"], content["material_2"]]
+                    sorted_material_list = sorted(materials_list, key=lambda d: d["name"])
+                    content["material_1"] = sorted_material_list[0]
+                    content["material_2"] = sorted_material_list[1]
+                new_action_list.append(action)
+            elif action_name == "Add":
+                if content["material"]["name"] == "SLN":
+                    pass
+                else:
+                    new_action_list.append(action)
+            elif action_name == "PH":
+                new_action = {'action': 'Add', 'content': {'material': content["material"], 'dropwise': content["dropwise"], 'atmosphere': None, 'duration': None}}
+                new_action_list.append(new_action)
+            elif action_name in ["CollectLayer", "Yield"]:
+                pass
+            elif action_name == "SetTemperature":
+                pass
+            else:
+                new_action_list.append(action)
+        return new_action_list
+        
+    @staticmethod
+    def correct_sac_action_list(action_dict_list: List[Dict[str, Any]]):
+        new_action_list = []
+        initial_temp = None
+        for action in action_dict_list:
+            action_name = action["action"]
+            content = action["content"]
+            try:
+                new_temp: str = content["temperature"]
+                if new_temp is None:
+                    pass
+                elif new_temp.lower() in ["ice-bath", "ice bath"]:
+                    new_temp = "0 °C"
+                if new_temp != initial_temp and new_temp is not None:
+                    initial_temp = new_temp
+                    if action_name not in ["ThermalTreatment", "Dry"]:
+                        new_action_list.append({'action': 'ChangeTemperature', 'content': {'temperature': new_temp, 'microwave': False, "heat_ramp": None}})
+                        del content["temperature"]
+            except KeyError:
+                pass
+            if action_name == "Add":
+                if content["material"]["name"] == "SLN":
+                    pass
+                else:
+                    new_action_list.append(action)
+            elif action_name in ["CollectLayer", "Yield"]:
+                pass
+            elif action_name == "ChangeTemperature":
+                pass
+            else:
+                new_action_list.append(action)
+        return new_action_list
     
     @staticmethod
     def transform_elementary(action_dict: List[Dict[str, Any]]):
@@ -606,11 +729,15 @@ class ActionExtractorFromText(BaseModel):
                 action_list.extend(new_action)
             i = i + 1
         if self.actions_type == "pistachio":
-            final_actions_list: List[Any] = ActionExtractorFromText.eliminate_empty_sequence(action_list, 5)
-        if self.actions_type == "pistachio":
-            final_actions_list: List[Any] = ActionExtractorFromText.correct_organic_action_list(action_list)
-        elif self.actions_type in set(["materials", "sac"]):
+            print(action_list)
+            final_actions_list: List[Any] = ActionExtractorFromText.correct_pistachio_action_list(action_list)
+            print(final_actions_list)
+        elif self.actions_type == "organic":
+            final_actions_list = ActionExtractorFromText.correct_organic_action_list(action_list)
+        elif self.actions_type == "materials":
             final_actions_list = ActionExtractorFromText.correct_action_list(action_list)
+        elif self.actions_type == "sac":
+            final_actions_list = ActionExtractorFromText.correct_sac_action_list(action_list)
         else:
             final_actions_list = action_list
         if self.elementar_actions is True:

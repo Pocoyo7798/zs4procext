@@ -19,7 +19,7 @@ from zs4procext.evaluator import Evaluator
 )
 @click.option(
     "--chemical_similarity_threshold",
-    default=0.75,
+    default=0.7,
     help="Minimum threshold value to consider two actions as equals",
 )
 def eval_actions(
