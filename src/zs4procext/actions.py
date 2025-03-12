@@ -147,6 +147,10 @@ class Actions(BaseModel):
             action_dict = self.model_dump(
                 exclude={"action_name", "action_context", "atmosphere", "temperature"}
             )
+        elif type(self) in  set([AddSAC, MakeSolutionSAC]):
+            action_dict = self.model_dump(
+                exclude={"action_name", "action_context", "temperature"}
+            )
         elif type(self) is Grind:
             action_dict = self.model_dump(
                 exclude={"action_name", "action_context", "size"}
@@ -1126,6 +1130,117 @@ class Yield(ActionsWithchemicals):
 
 ### Actions for Heterogeneous Catalysts
 
+class MakeSolutionSAC(ActionsWithChemicalAndConditions):
+    materials: Optional[List[ChemicalsMaterials]] = []
+    dropwise: bool = False
+    atmosphere: List[str] = []
+    temperature: Optional[str] = None
+    duration: Optional[str] = None
+
+    @classmethod
+    def generate_action(
+        cls,
+        context: str,
+        schemas: List[str],
+        schema_parser: SchemaParser,
+        amount_parser: ParametersParser,
+        conditions_parser: ParametersParser,
+        ph_parser: KeywordSearching,
+        banned_parser: KeywordSearching,
+        complex_parser: ComplexParametersParser=None,
+    ):
+        action = cls(action_name="MakeSolution", action_context=context)
+        action.validate_conditions(conditions_parser)
+        chemicals_info: ChemicalInfoMaterials = action.validate_chemicals_materials(
+            schemas, schema_parser, amount_parser, action.action_context, complex_parser=complex_parser
+        )
+        if len(chemicals_info.chemical_list) == 0:
+            pass
+        elif len(chemicals_info.chemical_list) == 1:
+            return AddSAC.generate_action(
+                context,
+                schemas,
+                schema_parser,
+                amount_parser,
+                conditions_parser,
+                ph_parser,
+                banned_parser,
+                complex_parser
+            )
+        else:
+            action.materials = chemicals_info.chemical_list
+            for test in chemicals_info.dropwise:
+                if test is True:
+                    action.dropwise = True
+                    break
+        list_of_actions: List[Dict[str, Any]] = []
+        if action.temperature is not None:
+            list_of_actions.append(ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature).zeolite_dict())
+        list_of_actions.append(action.zeolite_dict())
+        return list_of_actions
+
+class AddSAC(ActionsWithChemicalAndConditions):
+    material: Optional[ChemicalsMaterials] = None
+    dropwise: bool = False
+    atmosphere: List[str] = []
+    temperature: Optional[str] = None
+    duration: Optional[str] = None
+    ph: Optional[str] = None
+    
+    @classmethod
+    def generate_action(
+        cls,
+        context: str,
+        schemas: List[str],
+        schema_parser: SchemaParser,
+        amount_parser: ParametersParser,
+        conditions_parser: ParametersParser,
+        ph_parser: KeywordSearching,
+        banned_parser: KeywordSearching,
+        complex_parser: ComplexParametersParser=None,
+    ) -> List[Dict[str, Any]]:
+        action: AddMaterials = cls(action_name="Add", action_context=context)
+        action.validate_conditions(conditions_parser)
+        chemicals_info: ChemicalInfoMaterials = action.validate_chemicals_materials(
+            schemas, schema_parser, amount_parser, action.action_context, complex_parser=complex_parser
+        )
+        if len(ph_parser.find_keywords(context)) > 0:
+            dimensionless_values = DimensionlessParser.get_dimensionless_numbers(context)
+            if len(dimensionless_values) == 0:
+                pass
+            elif len(dimensionless_values) == 1:
+                action.ph = dimensionless_values[0]
+            else:
+                action.ph = dimensionless_values[0]
+                print(
+                    "Warning: More than one dimentionless value was found for the pH, only the first one was considered"
+                )
+        list_of_actions: List[Dict[str, Any]] = []
+        if action.temperature is not None:
+            list_of_actions.append(ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature).zeolite_dict())
+        if len(chemicals_info.chemical_list) == 0:
+            pass
+        elif len(chemicals_info.chemical_list[0].name.lower()) < 2:
+            pass
+        elif len(chemicals_info.chemical_list) == 1:
+            banned_names: List[str] = banned_parser.find_keywords(chemicals_info.chemical_list[0].name.lower())
+            if len(banned_names) == 0:
+                if chemicals_info.chemical_list[0].name.lower() == "aqueous solution":
+                    chemicals_info.chemical_list[0].name = "water"
+                action.material = chemicals_info.chemical_list[0]
+                action.dropwise = chemicals_info.dropwise[0]
+                list_of_actions.append(action.zeolite_dict())
+        else:
+            i = 0
+            for chemical in chemicals_info.chemical_list:
+                banned_names: List[str] = banned_parser.find_keywords(chemical.name)
+                if len(banned_names) == 0:
+                    action.material = chemical
+                    action.dropwise = chemicals_info.dropwise[i]
+                    list_of_actions.append(action.zeolite_dict())
+                i += 1
+        return list_of_actions
+
 class AddMaterials(ActionsWithChemicalAndConditions):
     material: Optional[ChemicalsMaterials] = None
     dropwise: bool = False
@@ -1513,6 +1628,28 @@ class Repeat(Actions):
             list_of_actions.append(action.zeolite_dict())
         print(list_of_actions)
         return list_of_actions
+    
+class Transfer(Actions):
+    recipient: str = ""
+    
+    @classmethod
+    def generate_action(cls, context: str, schemas: List[str], schemas_parser: SchemaParser):
+        print(context)
+        action: Transfer = cls(action_name="Transfer", action_context=context)
+        if len(schemas) == 0:
+            pass
+        elif len(schemas) == 1:
+            name: str = schemas_parser.get_atribute_value(schemas[0], "type")
+            size = schemas_parser.get_atribute_value(schemas[0], "volume")
+            action.recipient = f"{size} {name}"
+        else:
+            name: str = schemas_parser.get_atribute_value(schemas[0], "type")
+            size = schemas_parser.get_atribute_value(schemas[0], "volume")
+            action.recipient = f"{size} {name}"
+            print(
+                "Warning: More than one recipient was found, only the first one was considered"
+                )
+        return [action.zeolite_dict()]
 
 
 class ChangeTemperature(ActionsWithConditons):
