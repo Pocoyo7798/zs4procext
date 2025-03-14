@@ -738,8 +738,8 @@ class MakeSolution(ActionsWithChemicalAndConditions):
         schema_parser: SchemaParser,
         amount_parser: ParametersParser,
         conditions_parser: ParametersParser,
-        banned_parser: KeywordSearching,
         ph_parser: KeywordSearching,
+        banned_parser: KeywordSearching
     ) -> List[Dict[str, Any]]:
         action = cls(action_name="MakeSolution", action_context=context)
         action.validate_conditions(conditions_parser)
@@ -756,6 +756,7 @@ class MakeSolution(ActionsWithChemicalAndConditions):
                 amount_parser,
                 conditions_parser,
                 ph_parser,
+                banned_parser
             )
         else:
             action.materials = chemicals_info.chemical_list
@@ -1443,6 +1444,7 @@ class WashSAC(ActionsWithChemicalAndConditions):
     temperature: Optional[str] = None
     duration: Optional[str] = None
     method: Optional[str] = None
+    repetitions: Optional[int] = None
 
     @classmethod
     def generate_action(
@@ -1465,6 +1467,7 @@ class WashSAC(ActionsWithChemicalAndConditions):
         )
         centrifuge_results: List[str] = centrifuge_parser.find_keywords(action.action_context)
         filter_results: List[str] = filter_parser.find_keywords(action.action_context)
+        action.repetitions = chemicals_info.repetitions
         list_of_actions: List[Any] = []
         if action.temperature is not None:
             list_of_actions.append(ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature).zeolite_dict())
@@ -1485,8 +1488,6 @@ class WashSAC(ActionsWithChemicalAndConditions):
                 if len(banned_names) == 0:
                     action.material = material
                     list_of_actions.append(action.zeolite_dict())
-        if chemicals_info.repetitions > 1:
-            list_of_actions.append(Repeat(action_name="Repeat", amount=chemicals_info.repetitions).zeolite_dict())
         return list_of_actions
 
 class WaitMaterial(ActionsWithConditons):
@@ -1644,11 +1645,11 @@ class Transfer(Actions):
         elif len(schemas) == 1:
             name: str = schemas_parser.get_atribute_value(schemas[0], "type")
             size = schemas_parser.get_atribute_value(schemas[0], "volume")
-            action.recipient = f"{size} {name}"
+            action.recipient = f"{size[0]} {name[0]}".strip()
         else:
             name: str = schemas_parser.get_atribute_value(schemas[0], "type")
             size = schemas_parser.get_atribute_value(schemas[0], "volume")
-            action.recipient = f"{size} {name}"
+            action.recipient = f"{size[0]} {name[0]}".strip()
             print(
                 "Warning: More than one recipient was found, only the first one was considered"
                 )
@@ -1978,17 +1979,17 @@ ELEMENTARY_ACTION_REGISTRY: Dict[str, Any] = {
 }
 
 SAC_ACTION_REGISTRY: Dict[str, Any] = {
-    "add": Add,
-    "makesolution": MakeSolution,
-    "newsolution": Add,
+    "add": AddSAC,
+    "makesolution": MakeSolutionSAC,
+    "newsolution": MakeSolutionSAC,
     "separate": PhaseSeparation,
     "centrifugate": PhaseSeparation,
     "filter": PhaseSeparation,
     "concentrate": DryMaterial,
     "cool": CoolSAC,
     "heat": ChangeTemperatureSAC,
-    "wash": Wash,
-    "wait": Wait,
+    "wash": WashSAC,
+    "wait": WaitMaterial,
     "reflux": ChangeTemperatureSAC,
     "drysolid": DryMaterial,
     "drysolution": DryMaterial,
@@ -2007,7 +2008,7 @@ SAC_ACTION_REGISTRY: Dict[str, Any] = {
     "synthesisvariant": None,
     "yield": None,
     "noaction": None,
-    "transfer": None,
+    "transfer": Transfer,
     "invalidaction": None,
     "recrystallize": None,
     "followotherprocedure": None

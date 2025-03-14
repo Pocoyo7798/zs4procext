@@ -158,7 +158,7 @@ class ActionExtractorFromText(BaseModel):
             self._centri_parser = KeywordSearching(keywords_list=CENTRIFUGATION_REGISTRY)
             self._filter_parser = KeywordSearching(keywords_list=FILTER_REGISTRY)
             atributes = ["name", "dropwise"]
-        if self.actions_type == "organic":
+        elif self.actions_type == "organic":
             if self.action_prompt_schema_path is None:
                 self.action_prompt_schema_path = str(
                     importlib_resources.files("zs4procext")

@@ -767,7 +767,7 @@ class SchemaParser(BaseModel):
         for atribute in self.atributes_list:
             self._atributes_regex[atribute] = re.compile(
                 #rf"[\"']*{atribute}[\"']*\s*[:=-]\s*[\"']*([^\"'{self.limiters['initial']}{self.limiters['final']}]*)[\"']*,*",
-                rf"[\"']*{atribute}[\"']*\s*[:=-]\s*[\"']*([^\"']*)[\"']*,*",
+                rf"[\"']*{atribute}[\"']*\s*[:=-]\s*[\"',]*([^\"',]*)[\"']*",
                 re.IGNORECASE | re.MULTILINE,
             )
 
