@@ -1716,20 +1716,8 @@ class FilterSAC(Actions):
 
 class CentrifugeSAC(Actions):
     """
-    Filtration action, possibly with information about what phase to keep ('filtrate' or 'precipitate')
+    Centrifugation action, possibly with information about what phase to keep ('filtrate' or 'precipitate')
     """
-
-    @validator("phase_to_keep")
-    def phase_options(cls, phase_to_keep):
-        if phase_to_keep is not None and phase_to_keep not in [
-            "filtrate",
-            "precipitate",
-            None,
-        ]:
-            raise ValueError(
-                'phase_to_keep must be equal to "filtrate" or "precipitate"'
-            )
-        return phase_to_keep
 
     @classmethod
     def generate_action(
