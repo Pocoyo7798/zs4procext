@@ -2082,6 +2082,7 @@ SAC_ACTION_REGISTRY: Dict[str, Any] = {
     "thermaltreatment": ThermalTreatment,
     "stir": StirMaterial,
     "sonicate": Sonicate,
+    "quench": Quench,
     "settemperature": ChangeTemperatureSAC,
     "grind": Grind,
     "sieve": Sieve,
