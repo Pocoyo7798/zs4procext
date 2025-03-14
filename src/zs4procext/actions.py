@@ -1655,6 +1655,90 @@ class Transfer(Actions):
                 )
         return [action.zeolite_dict()]
 
+class PhaseSeparationSAC(Actions):
+    @classmethod
+    def generate_action(
+        cls,
+        context: str,
+        filtrate_parser: KeywordSearching,
+        precipitate_parser: KeywordSearching,
+        centrifuge_parser: KeywordSearching,
+        filter_parser: KeywordSearching,
+
+    ) -> List[Dict[str, Any]]:
+        action = cls(action_name="PhaseSeparation", action_context=context)
+        filter_results = filter_parser.find_keywords(action.action_context)
+        centrifuge_results = centrifuge_parser.find_keywords(action.action_context)
+        if len(filter_results) > 0:
+            return FilterSAC.generate_action(context, filtrate_parser, precipitate_parser)
+        elif len(centrifuge_results) > 0:
+            return CentrifugeSAC.generate_action(context)
+        else:
+            return [action.transform_into_pistachio()]
+
+class FilterSAC(Actions):
+    """
+    Filtration action, possibly with information about what phase to keep ('filtrate' or 'precipitate')
+    """
+
+    phase_to_keep: Optional[str] = None
+
+    @validator("phase_to_keep")
+    def phase_options(cls, phase_to_keep):
+        if phase_to_keep is not None and phase_to_keep not in [
+            "filtrate",
+            "precipitate",
+            None,
+        ]:
+            raise ValueError(
+                'phase_to_keep must be equal to "filtrate" or "precipitate"'
+            )
+        return phase_to_keep
+
+    @classmethod
+    def generate_action(
+        cls,
+        context: str,
+        filtrate_parser: KeywordSearching,
+        precipitate_parser: KeywordSearching,
+    ) -> List[Dict[str, Any]]:
+        action = cls(action_name="Filter", action_context=context)
+        filtrate_results = filtrate_parser.find_keywords(action.action_context)
+        precipitate_results = precipitate_parser.find_keywords(action.action_context)
+        if len(precipitate_results) > 0:
+            action.phase_to_keep = "precipitate"
+        elif len(filtrate_results) > 0:
+            action.phase_to_keep = "filtrate"
+        else:
+            action.phase_to_keep = "precipitate"
+        
+        return [action.transform_into_pistachio()]
+
+class CentrifugeSAC(Actions):
+    """
+    Filtration action, possibly with information about what phase to keep ('filtrate' or 'precipitate')
+    """
+
+    @validator("phase_to_keep")
+    def phase_options(cls, phase_to_keep):
+        if phase_to_keep is not None and phase_to_keep not in [
+            "filtrate",
+            "precipitate",
+            None,
+        ]:
+            raise ValueError(
+                'phase_to_keep must be equal to "filtrate" or "precipitate"'
+            )
+        return phase_to_keep
+
+    @classmethod
+    def generate_action(
+        cls,
+        context: str,
+    ) -> List[Dict[str, Any]]:
+        action = cls(action_name="Centrifugate", action_context=context)
+        return [action.transform_into_pistachio()]
+
 
 class ChangeTemperature(ActionsWithConditons):
     temperature: Optional[str] = None
@@ -1982,9 +2066,9 @@ SAC_ACTION_REGISTRY: Dict[str, Any] = {
     "add": AddSAC,
     "makesolution": MakeSolutionSAC,
     "newsolution": MakeSolutionSAC,
-    "separate": PhaseSeparation,
-    "centrifugate": PhaseSeparation,
-    "filter": PhaseSeparation,
+    "separate": PhaseSeparationSAC,
+    "centrifugate": PhaseSeparationSAC,
+    "filter": PhaseSeparationSAC,
     "concentrate": DryMaterial,
     "cool": CoolSAC,
     "heat": ChangeTemperatureSAC,
@@ -2003,6 +2087,9 @@ SAC_ACTION_REGISTRY: Dict[str, Any] = {
     "sieve": Sieve,
     "anneal": ThermalTreatment,
     "calcine": ThermalTreatment,
+    "degas": Degas,
+    "extract": Extract,
+    "purify": Purify,
     "synthesisproduct": None,
     "synthesismethod": None,
     "synthesisvariant": None,
