@@ -46,6 +46,7 @@ from zs4procext.actions import (
     SonicateMaterial,
     StirMaterial,
     ThermalTreatment,
+    Transfer,
     WashMaterial,
     WashSAC,
 )
@@ -75,7 +76,8 @@ class ActionExtractorFromText(BaseModel):
     chemical_prompt_schema_path: Optional[str] = None
     wash_chemical_prompt_schema_path: Optional[str] = None
     add_chemical_prompt_schema_path: Optional[str] = None
-    solution_chemical_prompt_schema_path: Optional[str] = None
+    solution_chemical_prompt_schema_path: Optional[str] = None,
+    transfer_prompt_schema_path: Optional[str] = None
     llm_model_name: Optional[str] = None
     llm_model_parameters_path: Optional[str] = None
     elementar_actions: bool = False
@@ -84,12 +86,14 @@ class ActionExtractorFromText(BaseModel):
     _wash_chemical_prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
     _add_chemical_prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
     _solution_chemical_prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
+    _transfer_prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
     _llm_model: Optional[ModelLLM] = PrivateAttr(default=None)
     _action_parser: Optional[ActionsParser] = PrivateAttr(default=None)
     _condition_parser: Optional[ParametersParser] = PrivateAttr(default=None)
     _complex_parser: Optional[ComplexParametersParser] = PrivateAttr(default=None)
     _quantity_parser: Optional[ParametersParser] = PrivateAttr(default=None)
     _schema_parser: Optional[SchemaParser] = PrivateAttr(default=None)
+    _transfer_schema_parser: Optional[SchemaParser] = PrivateAttr(default=None)
     _filtrate_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
     _precipitate_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
     _filter_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
@@ -135,6 +139,15 @@ class ActionExtractorFromText(BaseModel):
                 solution_chemical_prompt_dict = json.load(f)
             self._solution_chemical_prompt = PromptFormatter(**solution_chemical_prompt_dict)
             self._solution_chemical_prompt.model_post_init(self.chemical_prompt_structure_path)
+        self.transfer_prompt_schema_path = str(
+                    importlib_resources.files("zs4procext")
+                    / "resources"
+                    / "transfer_schema.json"
+                )
+        with open(self.transfer_prompt_schema_path, "r") as f:
+            transfer_prompt_dict = json.load(f)
+        self._transfer_prompt = PromptFormatter(**transfer_prompt_dict)
+        self._transfer_prompt.model_post_init(self.chemical_prompt_structure_path)
         if self.llm_model_parameters_path is None:
             llm_param_path = str(
                 importlib_resources.files("zs4procext")
@@ -248,6 +261,8 @@ class ActionExtractorFromText(BaseModel):
             atmosphere=False,
             size=False
         )
+        transfer_atributes = ["type", "volume"]
+        self._transfer_schema_parser = SchemaParser(atributes_list=transfer_atributes)
         self._schema_parser = SchemaParser(atributes_list=atributes)
         self._filtrate_parser = KeywordSearching(keywords_list=FILTRATE_REGISTRY)
         self._banned_parser = KeywordSearching(keywords_list=BANNED_CHEMICALS_REGISTRY)
@@ -698,6 +713,15 @@ class ActionExtractorFromText(BaseModel):
                 schemas = self._schema_parser.parse_schema(chemical_response)
                 new_action = action.generate_action(
                     context, schemas, self._schema_parser, self._quantity_parser, self._condition_parser, self._centri_parser, self._filter_parser, self._banned_parser
+                )
+                action_list.extend(new_action)
+            elif action is Transfer:
+                transfer_prompt = self._transfer_prompt.format_prompt(context)
+                transfer_response = self._llm_model.run_single_prompt(transfer_prompt)
+                print(transfer_response)
+                schemas = self._transfer_schema_parser.parse_schema(chemical_response)
+                new_action = action.generate_action(
+                    context, schemas, self._transfer_schema_parser
                 )
                 action_list.extend(new_action)
             elif action is Separate:
