@@ -719,7 +719,7 @@ class ActionExtractorFromText(BaseModel):
                 transfer_prompt = self._transfer_prompt.format_prompt(context)
                 transfer_response = self._llm_model.run_single_prompt(transfer_prompt)
                 print(transfer_response)
-                schemas = self._transfer_schema_parser.parse_schema(chemical_response)
+                schemas = self._transfer_schema_parser.parse_schema(transfer_response)
                 new_action = action.generate_action(
                     context, schemas, self._transfer_schema_parser
                 )
