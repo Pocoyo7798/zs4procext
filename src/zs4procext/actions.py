@@ -2030,7 +2030,22 @@ MATERIAL_ACTION_REGISTRY: Dict[str, Any] = {
     "cool": Cool,
     "heat": ChangeTemperature,
     "grind": Grind,
-    "sieve": Sieve
+    "sieve": Sieve,
+    "extract": Wash,
+    "quench": Wash,
+    "thermaltreatment": ThermalTreatment,
+    "drysolid": DryMaterial,
+    "drysolution": DryMaterial,
+    "dry": DryMaterial,
+    "concentrate": Separate,
+    "invalidaction": None,
+    "recrystallize": None,
+    "followotherprocedure": None,
+    "synthesisproduct": None,
+    "synthesismethod": None,
+    "synthesisvariant": None,
+    "yield": None,
+    "noaction": None,
 
 }
 
@@ -2047,7 +2062,7 @@ ELEMENTARY_ACTION_REGISTRY: Dict[str, Any] = {
     "cool": Cool,
     "heat": ChangeTemperatureSAC,
     "grind": Grind,
-    "sieve": Sieve
+    "sieve": Sieve,
 }
 
 SAC_ACTION_REGISTRY: Dict[str, Any] = {
@@ -2076,6 +2091,7 @@ SAC_ACTION_REGISTRY: Dict[str, Any] = {
     "sieve": Sieve,
     "anneal": ThermalTreatment,
     "calcine": ThermalTreatment,
+    "phaseseparation": PhaseSeparationSAC,
     "degas": Degas,
     "extract": Extract,
     "purify": Purify,
