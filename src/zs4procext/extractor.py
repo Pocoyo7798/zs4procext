@@ -1106,7 +1106,7 @@ class TableExtractor(BaseModel):
         if self.vlm_model_name is None:
             self._vlm_model = ModelVLM(model_name="Llama2-70B-chat-hf")
         else:
-            self._vlm_model = ModelLLM(model_name=self.vlm_model_name)
+            self._vlm_model = ModelVLM(model_name=self.vlm_model_name)
         self._vlm_model.load_model_parameters(vlm_param_path)
         self._vlm_model.vllm_load_model()
 
