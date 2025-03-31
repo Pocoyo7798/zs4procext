@@ -50,7 +50,7 @@ from zs4procext.actions import (
     WashMaterial,
     WashSAC,
 )
-from zs4procext.llm import ModelLLM
+from zs4procext.llm import ModelLLM, ModelVLM
 from zs4procext.parser import (
     ActionsParser,
     ComplexParametersParser,
@@ -1081,7 +1081,7 @@ class TableExtractor(BaseModel):
     vlm_model_name: Optional[str] = None
     vlm_model_parameters_path: Optional[str] = None
     _prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
-    _vlm_model: Optional[ModelLLM] = PrivateAttr(default=None)
+    _vlm_model: Optional[ModelVLM] = PrivateAttr(default=None)
     _condition_parser: Optional[TableParser] = PrivateAttr(default=None)
 
     def model_post_init(self, __context: Any) -> None:
@@ -1104,7 +1104,7 @@ class TableExtractor(BaseModel):
         self._prompt = PromptFormatter(**prompt_dict)
         self._prompt.model_post_init(self.prompt_structure_path)
         if self.vlm_model_name is None:
-            self._vlm_model = ModelLLM(model_name="Llama2-70B-chat-hf")
+            self._vlm_model = ModelVLM(model_name="Llama2-70B-chat-hf")
         else:
             self._vlm_model = ModelLLM(model_name=self.vlm_model_name)
         self._vlm_model.load_model_parameters(vlm_param_path)
