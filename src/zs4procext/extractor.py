@@ -615,7 +615,7 @@ class ActionExtractorFromText(BaseModel):
             raise AttributeError("You need to post initilize the class")
         paragraph = self._molar_ratio_parser.substitute(paragraph)
         print(paragraph)
-        action_prompt: str = self._action_prompt.format_prompt(paragraph)
+        action_prompt: str = self._action_prompt.format_prompt(f"'{paragraph}'")
         actions_response: str = self._llm_model.run_single_prompt(action_prompt).strip()
         actions_response = actions_response.replace("\x03C", "°C")
         actions_response = actions_response.replace("oC", "°C") 
@@ -658,11 +658,11 @@ class ActionExtractorFromText(BaseModel):
                 action_list.extend(new_action)
             elif action in set([MakeSolution, Add, Quench]):
                 if action is Add:
-                    chemical_prompt = self._add_chemical_prompt.format_prompt(context)
+                    chemical_prompt = self._add_chemical_prompt.format_prompt(f"'{context}'")
                 elif action is MakeSolution:
-                    chemical_prompt = self._solution_chemical_prompt.format_prompt(context)
+                    chemical_prompt = self._solution_chemical_prompt.format_prompt(f"'{context}'")
                 else:
-                    chemical_prompt = self._chemical_prompt.format_prompt(context)
+                    chemical_prompt = self._chemical_prompt.format_prompt(f"'{context}'")
                 chemical_response = self._llm_model.run_single_prompt(chemical_prompt).strip()
                 print(chemical_response)
                 schemas = self._schema_parser.parse_schema(chemical_response)
@@ -678,11 +678,11 @@ class ActionExtractorFromText(BaseModel):
                 action_list.extend(new_action)
             elif action in set([MakeSolutionSAC, AddSAC, AddMaterials, NewSolution]):
                 if action is AddMaterials or action is AddSAC:
-                    chemical_prompt = self._add_chemical_prompt.format_prompt(context)
+                    chemical_prompt = self._add_chemical_prompt.format_prompt(f"'{context}'")
                 elif action is NewSolution or action is MakeSolutionSAC:
-                    chemical_prompt = self._solution_chemical_prompt.format_prompt(context)
+                    chemical_prompt = self._solution_chemical_prompt.format_prompt(f"'{context}'")
                 else:
-                    chemical_prompt = self._chemical_prompt.format_prompt(context)
+                    chemical_prompt = self._chemical_prompt.format_prompt(f"'{context}'")
                 chemical_response = self._llm_model.run_single_prompt(chemical_prompt).strip()
                 print(chemical_response)
                 schemas = self._schema_parser.parse_schema(chemical_response)
@@ -698,7 +698,7 @@ class ActionExtractorFromText(BaseModel):
                 )
                 action_list.extend(new_action)
             elif action is WashMaterial:
-                chemical_prompt = self._wash_chemical_prompt.format_prompt(context)
+                chemical_prompt = self._wash_chemical_prompt.format_prompt(f"'{context}'")
                 chemical_response = self._llm_model.run_single_prompt(chemical_prompt)
                 print(chemical_response)
                 schemas = self._schema_parser.parse_schema(chemical_response)
@@ -707,7 +707,7 @@ class ActionExtractorFromText(BaseModel):
                 )
                 action_list.extend(new_action)
             elif action is WashSAC:
-                chemical_prompt = self._wash_chemical_prompt.format_prompt(context)
+                chemical_prompt = self._wash_chemical_prompt.format_prompt(f"'{context}'")
                 chemical_response = self._llm_model.run_single_prompt(chemical_prompt)
                 print(chemical_response)
                 schemas = self._schema_parser.parse_schema(chemical_response)
@@ -716,7 +716,7 @@ class ActionExtractorFromText(BaseModel):
                 )
                 action_list.extend(new_action)
             elif action is Transfer:
-                transfer_prompt = self._transfer_prompt.format_prompt(context)
+                transfer_prompt = self._transfer_prompt.format_prompt(f"'{context}'")
                 transfer_response = self._llm_model.run_single_prompt(transfer_prompt)
                 print(transfer_response)
                 schemas = self._transfer_schema_parser.parse_schema(transfer_response)
@@ -740,7 +740,7 @@ class ActionExtractorFromText(BaseModel):
                 new_action = action.generate_action(context, self._condition_parser)
                 action_list.extend(new_action)
             elif action.type == "onlychemicals":
-                chemical_prompt = self._chemical_prompt.format_prompt(context)
+                chemical_prompt = self._chemical_prompt.format_prompt(f"'{context}'")
                 chemical_response = self._llm_model.run_single_prompt(chemical_prompt)
                 print(chemical_response)
                 schemas = self._schema_parser.parse_schema(chemical_response)
@@ -749,7 +749,7 @@ class ActionExtractorFromText(BaseModel):
                 )
                 action_list.extend(new_action)
             elif action.type == "chemicalsandconditions":
-                chemical_prompt = self._chemical_prompt.format_prompt(context)
+                chemical_prompt = self._chemical_prompt.format_prompt(f"'{context}'")
                 chemical_response = self._llm_model.run_single_prompt(chemical_prompt)
                 print(chemical_response)
                 schemas = self._schema_parser.parse_schema(chemical_response)
@@ -1112,6 +1112,5 @@ class TableExtractor(BaseModel):
 
     def extract_table_info(self, image_path: str):
         prompt = self._prompt.format_prompt("")
-        print(prompt)
         output = self._vlm_model.run_image_single_prompt(prompt, image_path)
         print(output)

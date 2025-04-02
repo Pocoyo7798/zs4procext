@@ -130,7 +130,7 @@ class PromptFormatter(BaseModel):
             expertise=self.expertise,
             initialization=self.initialization,
             objective=self.objective,
-            context=f"'{context}'\n",
+            context=f"{context}\n",
             actions=self._action_list,
             answer_schema=self._answer_schema,
             conclusion=self.conclusion,

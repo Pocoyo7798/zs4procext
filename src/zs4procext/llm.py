@@ -103,7 +103,7 @@ class ModelVLM(BaseModel):
                 image_input_type="pixel_values",
                 image_token_id=32000,
                 image_input_shape="1,3,336,336",
-                image_feature_size=576,
+                image_feature_size=1151,
                 vllm_kwargs={
                     "gpu_memory_utilization": self.model_parameters[
                         "gpu_memory_utilization"
@@ -126,7 +126,8 @@ class ModelVLM(BaseModel):
 
     def run_image_single_prompt(self, prompt: str, image_path: str) -> str:
         pil_image = Image.open(image_path)
-        final_prompt: str = "<image>" * 576 + (prompt)
+        final_prompt: str = "<image>" * 1151 + (prompt)
+        print(final_prompt)
         new_prompt: Dict[str, Any] = [
             {
                 "prompt": final_prompt,
