@@ -103,7 +103,7 @@ class ModelVLM(BaseModel):
                 image_input_type="pixel_values",
                 image_token_id=32000,
                 image_input_shape="1,3,336,336",
-                image_feature_size=1151,
+                image_feature_size=576,
                 vllm_kwargs={
                     "gpu_memory_utilization": self.model_parameters[
                         "gpu_memory_utilization"
