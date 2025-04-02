@@ -130,7 +130,7 @@ class ModelVLM(BaseModel):
         new_prompt: Dict[str, Any] = [
             {
                 "prompt": final_prompt,
-                "multi_modal_data": {"image": np.array(pil_image)},
+                "multi_modal_data": {"image": pil_image},
             }
         ]
         outputs = self.model.generate(new_prompt)
