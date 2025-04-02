@@ -126,13 +126,11 @@ class ModelVLM(BaseModel):
 
     def run_image_single_prompt(self, prompt: str, image_path: str) -> str:
         pil_image = Image.open(image_path)
-        final_prompt: str = "<image>" + (prompt)
-        print(final_prompt)
         new_prompt: Dict[str, Any] = [
             {
-                "prompt": final_prompt,
+                "prompt": prompt,
                 "multi_modal_data": {"image": pil_image},
             }
         ]
-        outputs = self.model.generate(new_prompt)
+        outputs = self.model.generate(new_prompt)[0].text
         return outputs
