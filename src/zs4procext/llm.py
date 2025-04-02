@@ -126,7 +126,7 @@ class ModelVLM(BaseModel):
 
     def run_image_single_prompt(self, prompt: str, image_path: str) -> str:
         pil_image = Image.open(image_path)
-        final_prompt: str = (prompt)
+        final_prompt: str = "<image>" + (prompt)
         print(final_prompt)
         new_prompt: Dict[str, Any] = [
             {
