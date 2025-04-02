@@ -132,5 +132,5 @@ class ModelVLM(BaseModel):
                 "multi_modal_data": {"image": pil_image},
             }
         ]
-        outputs = self.model.generate(new_prompt)[0].text
+        outputs = self.model(new_prompt)
         return outputs
