@@ -134,12 +134,7 @@ class ModelVLM(BaseModel):
         ]
         outputs = self.model.generate(new_prompt)
         final_response = ""
-        print(outputs)
         for o in outputs:
-            print("##############")
-            print(o)
-            print(o[1])
-            print(o[1][0])
-            final_response += o[1][0][0].text + "\n"
-            print(final_response)
+            final_response += o[1][0][0].text
+            break
         return final_response
