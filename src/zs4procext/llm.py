@@ -136,5 +136,5 @@ class ModelVLM(BaseModel):
         final_response = ""
         for o in outputs:
             print(o)
-            final_response += o.outputs[0].text + "\n"
+            final_response += o[1][0].text + "\n"
         return final_response
