@@ -55,6 +55,7 @@ from zs4procext.parser import (
     ActionsParser,
     ComplexParametersParser,
     EquationFinder,
+    ImageParser,
     KeywordSearching,
     ListParametersParser,
     MolarRatioFinder,
@@ -1115,3 +1116,48 @@ class TableExtractor(BaseModel):
         print(prompt)
         output = self._vlm_model.run_image_single_prompt(prompt, image_path)
         print(output)
+
+
+class ImageExtractor(BaseModel):
+    prompt_structure_path: Optional[str] = None 
+    prompt_schema_path: Optional[str] = None
+    vlm_model_name: Optional[str] = None
+    vlm_model_parameters_path: Optional[str] = None
+    _prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
+    _vlm_model: Optional[ModelVLM] = PrivateAttr(default=None)
+    _image_parser: Optional[ImageParser] = PrivateAttr(default=None)  
+
+    def model_post_init(self, __context: Any) -> None:
+        if self.vlm_model_parameters_path is None:
+            vlm_param_path = str(
+                importlib_resources.files("zs4procext")
+                / "resources"
+                / "vllm_default_params.json"
+                )
+        else:
+            vlm_param_path = self.vlm_model_parameters_path
+        if self.prompt_schema_path is None:
+            self.prompt_schema_path = str(
+                importlib_resources.files("zs4procext")
+                / "resources"
+                / "image_extraction_schema.json" 
+            )
+        with open(self.prompt_schema_path, "r") as f:
+                prompt_dict = json.load(f)
+        self._prompt = PromptFormatter(**prompt_dict)
+        self._prompt.model_post_init(self.prompt_structure_path)
+        if self.vlm_model_name is None:
+            self._vlm_model = ModelVLM(model_name="Llama2-70B-chat-hf")
+        else:
+            self._vlm_model = ModelVLM(model_name=self.vlm_model_name)
+        self._vlm_model.load_model_parameters(vlm_param_path)
+        self._vlm_model.vllm_load_model()
+        self._image_parser = ImageParser() 
+
+    def extract_image_info(self, image_path: str):
+        prompt = self._prompt.format_prompt("<image>")
+        print(prompt)
+        output = self._vlm_model.run_image_single_prompt(prompt, image_path)
+        print(output)
+        parsed_output = self._image_parser.parse(output) 
+        return parsed_output 

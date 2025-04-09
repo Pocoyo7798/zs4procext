@@ -335,5 +335,10 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         importlib_resources.files("zs4procext")
         / "resources"
         / "deepseek_chat_default_instruct_template.json"
+    ),
+    "Ovis2-4B": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "ovis_chat_default_instruct_template.json"
     )
 }
