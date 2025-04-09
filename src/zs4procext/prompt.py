@@ -339,6 +339,21 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
     "Ovis2-4B": str(
         importlib_resources.files("zs4procext")
         / "resources"
-        / "ovis_chat_default_instruct_template.json"
-    )
+        / "ovis_default_instruct_template.json"
+    ),
+    "Ovis2-34B": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "ovis_default_instruct_template.json"
+    ),
+    "InternVL2_5-38B-MPO": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "intern_default_instruct_template.json"
+    ),
+    "POINTS-Qwen-2-5-7B-Chat": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "qwen_chat_default_instruct_template.json"
+    )   
 }
