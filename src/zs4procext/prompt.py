@@ -135,6 +135,7 @@ class PromptFormatter(BaseModel):
             answer_schema=self._answer_schema,
             conclusion=self.conclusion,
         )
+        
         return formatted_prompt
     
     def prepare_image(self, image_path: str = ""):

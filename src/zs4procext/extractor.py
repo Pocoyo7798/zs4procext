@@ -1111,7 +1111,7 @@ class TableExtractor(BaseModel):
         self._vlm_model.vllm_load_model()
 
     def extract_table_info(self, image_path: str):
-        prompt = self._prompt.format_prompt("<image>")
+        prompt = self._prompt.format_prompt("")
         print(prompt)
         output = self._vlm_model.run_image_single_prompt(prompt, image_path)
         print(output)
