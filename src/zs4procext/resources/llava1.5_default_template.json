@@ -11,7 +11,7 @@
     "input_types": {},
     "output_parser": null,
     "partial_variables": {},
-    "template": "A chat between a curious human and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the human's questions. USER: {context}{expertise}{initialization}{actions}{objective}{answer_schema}{conclusion}\nASSISTANT:",
+    "template": "USER: <image>\n{expertise}{initialization}{actions}{objective}{context}{answer_schema}{conclusion}\nASSISTANT:",
     "template_format": "f-string",
     "validate_template": true,
     "_type": "prompt"
