@@ -1152,7 +1152,7 @@ class ImageExtractor(BaseModel):
             self._vlm_model = ModelVLM(model_name=self.vlm_model_name)
         self._vlm_model.load_model_parameters(vlm_param_path)
         self._vlm_model.vllm_load_model()
-        self._image_parser = ImageParser() 
+        self._image_parser = ImageParser()
 
     def extract_image_info(self, image_path: str):
         prompt = self._prompt.format_prompt("<image>")

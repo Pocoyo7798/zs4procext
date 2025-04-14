@@ -341,19 +341,47 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         / "resources"
         / "ovis_default_instruct_template.json"
     ),
-    "Ovis2-34B": str(
+    "Ovis2-16B": str(
         importlib_resources.files("zs4procext")
         / "resources"
-        / "ovis_default_instruct_template.json"
+        / "ovis_chat_default_instruct_template.json"
     ),
-    "InternVL2_5-38B-MPO": str(
+    "Ovis1.6-Gemma2-9B": str(
         importlib_resources.files("zs4procext")
         / "resources"
-        / "intern_default_instruct_template.json"
+        / "ovis_chat_default_instruct_template.json"
+    ),
+    "Ovis1.5-Llama3-8B": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "ovis_chat_default_instruct_template.json"
+    ),
+    "Ovis1.5-Llama3-8B": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "ovis_chat_default_instruct_template.json"
+    ),
+
+    "Phi-3-vision-128k-instruct": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "phi3_default_instruct_template.json"
+    ),
+    "Qwen2.5-VL-7B-Instruct": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "quew_default_instruct_template.json"
     ),
     "POINTS-Qwen-2-5-7B-Chat": str(
         importlib_resources.files("zs4procext")
         / "resources"
-        / "qwen_chat_default_instruct_template.json"
-    )   
+        / "qwen_default_instruct_template.json"
+    ),
+
+    "pixtral-12b": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "pixtral-12b_default_instruct_template.json"
+    )
+
 }

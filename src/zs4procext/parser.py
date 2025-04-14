@@ -1184,7 +1184,7 @@ MATERIALS_CHARACTERIZATION_REGISTRY: Dict[str, Any] = {
 }
 
 class ImageParser(BaseModel):
-    data_string: str
+
     data_dict: dict = Field(default_factory=dict)
     catalyst_label: str = ""
     x_axis_label: str = ""
@@ -1194,7 +1194,7 @@ class ImageParser(BaseModel):
         super().__init__(**data)
         self._convert_to_dict()
 
-    def _convert_to_dict(self):
+    def _convert_to_dict(self,data_string:str):
         header_pattern = re.compile(r'^[^\n]*[a-zA-Z]+;[^\n]*[a-zA-Z]+;[^\n]*[a-zA-Z]+[^\n]*$', re.MULTILINE)
         header_match = header_pattern.search(self.data_string)
         if not header_match:
