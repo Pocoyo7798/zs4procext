@@ -99,7 +99,6 @@ class ModelVLM(BaseModel):
                 top_k=self.model_parameters["top_k"],
                 top_p=self.model_parameters["top_p"],
                 trust_remote_code=self.model_parameters["trust_remote_code"],
-
                 image_input_type="pixel_values",
                 image_token_id=32000,
                 image_input_shape="1,3,336,336",

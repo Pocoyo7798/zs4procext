@@ -56,10 +56,8 @@ def image2data(
 
     for file in file_list:
         extension = file.split(".")[-1]
-        if extension in {"tiff"}:
+        if extension in {"png", "jpeg", "tiff"}:
             output = extractor.extract_image_info(os.path.join(image_folder, file))
-            
-            print(f"VLM Response for {file}: {output}")
 
             extracted_data.append({
                 "image_name": file,
