@@ -382,6 +382,24 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         importlib_resources.files("zs4procext")
         / "resources"
         / "pixtral-12b_default_instruct_template.json"
+    ),
+
+    "InternVL2-8B": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "internvl_default_instruct_template.json"
+    ),
+
+    "MiniCPM-o-2_6": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "minicpm_default_instruct_template.json"
+    ),
+    
+    "Qwen2.5-VL-7B-Instruct": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "qwen_default_instruct_template.json"
     )
 
 }
