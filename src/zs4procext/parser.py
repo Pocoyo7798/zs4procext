@@ -1188,54 +1188,47 @@ class ImageParser(BaseModel):
     catalyst_label: str = ""
     x_axis_label: str = ""
     y_axis_label: str = ""
-    data_string: str = ""  
+    data_string: str = ""
 
     def __init__(self, data_string: str = "", **data):
         super().__init__(data_string=data_string, **data)
-        self._convert_to_dict(self.data_string)
+        self._convert_to_nested_dict(self.data_string)
 
-    def _convert_to_dict(self, data_string: str, delimiter: str = ";"):
-        header_pattern = re.compile(rf'^[^\n]*[a-zA-Z]+\s*{delimiter}\s*[a-zA-Z]+\s*{delimiter}\s*[a-zA-Z]+[^\n]*$', re.MULTILINE)
-        header_match = header_pattern.search(data_string)
-        if not header_match:
-            print("No valid table header found in the input string.")
-            return
+    def _convert_to_nested_dict(self, data_string: str, delimiter: str = ";"):
 
-        header_start = header_match.start()
-        header_line = data_string[header_start:].split('\n')[0]
-        header = header_line.split(delimiter)
+        lines = data_string.strip().split("\n")
+
+        header = lines[0].split(delimiter)
         if len(header) != 3:
-            print("Header does not have the expected format (Catalyst;x-axis label;y-axis label).")
-            return
+            raise ValueError("Expected header format: 'Catalyst;X-label;Y-label'")
 
         self.catalyst_label = header[0]
         self.x_axis_label = header[1]
         self.y_axis_label = header[2]
 
-        data_lines = data_string.strip().split('\n')
-        for line in data_lines:
-            if not line.strip():
-                continue
-            if line == header_line:
-                continue
-            if not re.match(rf'^[^;]+{delimiter}[^;]+{delimiter}[^;]+$', line):
-                continue
+        for line in lines[1:]:
             parts = line.split(delimiter)
             if len(parts) != 3:
                 continue
-            catalyst = parts[0]
+            catalyst = parts[0].strip()
             try:
                 x_value = float(parts[1])
                 y_value = float(parts[2])
             except ValueError:
                 continue
+
+            
             if catalyst not in self.data_dict:
-                self.data_dict[catalyst] = {self.x_axis_label: [], self.y_axis_label: []}
-            self.data_dict[catalyst][self.x_axis_label].append(x_value)
-            self.data_dict[catalyst][self.y_axis_label].append(y_value)
+                self.data_dict[catalyst] = {
+                    f"{self.x_axis_label}": [],
+                    f"{self.y_axis_label}": []
+                }
+
+            self.data_dict[catalyst][f"{self.x_axis_label}"].append(x_value)
+            self.data_dict[catalyst][f"{self.y_axis_label}"].append(y_value)
 
     def parse(self, data_string: str):
-        self._convert_to_dict(data_string)
+        self._convert_to_nested_dict(data_string)
         return self.get_data_dict()
 
     def get_data_dict(self):
