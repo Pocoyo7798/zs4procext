@@ -1118,64 +1118,48 @@ class TableExtractor(BaseModel):
         print(output)
 
 
-class ImageParser(BaseModel):
-    data_dict: dict = Field(default_factory=dict)
-    catalyst_label: str = ""
-    x_axis_label: str = ""
-    y_axis_label: str = ""
-    data_string: str = ""  
+class ImageExtractor(BaseModel):
+    prompt_structure_path: Optional[str] = None 
+    prompt_schema_path: Optional[str] = None
+    vlm_model_name: Optional[str] = None
+    vlm_model_parameters_path: Optional[str] = None
+    _prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
+    _vlm_model: Optional[ModelVLM] = PrivateAttr(default=None)
+    _image_parser: Optional[ImageParser] = PrivateAttr(default=None)  
 
-    def __init__(self, data_string: str = "", **data):
- 
-        super().__init__(data_string=data_string, **data)
-        self._convert_to_dict(self.data_string)
+    def model_post_init(self, __context: Any) -> None:
+        if self.vlm_model_parameters_path is None:
+            vlm_param_path = str(
+                importlib_resources.files("zs4procext")
+                / "resources"
+                / "vllm_default_params.json"
+                )
+        else:
+            vlm_param_path = self.vlm_model_parameters_path
+        if self.prompt_schema_path is None:
+            self.prompt_schema_path = str(
+                importlib_resources.files("zs4procext")
+                / "resources"
+                / "image_extraction_schema.json" 
+            )
+        with open(self.prompt_schema_path, "r") as f:
+                prompt_dict = json.load(f)
+        self._prompt = PromptFormatter(**prompt_dict)
+        self._prompt.model_post_init(self.prompt_structure_path)
+        if self.vlm_model_name is None:
+            self._vlm_model = ModelVLM(model_name="Llama2-70B-chat-hf")
+        else:
+            self._vlm_model = ModelVLM(model_name=self.vlm_model_name)
+        self._vlm_model.load_model_parameters(vlm_param_path)
+        self._vlm_model.vllm_load_model()
+        self._image_parser = ImageParser()
 
-    def _convert_to_dict(self, data_string: str, delimiter: str = ";"):
-        header_pattern = re.compile(rf'^[^\n]*[a-zA-Z]+\s*{delimiter}\s*[a-zA-Z]+\s*{delimiter}\s*[a-zA-Z]+[^\n]*$', re.MULTILINE)
-        header_match = header_pattern.search(data_string)
-        if not header_match:
-            print("No valid table header found in the input string.")
-            return
+    def extract_image_info(self, image_path: str):
+        prompt = self._prompt.format_prompt("<image>")
 
-        header_start = header_match.start()
-        header_line = data_string[header_start:].split('\n')[0]
-        header = header_line.split(delimiter)
-        if len(header) != 3:
-            print("Header does not have the expected format (Catalyst;x-axis label;y-axis label).")
-            return
+        output = self._vlm_model.run_image_single_prompt(prompt, image_path)
 
-        self.catalyst_label = header[0]
-        self.x_axis_label = header[1]
-        self.y_axis_label = header[2]
+        print(f"Raw Model Output for {image_path}:\n{output}")
 
-        data_lines = data_string.strip().split('\n')
-        for line in data_lines:
-            if not line.strip():
-                continue
-            if line == header_line:
-                continue
-            if not re.match(rf'^[^;]+{delimiter}[^;]+{delimiter}[^;]+$', line):
-                continue
-            parts = line.split(delimiter)
-            if len(parts) != 3:
-                continue
-            catalyst = parts[0]
-            try:
-                x_value = float(parts[1])
-                y_value = float(parts[2])
-            except ValueError:
-                continue
-            if catalyst not in self.data_dict:
-                self.data_dict[catalyst] = {self.x_axis_label: [], self.y_axis_label: []}
-            self.data_dict[catalyst][self.x_axis_label].append(x_value)
-            self.data_dict[catalyst][self.y_axis_label].append(y_value)
-
-    def parse(self, data_string: str):
-        self._convert_to_dict(data_string)
-        return self.get_data_dict()
-
-    def get_data_dict(self):
-        return self.data_dict
-
-    def to_json(self):
-        return json.dumps(self.data_dict, indent=4)
+        parsed_output = self._image_parser.parse(output) 
+        return parsed_output 

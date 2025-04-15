@@ -1188,10 +1188,10 @@ class ImageParser(BaseModel):
     catalyst_label: str = ""
     x_axis_label: str = ""
     y_axis_label: str = ""
+    data_string: str = ""  
 
     def __init__(self, data_string: str = "", **data):
-        super().__init__(**data)
-        self.data_string = data_string
+        super().__init__(data_string=data_string, **data)
         self._convert_to_dict(self.data_string)
 
     def _convert_to_dict(self, data_string: str, delimiter: str = ";"):
