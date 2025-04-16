@@ -68,7 +68,7 @@ def image2data(
 
 
     with open(output_file_path, 'w') as f:
-        json.dump(final_output, f, indent=4)
+        json.dump(extracted_data, f, indent=4)
 
     print(f"{(time.time() - start_time) / 60} minutes")
 
