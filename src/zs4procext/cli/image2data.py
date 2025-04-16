@@ -57,20 +57,15 @@ def image2data(
     if os.path.isfile(output_file_path):
         os.remove(output_file_path)
 
-    extracted_data = []
+    extracted_data = {}
 
     for file in file_list:
         extension = file.split(".")[-1]
         if extension in {"png", "jpeg", "tiff"}:
             output = extractor.extract_image_info(os.path.join(image_folder, file))
             
-            # Nest data by image name
-            extracted_data.append({
-                "image_name": file,
-                "extracted_data": output
-            })
+            extracted_data[file] = output
 
-    final_output = {item["image_name"]: item["extracted_data"] for item in extracted_data}
 
     with open(output_file_path, 'w') as f:
         json.dump(final_output, f, indent=4)
