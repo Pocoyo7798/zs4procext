@@ -400,6 +400,12 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         importlib_resources.files("zs4procext")
         / "resources"
         / "qwen_default_instruct_template.json"
+    ),
+        
+    "SmolVLM2-2.2B-Instruct": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "smolvlm2_default_instruct_template.json"
     )
 
 }

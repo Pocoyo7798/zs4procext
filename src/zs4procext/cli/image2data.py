@@ -55,16 +55,19 @@ def image2data(
     )
     file_list = os.listdir(image_folder)
     if os.path.isfile(output_file_path):
-        os.remove(output_file_path)
-
-    extracted_data = {}
+        with open(output_file_path, 'r') as f:
+            extracted_data = json.load(f)
+    else:
+        extracted_data = {}
+        print (extracted_data)
 
     for file in file_list:
         extension = file.split(".")[-1]
         if extension in {"png", "jpeg", "tiff"}:
             output = extractor.extract_image_info(os.path.join(image_folder, file))
-            
+
             extracted_data[file] = output
+            print (extracted_data)
 
 
     with open(output_file_path, 'w') as f:
