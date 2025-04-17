@@ -11,7 +11,7 @@
     "input_types": {},
     "output_parser": null,
     "partial_variables": {},
-    "template": "<s>[INST]{expertise}{initialization}{actions}{objective}{context}{answer_schema}{conclusion}\n[IMG][IMG][IMG][IMG][/INST]",
+    "template": "<s>[INST]{expertise}{initialization}{actions}{objective}{context}{answer_schema}{conclusion}\n[IMG]/INST]",
     "template_format": "f-string",
     "validate_template": true,
     "_type": "prompt"

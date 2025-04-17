@@ -1196,7 +1196,6 @@ class ImageParser(BaseModel):
         self._convert_to_dict(self.data_string)
 
     def _convert_to_dict(self, data_string: str, delimiter: str = ";"):
-
         header_pattern = re.compile(
             rf'^[^;\n]*[a-zA-Z]+[^;\n]*\s*{delimiter}\s*[^;\n]*[a-zA-Z]+[^;\n]*\s*{delimiter}\s*[^;\n]*[a-zA-Z]+[^;\n]*$',
             re.MULTILINE,
@@ -1216,6 +1215,13 @@ class ImageParser(BaseModel):
         self.catalyst_label = header[0]
         self.x_axis_label = header[1]
         self.y_axis_label = header[2]
+
+        # Check if x-axis and y-axis headers are the same
+        if self.x_axis_label == self.y_axis_label:
+            print(f"Header labels for x-axis and y-axis are identical ('{self.x_axis_label}'). Temporarily renaming y-axis header.")
+            temp_y_axis_label = self.y_axis_label + "y"  # Append "_y" to make it unique
+        else:
+            temp_y_axis_label = self.y_axis_label
 
         data_lines = data_string.strip().split('\n')
         for line in data_lines:
@@ -1240,10 +1246,10 @@ class ImageParser(BaseModel):
                 continue
 
             if catalyst not in self.data_dict:
-                self.data_dict[catalyst] = {self.x_axis_label: [], self.y_axis_label: []}
+                self.data_dict[catalyst] = {self.x_axis_label: [], temp_y_axis_label: []}
 
             self.data_dict[catalyst][self.x_axis_label].append(x_value)
-            self.data_dict[catalyst][self.y_axis_label].append(y_value)
+            self.data_dict[catalyst][temp_y_axis_label].append(y_value)
 
     def parse(self, data_string: str):
         self._convert_to_dict(data_string)
