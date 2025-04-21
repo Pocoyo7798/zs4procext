@@ -53,31 +53,44 @@ def image2data(
         vlm_model_name=vlm_model_name,
         vlm_model_parameters_path=vlm_model_parameters_path,
     )
+    
+    
+    individual_results = []
+
+
     file_list = os.listdir(image_folder)
-    if os.path.isfile(output_file_path):
-        with open(output_file_path, 'r') as f:
-            extracted_data = json.load(f)
-    else:
-        extracted_data = {}
-        print (extracted_data)
+    for file_name in file_list:
+        file_extension = file_name.split(".")[-1].lower()
+        if file_extension in {"png", "jpeg", "tiff"}:
+            full_path = os.path.join(image_folder, file_name)
+            print(f"Processing file: {full_path}")
 
-    for file in file_list:
-        extension = file.split(".")[-1]
-        if extension in {"png", "jpeg", "tiff"}:
-            output = extractor.extract_image_info(os.path.join(image_folder, file))
+            try:
+                image_data = extractor.extract_image_info(full_path)
 
-            extracted_data[file] = output
-            print (extracted_data)
+
+                image_dict = {file_name: image_data}
+                individual_results.append(image_dict)
+                print(f"Extracted data for {file_name}: {image_data}")
+            except Exception as e:
+                print(f"Error processing {file_name}: {e}")
+
+
+    merged_data = {}
+    for item in individual_results:
+        merged_data.update(item)
 
 
     with open(output_file_path, 'w') as f:
-        json.dump(extracted_data, f, indent=4)
+        json.dump(merged_data, f, indent=4)
 
-    print(f"{(time.time() - start_time) / 60} minutes")
+    print(f"Data successfully written to {output_file_path}")
+    print(f"Total execution time: {(time.time() - start_time) / 60:.2f} minutes")
 
 
 def main():
     image2data()
+
 
 if __name__ == "__main__":
     main()

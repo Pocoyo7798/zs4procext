@@ -1193,7 +1193,14 @@ class ImageParser(BaseModel):
 
     def __init__(self, data_string: str = "", **data):
         super().__init__(data_string=data_string, **data)
-        self._convert_to_dict(self.data_string)
+        cleaned_data_string = self._remove_square_brackets(data_string)
+        self._convert_to_dict(cleaned_data_string)
+
+    def _remove_square_brackets(self, data_string: str) -> str:
+        """
+        Removes all square brackets from the given data string.
+        """
+        return re.sub(r'\[|\]', '', data_string)
 
     def _convert_to_dict(self, data_string: str, delimiter: str = ";"):
         header_pattern = re.compile(
@@ -1216,10 +1223,9 @@ class ImageParser(BaseModel):
         self.x_axis_label = header[1]
         self.y_axis_label = header[2]
 
-        # Check if x-axis and y-axis headers are the same
         if self.x_axis_label == self.y_axis_label:
             print(f"Header labels for x-axis and y-axis are identical ('{self.x_axis_label}'). Temporarily renaming y-axis header.")
-            temp_y_axis_label = self.y_axis_label + "y"  # Append "_y" to make it unique
+            temp_y_axis_label = self.y_axis_label + "y"  
         else:
             temp_y_axis_label = self.y_axis_label
 
@@ -1251,12 +1257,13 @@ class ImageParser(BaseModel):
             self.data_dict[catalyst][self.x_axis_label].append(x_value)
             self.data_dict[catalyst][temp_y_axis_label].append(y_value)
 
+
     def parse(self, data_string: str):
-        self._convert_to_dict(data_string)
+        cleaned_data_string = self._remove_square_brackets(data_string)
+        self._convert_to_dict(cleaned_data_string)
         return self.get_data_dict()
 
     def get_data_dict(self):
-
         return self.data_dict
 
     def to_json(self):
