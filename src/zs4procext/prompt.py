@@ -370,7 +370,7 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
     "Qwen2.5-VL-7B-Instruct": str(
         importlib_resources.files("zs4procext")
         / "resources"
-        / "quew_default_instruct_template.json"
+        / "qwen_default_instruct_template.json"
     ),
     "POINTS-Qwen-2-5-7B-Chat": str(
         importlib_resources.files("zs4procext")
