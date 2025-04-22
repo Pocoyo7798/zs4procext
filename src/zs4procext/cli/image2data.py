@@ -68,7 +68,7 @@ def image2data(
             file_path = f"{image_folder}/{file}"
             print(f"Processing image file: {file_path}")
             parsed_data = extractor.extract_image_info(file_path)
-            print(f"Parsed data for {file}: {parsed_data}"
+            print(f"Parsed data for {file}: {parsed_data}")
             aggregated_data.update({file:parsed_data})
             
 
