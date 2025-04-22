@@ -1259,6 +1259,11 @@ class ImageParser(BaseModel):
 
 
     def parse(self, data_string: str):
+        self.data_dict = {}
+        self.catalyst_label = ""
+        self.x_axis_label = ""
+        self.y_axis_label = ""
+
         cleaned_data_string = self._remove_square_brackets(data_string)
         self._convert_to_dict(cleaned_data_string)
         return self.get_data_dict()

@@ -1155,14 +1155,14 @@ class ImageExtractor(BaseModel):
         self._image_parser = ImageParser()
 
     def extract_image_info(self, image_path: str):
+        image_name = os.path.basename(image_path)
+
         prompt = self._prompt.format_prompt("<image>")
 
         output = self._vlm_model.run_image_single_prompt(prompt, image_path)
-
         print(f"Raw Model Output for {image_path}:\n{output}")
-
-        parsed_output = self._image_parser.parse(output) 
-
-        print(parsed_output)
         
-        return parsed_output
+        self._image_parser.parse(output)
+        parsed_output = self._image_parser.get_data_dict()
+        print (parsed_output)
+        return {image_name: parsed_output}

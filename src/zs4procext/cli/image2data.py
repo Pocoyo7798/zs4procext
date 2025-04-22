@@ -58,27 +58,37 @@ def image2data(
     file_list = os.listdir(image_folder)
     aggregated_data = {}
 
+
     for file in file_list:
         print(f"Processing file: {file}")
         extension = file.split(".")[-1]
         print(f"File extension: {extension}")
-        print(extension)
         if extension in {"png", "jpeg", "tiff"}:
-            
             file_path = f"{image_folder}/{file}"
             print(f"Processing image file: {file_path}")
-            parsed_data = extractor.extract_image_info(file_path)
-            print(f"Parsed data for {file}: {parsed_data}")
-            aggregated_data.update({file:parsed_data})
             
-
-
+            try:
+                # Extract image info with the image name as a key in the parsed data
+                parsed_data = extractor.extract_image_info(file_path)
+                print(f"Parsed data for {parsed_data}")
+                
+                # Update aggregated_data using a nested dictionary merge logic
+                for key, subdict in parsed_data.items():
+                    if key in aggregated_data:
+                        aggregated_data[key].update(subdict)
+                    else:
+                        aggregated_data[key] = subdict
+            
+            except Exception as e:
+                print(f"Error processing file {file}: {e}")
+    
     print("Writing aggregated data to output file...")
     with open(output_file_path, 'w') as output_file:
         json.dump(aggregated_data, output_file, indent=4)
     print(f"Aggregated data written to {output_file_path}")
     
-    print(f"Process completed in {(time.time() - start_time) / 60} minutes")
+    elapsed_time = (time.time() - start_time) / 60
+    print(f"Process completed in {elapsed_time} minutes")
 
 
 def main():
