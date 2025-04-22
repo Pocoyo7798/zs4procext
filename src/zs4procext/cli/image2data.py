@@ -59,16 +59,24 @@ def image2data(
     aggregated_data = {}
 
     for file in file_list:
+        print(f"Processing file: {file}")
         extension = file.split(".")[-1]
+        print(f"File extension: {extension}")
         print(extension)
         if extension in {"png", "jpeg", "tiff"}:
+            
             file_path = f"{image_folder}/{file}"
+            print(f"Processing image file: {file_path}")
             parsed_data = extractor.extract_image_info(file_path)
-            aggregated_data.update(parsed_data)
+            print(f"Parsed data for {file}: {parsed_data}"
+            aggregated_data.update({file:parsed_data})
+            
 
-    # Write the aggregated data to the output file
+
+    print("Writing aggregated data to output file...")
     with open(output_file_path, 'w') as output_file:
         json.dump(aggregated_data, output_file, indent=4)
+    print(f"Aggregated data written to {output_file_path}")
     
     print(f"Process completed in {(time.time() - start_time) / 60} minutes")
 
