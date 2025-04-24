@@ -1190,6 +1190,13 @@ class ImageParser(BaseModel):
     x_axis_label: str = ""
     y_axis_label: str = ""
     data_string: str = ""
+    
+    
+    subscript_map: ClassVar[dict] = {
+        '₀': '0', '₁': '1', '₂': '2', '₃': '3', '₄': '4',
+        '₅': '5', '₆': '6', '₇': '7', '₈': '8', '₉': '9'
+    }
+
 
     def __init__(self, data_string: str = "", **data):
         super().__init__(data_string=data_string, **data)
@@ -1201,6 +1208,14 @@ class ImageParser(BaseModel):
         Removes all square brackets from the given data string.
         """
         return re.sub(r'\[|\]', '', data_string)
+
+    def _simplify_subscripts(self, text: str) -> str:
+        """
+        Converts subscript Unicode characters to regular numbers in the given text.
+        """
+        for subscript, number in self.subscript_map.items():
+            text = text.replace(subscript, number)
+        return text
 
     def _convert_to_dict(self, data_string: str, delimiter: str = ";"):
         header_pattern = re.compile(
