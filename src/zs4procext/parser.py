@@ -1,7 +1,7 @@
 import json
 import re
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Union
+from typing import Any, ClassVar, Dict, Iterator, List, Optional, Union
 
 import importlib_resources
 from pint import UnitRegistry
@@ -1185,7 +1185,6 @@ MATERIALS_CHARACTERIZATION_REGISTRY: Dict[str, Any] = {
 
 
 class ImageParser(BaseModel):
-    json: ClassVar = json
     data_dict: dict = Field(default_factory=dict)
     catalyst_label: str = ""
     x_axis_label: str = ""
