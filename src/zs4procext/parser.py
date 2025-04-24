@@ -1185,11 +1185,13 @@ MATERIALS_CHARACTERIZATION_REGISTRY: Dict[str, Any] = {
 
 
 class ImageParser(BaseModel):
+    json: ClassVar = json
     data_dict: dict = Field(default_factory=dict)
     catalyst_label: str = ""
     x_axis_label: str = ""
     y_axis_label: str = ""
     data_string: str = ""
+
     
     
     subscript_map: ClassVar[dict] = {
