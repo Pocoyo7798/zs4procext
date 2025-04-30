@@ -1183,7 +1183,6 @@ MATERIALS_CHARACTERIZATION_REGISTRY: Dict[str, Any] = {
     "lewis_sites": {"words": ["l"], "units": ["μmol/g"]},
 }
 
-
 class ImageParser(BaseModel):
     data_dict: dict = Field(default_factory=dict)
     catalyst_label: str = ""
@@ -1191,13 +1190,11 @@ class ImageParser(BaseModel):
     y_axis_label: str = ""
     data_string: str = ""
 
-    
-    
+
     subscript_map: ClassVar[dict] = {
         '₀': '0', '₁': '1', '₂': '2', '₃': '3', '₄': '4',
         '₅': '5', '₆': '6', '₇': '7', '₈': '8', '₉': '9'
     }
-
 
     def __init__(self, data_string: str = "", **data):
         super().__init__(data_string=data_string, **data)
@@ -1208,7 +1205,9 @@ class ImageParser(BaseModel):
         """
         Removes all square brackets from the given data string.
         """
-        return re.sub(r'\[|\]', '', data_string)
+        #return re.sub(r'\[|\]', '', data_string)
+        data_string = data_string.replace('_{', ' ')
+        return re.sub(r'[\[\]{}]', '', data_string).replace('_', '')
 
     def _simplify_subscripts(self, text: str) -> str:
         """
@@ -1235,10 +1234,12 @@ class ImageParser(BaseModel):
             print("Header does not have the expected format (Catalyst;x-axis label;y-axis label).")
             return
 
-        self.catalyst_label = header[0]
-        self.x_axis_label = header[1]
-        self.y_axis_label = header[2]
+        
+        self.catalyst_label = self._simplify_subscripts(header[0])
+        self.x_axis_label = self._simplify_subscripts(header[1])
+        self.y_axis_label = self._simplify_subscripts(header[2])
 
+        
         if self.x_axis_label == self.y_axis_label:
             print(f"Header labels for x-axis and y-axis are identical ('{self.x_axis_label}'). Temporarily renaming y-axis header.")
             temp_y_axis_label = self.y_axis_label + "y"  
@@ -1260,7 +1261,8 @@ class ImageParser(BaseModel):
             if len(parts) != 3:
                 continue
 
-            catalyst = parts[0]
+            # Simplify subscripts in the catalyst name
+            catalyst = self._simplify_subscripts(parts[0])
             try:
                 x_value = float(parts[1])
                 y_value = float(parts[2])
@@ -1272,7 +1274,6 @@ class ImageParser(BaseModel):
 
             self.data_dict[catalyst][self.x_axis_label].append(x_value)
             self.data_dict[catalyst][temp_y_axis_label].append(y_value)
-
 
     def parse(self, data_string: str):
         self.data_dict = {}
