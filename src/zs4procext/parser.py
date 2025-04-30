@@ -1183,6 +1183,11 @@ MATERIALS_CHARACTERIZATION_REGISTRY: Dict[str, Any] = {
     "lewis_sites": {"words": ["l"], "units": ["μmol/g"]},
 }
 
+import re
+import json
+from typing import ClassVar
+from pydantic import BaseModel, Field
+
 class ImageParser(BaseModel):
     data_dict: dict = Field(default_factory=dict)
     catalyst_label: str = ""
@@ -1190,32 +1195,21 @@ class ImageParser(BaseModel):
     y_axis_label: str = ""
     data_string: str = ""
 
-
-    subscript_map: ClassVar[dict] = {
-        '₀': '0', '₁': '1', '₂': '2', '₃': '3', '₄': '4',
-        '₅': '5', '₆': '6', '₇': '7', '₈': '8', '₉': '9'
-    }
-
     def __init__(self, data_string: str = "", **data):
         super().__init__(data_string=data_string, **data)
         cleaned_data_string = self._remove_square_brackets(data_string)
+        cleaned_data_string = self._remove_unicode_subscripts_superscripts(cleaned_data_string)
         self._convert_to_dict(cleaned_data_string)
 
     def _remove_square_brackets(self, data_string: str) -> str:
-        """
-        Removes all square brackets from the given data string.
-        """
-        #return re.sub(r'\[|\]', '', data_string)
         data_string = data_string.replace('_{', ' ')
         return re.sub(r'[\[\]{}]', '', data_string).replace('_', '')
 
-    def _simplify_subscripts(self, text: str) -> str:
-        """
-        Converts subscript Unicode characters to regular numbers in the given text.
-        """
-        for subscript, number in self.subscript_map.items():
-            text = text.replace(subscript, number)
-        return text
+    def _remove_unicode_subscripts_superscripts(self, data: str) -> str:
+        # Remove Unicode subscripts (\u208x), superscripts (\u207x), and similar symbols
+        cleaned_data = re.sub(r'[\u2070-\u209F]', '', data)
+        cleaned_data = re.sub(r'\^', '', cleaned_data)  # Remove caret if used for superscripts
+        return cleaned_data
 
     def _convert_to_dict(self, data_string: str, delimiter: str = ";"):
         header_pattern = re.compile(
@@ -1234,24 +1228,19 @@ class ImageParser(BaseModel):
             print("Header does not have the expected format (Catalyst;x-axis label;y-axis label).")
             return
 
-        
-        self.catalyst_label = self._simplify_subscripts(header[0])
-        self.x_axis_label = self._simplify_subscripts(header[1])
-        self.y_axis_label = self._simplify_subscripts(header[2])
+        self.catalyst_label = header[0]
+        self.x_axis_label = header[1]
+        self.y_axis_label = header[2]
 
-        
         if self.x_axis_label == self.y_axis_label:
             print(f"Header labels for x-axis and y-axis are identical ('{self.x_axis_label}'). Temporarily renaming y-axis header.")
-            temp_y_axis_label = self.y_axis_label + "y"  
+            temp_y_axis_label = self.y_axis_label + "y"
         else:
             temp_y_axis_label = self.y_axis_label
 
         data_lines = data_string.strip().split('\n')
         for line in data_lines:
-            if not line.strip():
-                continue
-
-            if line == header_line:
+            if not line.strip() or line == header_line:
                 continue
 
             if not re.match(rf'^[^;]+{delimiter}[^;]+{delimiter}[^;]+$', line):
@@ -1261,8 +1250,7 @@ class ImageParser(BaseModel):
             if len(parts) != 3:
                 continue
 
-            # Simplify subscripts in the catalyst name
-            catalyst = self._simplify_subscripts(parts[0])
+            catalyst = parts[0]
             try:
                 x_value = float(parts[1])
                 y_value = float(parts[2])
@@ -1282,6 +1270,7 @@ class ImageParser(BaseModel):
         self.y_axis_label = ""
 
         cleaned_data_string = self._remove_square_brackets(data_string)
+        cleaned_data_string = self._remove_unicode_subscripts_superscripts(cleaned_data_string)
         self._convert_to_dict(cleaned_data_string)
         return self.get_data_dict()
 
