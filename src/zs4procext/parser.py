@@ -1206,9 +1206,9 @@ class ImageParser(BaseModel):
         return re.sub(r'[\[\]{}]', '', data_string).replace('_', '')
 
     def _remove_unicode_subscripts_superscripts(self, data: str) -> str:
-        # Remove Unicode subscripts (\u208x), superscripts (\u207x), and similar symbols
-        cleaned_data = re.sub(r'[\u2070-\u209F]', '', data)
-        cleaned_data = re.sub(r'\^', '', cleaned_data)  # Remove caret if used for superscripts
+        cleaned_data = re.sub(r'\\u208', '', data)
+        cleaned_data = re.sub(r'\\u00b', '', cleaned_data)
+        cleaned_data = re.sub(r'\^', '', cleaned_data) 
         return cleaned_data
 
     def _convert_to_dict(self, data_string: str, delimiter: str = ";"):

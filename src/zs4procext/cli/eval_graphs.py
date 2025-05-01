@@ -91,16 +91,16 @@ def eval_graphs(
         for col in range(2, 5):  # Columns with numeric values
             cell = ws.cell(row=row, column=col)
             if isinstance(cell.value, (int, float)):
-                if cell.value >= 0.95:
-                    fill = PatternFill(start_color="C3E6CB", end_color="C3E6CB", fill_type="solid")  # Pastel green
-                elif cell.value >= 0.90:
-                    fill = PatternFill(start_color="D4E9D6", end_color="D4E9D6", fill_type="solid")  # Lighter green
-                elif cell.value >= 0.75:
-                    fill = PatternFill(start_color="FFF3CD", end_color="FFF3CD", fill_type="solid")  # Light yellow
-                elif cell.value >= 0.50:
-                    fill = PatternFill(start_color="F8D7DA", end_color="F8D7DA", fill_type="solid")  # Light red
-                else:
+                if cell.value >= 0.80:
                     fill = PatternFill(start_color="F5C6CB", end_color="F5C6CB", fill_type="solid")  # Pastel red
+                elif cell.value >= 0.70:
+                    fill = PatternFill(start_color="F8D7DA", end_color="F8D7DA", fill_type="solid")  # Light red
+                elif cell.value >= 0.45:
+                    fill = PatternFill(start_color="FFF3CD", end_color="FFF3CD", fill_type="solid")  # Light yellow
+                elif cell.value >= 0.10:
+                    fill = PatternFill(start_color="D4E9D6", end_color="D4E9D6", fill_type="solid")  # Lighter green
+                else:
+                    fill = PatternFill(start_color="C3E6CB", end_color="C3E6CB", fill_type="solid")  # Pastel green
                 cell.fill = fill
     
     # Save the workbook
