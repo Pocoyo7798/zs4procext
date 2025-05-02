@@ -16,7 +16,7 @@ class Evaluator_Graphs(BaseModel):
             ND: float = 0
         else:
             ND = fp / (tp + fp)
-            MD = fp / (tp + fn)
+            MD = fn / (tp + fn)
             ID = (fn + fp) / (tp + fn + fp)
         return {"New detections": ND, "Miss detections": MD, "Incorrect detections": ID}
 
