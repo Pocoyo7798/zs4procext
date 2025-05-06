@@ -6,7 +6,7 @@
     "description": "Each marker in the graph represents a data point. Ensure all visible data points are counted and included.\n If any points are ambiguous, occluded, or unclear, mark their values as 'N/A'.\n Do not alter or simplify any axis or series labels — copy them exactly as written in the image or figure."
   },
   "answer_schema": {
-    "description": "Use **exclusively** the format below to provide the answer.\n {data extracted}:\nSeries;_put_here_x-axis_label_name;put_here_y-axis_label_name\nput_here_serie_1_name;put_here_x_1_value;put_here_y_1_value\nput_here_serie_1_name;put_here_x_2_value;put_here_y_2_value\n...\n{Additional information}:<Add any relevant notes here that are essential for interpreting the graph, such as units, legends, or special annotations.>"
+    "description": "Use **exclusively** the format below to provide the answer.\n {data extracted}:\nSeries;<_x-axis_label_name>;<y-axis_label_name>\n<serie_1_name>;<x_1_value>;<y_1_value>\n<serie_1_name>;<x_2_value>;<y_2_value>\n...\n{Additional information}:<Add any relevant notes here that are essential for interpreting the graph, such as units, legends, or special annotations.>"
   },
   "conclusion": "Do not summarize or modify labels or series names. They must be copied exactly as presented, converting only superscripts and subscripts to plain numbers/text. If you're unsure about any data point, mark it 'N/A'."
 }
