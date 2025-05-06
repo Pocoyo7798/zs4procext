@@ -1046,11 +1046,24 @@ class TableParser(BaseModel):
         keys_to_use = list(self._words_registry.keys())
         i = 0
         for header in headers:
-            print(header.lower())
             units = self._unit_searcher.find_keywords(header.lower())
+            corrected_header = header.replace(",", "")
+            corrected_header = corrected_header.replace("(", "")
+            corrected_header = corrected_header.replace(")", "")
+            corrected_header = corrected_header.replace("[", "")
+            corrected_header = corrected_header.replace("]", "")
+            corrected_header = corrected_header.replace("  ", " ")
+            if len(units) > 0:
+                corrected_header = corrected_header.replace(units[0], "")
+                corrected_header = corrected_header.replace("  ", " ")
+            print(corrected_header.lower())
             print(units)
+            if corrected_header == " ":
+                key = "sample"
+                print(key)
+                results = self.update_result(results, table_entries, collumn_headers, units, key, i)
             for key in keys_to_use:
-                words_found: List[str] = self._word_searcher[key].find_keywords(header.lower())
+                words_found: List[str] = self._word_searcher[key].find_keywords(corrected_header.lower())
                 if len(words_found) > 0:
                     print(key)
                     results = self.update_result(results, table_entries, collumn_headers, units, key, i)
@@ -1196,28 +1209,28 @@ TYPE_COMPARISSON_REGISTRY: Dict[str, str] = {
 }
 
 MATERIALS_CHARACTERIZATION_REGISTRY: Dict[str, Any] = {
-    "sample": {"words": ["sample", "catalyst", "zeolites", "samples", "zeolite", "material"], "units": ["empty"], "limit_words": False, "unique": True},
+    "sample": {"words": ["sample", "catalyst", "zeolites", "samples", "zeolite", "material", "support"], "units": ["empty"], "limit_words": False, "unique": True},
     "yield": {"words": ["yield"], "units": ["%", "empty"],"limit_words": False,  "unique": True},
-    "external_area": {"words": ["sext", "smeso", "Surface area (m2 g-1) Meso", "External"], "units": ["m2/g", "m2/g", "m2g-1", "m2 g-1"], "limit_words": False,  "unique": True},
-    "micropore_area": {"words": ["smicro", "bet area (m2 g-1) microporous"], "units": ["m2/g", "m2/g", "m2g-1", "m2 g-1"], "limit_words": False,  "unique": True},
-    "surface_area": {"words": ["sbet", "Surface area (m2 g-1) BET", "Surface area", "bet area"], "units": ["m2/g", "m2/g", "m2g-1", "m2.g-1", "m2 g-1"], "limit_words": False,  "unique": True},
-    "micropore_volume": {"words": ["vmicro", "Pore volume (cm3 g-1) Micro", "Micropore volume"], "units": ["cm3/g", "cm3g-1", "cm3.g-1", "cm3 g-1", "mm3/g", "mm3g-1", "mm3.g-1", "mm3 g-1"], "limit_words": False,  "unique": True},
-    "mesopore_volume": {"words": ["vmeso", "Pore volume (cm3 g-1) Meso", "Mesopore volume"], "units": ["cm3/g", "cm3g-1", "cm3.g-1", "cm3 g-1", "mm3/g", "mm3g-1", "mm3.g-1", "mm3 g-1"],"limit_words": False,  "unique": True},
-    "total_volume": {"words": ["vp", "pore volume", "vtotal"], "units": ["cm3/g", "cm3g-1", "cm3 g-1"], "limit_words": False,  "unique": True},
+    "external_area": {"words": ["sext", "smes", "s mes", "Surface area Meso", "External", "area external"], "units": ["m2/g", "m2/g", "m2g-1", "m2 g-1", "m2.g-1"], "limit_words": False,  "unique": True},
+    "micropore_area": {"words": ["smic", "s mic", "bet area microporous", "area micropore"], "units": ["m2/g", "m2/g", "m2g-1", "m2 g-1"], "limit_words": False,  "unique": True},
+    "surface_area": {"words": ["sbet", "Surface area BET", "Surface area", "bet area", "area total", "stotal", "s total"], "units": ["m2/g", "m2/g", "m2g-1", "m2.g-1", "m2 g-1"], "limit_words": False,  "unique": True},
+    "micropore_volume": {"words": ["vmic", "v mic", "Pore volume Micro", "Micropore volume", "Microporous volume", "volume micro"], "units": ["cm3/g", "cm3g-1", "cm3.g-1", "cm3 g-1", "mm3/g", "mm3g-1", "mm3.g-1", "mm3 g-1", "ml/g"], "limit_words": False,  "unique": True},
+    "mesopore_volume": {"words": ["vmes", "v mes", "Pore volume Meso", "Mesopore volume", "Vext", "volume meso"], "units": ["cm3/g", "cm3g-1", "cm3.g-1", "cm3 g-1", "mm3/g", "mm3g-1", "mm3.g-1", "mm3 g-1"],"limit_words": False,  "unique": True},
+    "total_volume": {"words": ["vp", "pore volume", "vtotal", "v total", "volume total", "vt"], "units": ["cm3/g", "cm3g-1", "cm3 g-1"], "limit_words": False,  "unique": True},
     "sio2_al2o_ratio_gel": {"words": ["sio2/al2o3 gel", "gel siO2/al2o3"], "units": ["empty"], "limit_words": False,  "unique": True},
     "sio2_al2o3_ratio": {"words": ["sio2/al2o3"], "units": ["empty"], "limit_words": False,  "unique": True},
     "si_al_ratio_filtrate": {"words": ["si/al filtrate", "filtrate si/al", "Si/Al ﬁltrate"], "units": ["empty"], "limit_words": False,  "unique": True},
-    "si_al_ratio": {"words": ["si/al", "Molar ratio", "si/albulk", "si/ albulk"], "units": ["empty"],"limit_words": False, "unique": True},
+    "si_al_ratio": {"words": ["si/al", "Molar ratio", "si/albulk", "si/ albulk", "Si/ Al"], "units": ["empty"],"limit_words": False, "unique": True},
     "b_l_ratio": {"words": ["b/l"], "units": ["empty"],"limit_words": False,  "unique": False},
     "l_b_ratio": {"words": ["l/b"], "units": ["empty"], "limit_words": False,  "unique": False},
     "time": {"words": ["time", "period", "t (min)"], "units": ["min", "h"],"limit_words": False,  "unique": True},
     "temperature": {"words": ["t (k)", "temperature"], "units": ["k", "°c"],"limit_words": False,  "unique": True},
     "crystallinity": {"words": ["crystallinity", "cristallinity"], "units": ["%", "empty"], "limit_words": False,  "unique": True},
-    "Si": {"words": ["si"], "units": ["wt%", "empty", "umol/g"],"limit_words": True,  "unique": True},
-    "Al": {"words": ["al"], "units": ["wt%", "empty", "umol/g"],"limit_words": True, "unique": True},
-    "bronsted_sites": {"words": ["b", "nbronstead", "bronstead", "bronsted", "bpy"], "units": ["μmol/g", "mmol g-1", "empty", "umol/g"], "limit_words": True, "unique": False},
-    "lewis_sites": {"words": ["l", "nlewis", "lewis", "lpy"], "units": ["μmol/g", "mmol g-1", "empty", "umol/g"], "limit_words": True,  "unique": False},
-     "naoh_c": {"words": ["naoh", "concentration", "c (m)"], "units": ["m", "empty"],"limit_words": False,  "unique": True},
+    "Si": {"words": ["si", "nsi"], "units": ["wt%", "empty", "umol/g", "mmol/g"],"limit_words": True,  "unique": True},
+    "Al": {"words": ["al", "nal"], "units": ["wt%", "empty", "umol/g", "mmol/g", "umol.g-1"],"limit_words": True, "unique": True},
+    "lewis_sites": {"words": ["l", "nlewis", "lewis", "lpy", "pyl", "clewis", "cl"], "units": ["μmol/g", "mmol g-1", "umol/g", "umol.g-1", "mmolg-1", "lmol g-1"], "limit_words": True,  "unique": False},
+    "bronsted_sites": {"words": ["b", "nbronstead", "bronstead", "bronsted", "bpy", "pyh", "cbronsted", "cb"], "units": ["μmol/g", "mmol g-1", "umol/g", "umol.g-1","mmolg-1", "lmol g-1"], "limit_words": True, "unique": False},
+    "naoh_c": {"words": ["naoh", "concentration", "c (m)"], "units": ["m", "empty"],"limit_words": False,  "unique": True},
 }
 
 EMPTY_VALUES_REGISTRY = set(["-", "-"])

@@ -512,6 +512,37 @@ class Evaluator(BaseModel):
             i += 1
         return self.evaluate(true_positive, false_positive, false_negative)
 
+    def evaluate_extractor_keys(self, test_dataset_path: str):
+        with open(self.reference_dataset_path, "r") as f:
+            reference_dataset: List[str] = f.readlines()
+        with open(test_dataset_path, "r") as f:
+            test_dataset: List[str] = f.readlines()
+        tp: int = 0
+        fp: int = 0
+        fn: int = 0
+        i : int = 0
+        for data in test_dataset:
+            data_dict: Dict[str, Any] = ast.literal_eval(data)
+            ref_data_dict: Dict[str, Any] = ast.literal_eval(reference_dataset[i])
+            data_keys: List[str] =  list(data_dict.keys())
+            ref_data_keys: List[str] =  list(ref_data_dict.keys())
+            evaluation_results:  Dict[str, Any]  = self.evaluate_string_list(data_keys, ref_data_keys)
+            tp += evaluation_results["true_positive"]
+            fp += evaluation_results["false_positive"]
+            fn += evaluation_results["false_negative"]
+            i += 1
+        return self.evaluate(tp, fp, fn)
+    
+    def evaluate_extractor_data(self, test_dataset_path: str):
+        with open(self.reference_dataset_path, "r") as f:
+            reference_dataset: List[str] = f.readlines()
+        with open(test_dataset_path, "r") as f:
+            test_dataset: List[str] = f.readlines()
+        tp: int = 0
+        fp: int = 0
+        fn: int = 0
+        i : int = 0
+    
 CHEMICALS_REGISTRY = {"solution": "",
                       "powder": "",
                       "hot": "",
