@@ -1,6 +1,6 @@
 import ast
 from difflib import SequenceMatcher
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 import re
 from zs4procext.parser import KeywordSearching
 
@@ -542,7 +542,71 @@ class Evaluator(BaseModel):
         fp: int = 0
         fn: int = 0
         i : int = 0
+        for data in test_dataset:
+            data_dict: Dict[str, Any] = ast.literal_eval(data)
+            ref_data_dict: Dict[str, Any] = ast.literal_eval(reference_dataset[i])
+            test_set: Set[str] = set(data_dict)
+            ref_set = set()
     
+    def verify_dict_in_list(self, dictionary: Dict[str, Any], dictionary_list: List[Dict[str, Any]], threshold: float = 0.8):
+        dictionary_keys = list(dictionary.keys())
+        i: int = 0
+        final_index: Optional[int] = None
+        for entry in dictionary_list:
+            test = False
+            for key in dictionary_keys:
+                try:
+                    dictionary_value: List[str] = dictionary[key]
+                    entry_value = entry[key]
+                    comparison_results: Dict[str, Any] = self.evaluate_string_list(dictionary_value, entry_value, threshold= threshold)
+                    if comparison_results["false_negative"] == 0 and comparison_results["false_positive"] == 0:
+                        test = True
+                        break
+                except KeyError:
+                    pass
+            if test is True:
+                final_index = i
+                break
+            i += 1
+        return final_index
+    
+    def evaluate_dcitionary_list(self, test_dictionaries: List[Dict[str, Any]], ref_dictionaries: List[Dict[str, Any]]):
+        tp_keys: int = 0
+        fp_keys: int = 0
+        fn_keys: int = 0
+        tp_data: int = 0
+        fp_data: int = 0
+        fn_data: int = 0
+        for dictionary in test_dictionaries:
+            dictionary_keys = list(dictionary.keys())
+            index = self.verify_dict_in_list(dictionary, ref_dictionaries)
+            if index is None:
+                fp_keys += len(dictionary_keys)
+                for key in dictionary_keys:
+                    fp_data += len(dictionary[key])
+            else:
+                ref_dictionary = ref_dictionaries[index].copy()
+                del ref_dictionaries[index]
+
+    def evaluate_table_extractor(self, test_dataset_path: str):
+        with open(self.reference_dataset_path, "r") as f:
+            reference_dataset: List[str] = f.readlines()
+        with open(test_dataset_path, "r") as f:
+            test_dataset: List[str] = f.readlines()
+        tp_keys: int = 0
+        fp_keys: int = 0
+        fn_keys: int = 0
+        tp_data: int = 0
+        fp_data: int = 0
+        fn_data: int = 0
+        i : int = 0
+        for data in test_dataset:
+            data_dict: Dict[str, Any] = ast.literal_eval(data)
+            ref_data_dict: Dict[str, Any] = ast.literal_eval(reference_dataset[i])
+            test_results: List[Dict[str, Any]] = data_dict["data"]
+            ref_results: List[Dict[str, Any]] = ref_data_dict["data"]
+            self.evaluate_dict_lists(test_results, ref_results)
+
 CHEMICALS_REGISTRY = {"solution": "",
                       "powder": "",
                       "hot": "",
