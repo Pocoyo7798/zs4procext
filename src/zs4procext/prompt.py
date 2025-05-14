@@ -336,5 +336,110 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         importlib_resources.files("zs4procext")
         / "resources"
         / "deepseek_chat_default_instruct_template.json"
+    ),
+    "Ovis2-4B": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "ovis_default_instruct_template.json"
+    ),
+    "Ovis2-16B": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "ovis_chat_default_instruct_template.json"
+    ),
+    "Ovis1.6-Gemma2-9B": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "ovis_chat_default_instruct_template.json"
+    ),
+    "Ovis1.5-Llama3-8B": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "ovis_chat_default_instruct_template.json"
+    ),
+    "Ovis1.5-Llama3-8B": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "ovis_chat_default_instruct_template.json"
+    ),
+
+    "Phi-3-vision-128k-instruct": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "phi3_default_instruct_template.json"
+    ),
+    "Qwen2.5-VL-7B-Instruct": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "qwen_default_instruct_template.json"
+    ),
+    "POINTS-Qwen-2-5-7B-Chat": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "qwen_default_instruct_template.json"
+    ),
+
+    "pixtral-12b": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "pixtral-12b_default_instruct_template.json"
+    ),
+
+    "InternVL2-8B": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "internvl_default_instruct_template.json"
+    ),
+
+    "MiniCPM-o-2_6": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "minicpm_default_instruct_template.json"
+    ),
+        
+    "SmolVLM2-2.2B-Instruct": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "smolvlm2_default_instruct_template.json"
+    ),
+
+    "gemma-3-4b-it": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "gemma-3_default_instruct_template.json"
+    ),
+
+    "glm-4v-9b": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "glm_default_instruct_template.json"
+    ),
+
+    "Idefics3-8B-Llama3": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "idefics3_llama_default_instruct_template.json"
+    ),
+
+    "Molmo-7B-D-0924": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "molmo_default_instruct_template.json"
+    ),
+
+
+    "Phi-4-multimodal-instruct": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "phi4_default_instruct_template.json"
+    ),
+
+
+    "llava-onevision-qwen2-7b-ov-hf": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "llava-onevision-qwen_default_instruct_template.json"
     )
+
+
 }

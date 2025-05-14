@@ -41,58 +41,27 @@ def eval_graphs(
     
     evaluator = Evaluator_Graphs(reference_data=reference_data, threshold=label_threshold, distance_threshold=point_distance_threshold)
     
-    reference_labels = evaluator.extract_labels(reference_data)
-    test_labels = evaluator.extract_labels(test_data)
+    # Process plots and get overall results
+    results = evaluator.process_plots(test_data)
 
-    reference_series = evaluator.extract_series(reference_data)
-    test_series = evaluator.extract_series(test_data)
-    
-    tp_l, fp_l, fn_l, matches_labels, matched_refs_labels, matched_tests_labels = evaluator.match_references_tests(reference_labels, test_labels)
-    tp_s, fp_s, fn_s, matches_series, matched_refs_series, matched_tests_series = evaluator.match_references_tests(reference_series, test_series)
-    
-    overall_tp, overall_fp, overall_fn = evaluator.point_matching_accuracy(test_data, matches_series, matched_refs_series, matched_tests_series)
-    
-    metrics_labels = evaluator.evaluate(tp_l, fp_l, fn_l)
-    label_metrics = {
-        "new_detections": metrics_labels["New detections"],
-        "miss_detections": metrics_labels["Miss detections"],
-        "incorrect_detections": metrics_labels["Incorrect detections"]
-    }
-
-    metrics_series = evaluator.evaluate(tp_s, fp_s, fn_s)
-    series_metrics = {
-        "new_detections": metrics_series["New detections"],
-        "miss_detections": metrics_series["Miss detections"],
-        "incorrect_detections": metrics_series["Incorrect detections"]
-    }
-
-    metrics_points = evaluator.evaluate(overall_tp, overall_fp, overall_fn)
-    point_metrics = {
-        "new_detections": metrics_points["New detections"],
-        "miss_detections": metrics_points["Miss detections"],
-        "incorrect_detections": metrics_points["Incorrect detections"]
-    }
-
-    results = {
-        "label_metrics": label_metrics,
-        "series_metrics": series_metrics,
-        "point_metrics": point_metrics,
-        "label_threshold": label_threshold,
-        "series_threshold": series_threshold,
-        "point_distance_threshold": point_distance_threshold,
-    }
-
-    print(results)
+    # Calculate metrics for labels, series, and points
+    label_metrics = evaluator.evaluate(results["Label_TP"], results["Label_FP"], results["Label_FN"])
+    series_metrics = evaluator.evaluate(results["Series_TP"], results["Series_FP"], results["Series_FN"])
+    point_metrics = evaluator.evaluate(results["Point_TP"], results["Point_FP"], results["Point_FN"])
+    skipped_images = evaluator.evaluate (results["Skipped_Images"], results["Total_Images"], results["Skipped_Percent"])
 
     # Restructure the DataFrame
     data = {
         "Metric": ["FN", "FP", "TP", "New Detections", "Miss Detections", "Incorrect Detections"],
-        "Label Metrics": [fn_l, fp_l, tp_l, metrics_labels["New detections"], metrics_labels["Miss detections"], metrics_labels["Incorrect detections"]],
-        "Series Metrics": [fn_s, fp_s, tp_s, metrics_series["New detections"], metrics_series["Miss detections"], metrics_series["Incorrect detections"]],
-        "Point Metrics": [overall_fn, overall_fp, overall_tp, metrics_points["New detections"], metrics_points["Miss detections"], metrics_points["Incorrect detections"]],
+        "Label Metrics": [results["Label_FN"], results["Label_FP"], results["Label_TP"], label_metrics["New detections"], label_metrics["Miss detections"], label_metrics["Incorrect detections"]],
+        "Series Metrics": [results["Series_FN"], results["Series_FP"], results["Series_TP"], series_metrics["New detections"], series_metrics["Miss detections"], series_metrics["Incorrect detections"]],
+        "Point Metrics": [results["Point_FN"], results["Point_FP"], results["Point_TP"], point_metrics["New detections"], point_metrics["Miss detections"], point_metrics["Incorrect detections"]],
         "Label Threshold": [label_threshold, "", "", "", "", ""],
         "Series Threshold": [series_threshold, "", "", "", "", ""],
-        "Point Distance Threshold": [point_distance_threshold, "", "", "", "", ""]
+        "Point Distance Threshold": [point_distance_threshold, "", "", "", "", ""],
+        "Images Skipped":[results ["Skipped_Images"], "", "", "", "", ""],
+        "Total Images": [results ["Total_Images"], "", "", "", "", ""],
+        "% Images Skipped": [results ["Skipped_Percent"], "", "", "", "", ""]
     }
 
     df = pd.DataFrame(data)
@@ -112,7 +81,7 @@ def eval_graphs(
     bold_font = Font(bold=True)
     
     # Apply bold formatting to Precision, Recall, and F-Score rows
-    for row in [4, 5, 6]:  # Rows to bold (Precision, Recall, F-Score)
+    for row in [4, 5, 6]:  # Rows to bold (New Detections, Miss Detections, Incorrect Detections)
         for col in range(1, len(df.columns) + 1):
             cell = ws.cell(row=row + 1, column=col)  # +1 because Excel is 1-indexed
             cell.font = bold_font
@@ -122,16 +91,16 @@ def eval_graphs(
         for col in range(2, 5):  # Columns with numeric values
             cell = ws.cell(row=row, column=col)
             if isinstance(cell.value, (int, float)):
-                if cell.value >= 0.95:
-                    fill = PatternFill(start_color="C3E6CB", end_color="C3E6CB", fill_type="solid")  # Pastel green
-                elif cell.value >= 0.90:
-                    fill = PatternFill(start_color="D4E9D6", end_color="D4E9D6", fill_type="solid")  # Lighter green
-                elif cell.value >= 0.75:
-                    fill = PatternFill(start_color="FFF3CD", end_color="FFF3CD", fill_type="solid")  # Light yellow
-                elif cell.value >= 0.50:
-                    fill = PatternFill(start_color="F8D7DA", end_color="F8D7DA", fill_type="solid")  # Light red
-                else:
+                if cell.value >= 0.80:
                     fill = PatternFill(start_color="F5C6CB", end_color="F5C6CB", fill_type="solid")  # Pastel red
+                elif cell.value >= 0.70:
+                    fill = PatternFill(start_color="F8D7DA", end_color="F8D7DA", fill_type="solid")  # Light red
+                elif cell.value >= 0.45:
+                    fill = PatternFill(start_color="FFF3CD", end_color="FFF3CD", fill_type="solid")  # Light yellow
+                elif cell.value >= 0.10:
+                    fill = PatternFill(start_color="D4E9D6", end_color="D4E9D6", fill_type="solid")  # Lighter green
+                else:
+                    fill = PatternFill(start_color="C3E6CB", end_color="C3E6CB", fill_type="solid")  # Pastel green
                 cell.fill = fill
     
     # Save the workbook
@@ -139,4 +108,3 @@ def eval_graphs(
 
 if __name__ == "__main__":
     main()
-
