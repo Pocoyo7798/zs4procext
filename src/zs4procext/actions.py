@@ -382,6 +382,7 @@ class Treatment(ActionsWithChemicalAndConditions):
         schema_parser: SchemaParser,
         amount_parser: ParametersParser,
         conditions_parser: ParametersParser,
+        banned_parser: KeywordSearching
     ) -> List[Dict[str, Any]]:
         action: Treatment = cls(action_name=name, action_context=context)
         action.validate_conditions(conditions_parser)
@@ -398,10 +399,14 @@ class Treatment(ActionsWithChemicalAndConditions):
         if len(action.solutions) > 0:
             list_of_actions.append(NewSolution(action_name="NewSolution").zeolite_dict())
             for solution in action.solutions:
-                if len(concentration) > 0 and len(solution["quantity"]) == 0:
-                    solution["quantity"].append(str(float(concentration[0]) / len(action.solutions)) + "mL")
-                new_action: Actions = AddMaterials(action_name="Add", material=solution)
-                list_of_actions.append(new_action.zeolite_dict())
+                banned_names: List[str] = banned_parser.find_keywords(solution["name"].lower())
+                if len(banned_names) == 0:
+                    pass
+                else:
+                    if len(concentration) > 0 and len(solution["quantity"]) == 0:
+                        solution["quantity"].append(str(float(concentration[0]) / len(action.solutions)) + "mL")
+                    new_action: Actions = AddMaterials(action_name="Add", material=solution)
+                    list_of_actions.append(new_action.zeolite_dict())
         if action.temperature is not None:
             new_action = ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature)
             list_of_actions.append(new_action.zeolite_dict())
