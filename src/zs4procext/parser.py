@@ -707,6 +707,7 @@ class ActionsParser(BaseModel):
 class KeywordSearching(BaseModel):
     keywords_list: List[str]
     limit_words: bool = True
+    word_type: str = "normal"
     _regex: Optional[re.Pattern[str]] = PrivateAttr(default=None)
 
     @validator("keywords_list")
@@ -720,7 +721,9 @@ class KeywordSearching(BaseModel):
     def model_post_init(self, __context: Any) -> None:
         """initialize the parser object by compiling a regex code"""
         tre_regex: re.Pattern[str] = correct_tre(self.keywords_list)
-        if self.limit_words is False:
+        if self.word_type == "units":
+             self._regex = re.compile(f"(?<![a-zA-Z]){tre_regex}(?![a-zA-Z])", re.IGNORECASE | re.MULTILINE)
+        elif self.limit_words is False:
             self._regex = re.compile(f"{tre_regex}", re.IGNORECASE | re.MULTILINE)
         else:
             self._regex = re.compile(f"\\b{tre_regex}\\b", re.IGNORECASE | re.MULTILINE)
@@ -956,9 +959,10 @@ class TableParser(BaseModel):
     table_type: str = "materials_characterization"
     _words_registry: Optional[Dict[str, Any]] = PrivateAttr(default=None)
     _word_searcher: Optional[Dict[str, KeywordSearching]] = PrivateAttr(default={})
-    _unit_searcher: Optional[Dict[str, KeywordSearching]] = PrivateAttr(default={})
+    _unit_searcher: Optional[KeywordSearching] = PrivateAttr(default={})
+    _unique_set: set = set()
 
-    def model_post_init(self, __context: Any):
+    """def model_post_init(self, __context: Any):
         if self.table_type == "materials_characterization":
             self._words_registry = MATERIALS_CHARACTERIZATION_REGISTRY
         if self._words_registry is None:
@@ -968,13 +972,32 @@ class TableParser(BaseModel):
             if self._words_registry[key]["units"] != []:
                 self._unit_searcher[key] = KeywordSearching(keywords_list=self._words_registry[key]["units"])
             else:
-                self._unit_searcher[key] = KeywordSearching(keywords_list=["#%/daopdj21387921"])
-
+                self._unit_searcher[key] = KeywordSearching(keywords_list=["#%/daopdj21387921"])"""
+    
+    def model_post_init(self, __context: Any):
+        if self.table_type == "materials_characterization":
+            self._words_registry = MATERIALS_CHARACTERIZATION_REGISTRY
+        if self._words_registry is None:
+            raise AttributeError(f"{self.table_type} is not a valid table_type")
+        unit_list: List[str] = []
+        regex_pattern: str = ""
+        unique_variables = []
+        for key in self._words_registry.keys():
+            self._word_searcher[key] = KeywordSearching(keywords_list=self._words_registry[key]["words"], limit_words=self._words_registry[key]["limit_words"])
+            if self._words_registry[key]["unique"]:
+                unique_variables.append(key)
+            for unit in self._words_registry[key]["units"]:
+                if unit not in unit_list:
+                    unit_list.append(unit)
+        print(self._word_searcher)
+        self._unique_set = set(unique_variables)
+        self._unit_searcher = KeywordSearching(keywords_list=unit_list, word_type="units")
+    
     def update_result(self, results: List[Dict[str, Any]], table_entries: List[List[str]], indexes_to_ignore: List[int], units: List[str], key: str, index: int):
         if len(units) > 0:
             unit: str = f" {units[0]}"
         else:
-            unit = ""
+            unit = " empty"
         j = 0
         line_index = 0
         for line in table_entries:
@@ -990,12 +1013,20 @@ class TableParser(BaseModel):
                 entry = line[index]
                 try:
                     test = results[j]
-                    new_entry =  entry + unit
+                    new_entry =  entry.strip() + unit
                 except IndexError:
                     results.append({})
-                    new_entry = entry + unit
-                if key in results[j].keys():
-                    results[j][key].append(new_entry)
+                    new_entry = entry.strip() + unit
+                new_entry = new_entry.replace(" empty", "")
+                if entry.strip() in EMPTY_VALUES_REGISTRY:
+                    pass
+                elif unit[1:] not in self._words_registry[key]["units"]:
+                    pass
+                elif key in results[j].keys():
+                    if key in self._unique_set and len(results[j][key]) > 0:
+                        pass
+                    else:
+                        results[j][key].append(new_entry)
                 else:
                     results[j][key] = [new_entry]
                 j += 1
@@ -1008,16 +1039,36 @@ class TableParser(BaseModel):
         headers: List[str] = []
         for i in range(len(table_entries[0])):
             header_string = ""
+            previous_index = -1
             for index in collumn_headers:
-                header_string += table_entries[index][i]
-            headers.append(header_string.replace(" ", ""))
+                if index > previous_index + 1:
+                    break
+                header_string += " " + table_entries[index][i].strip()
+                previous_index = index
+            headers.append(header_string)
         keys_to_use = list(self._words_registry.keys())
         i = 0
         for header in headers:
+            units = self._unit_searcher.find_keywords(header.lower())
+            corrected_header = header.replace(",", "")
+            corrected_header = corrected_header.replace("(", "")
+            corrected_header = corrected_header.replace(")", "")
+            corrected_header = corrected_header.replace("[", "")
+            corrected_header = corrected_header.replace("]", "")
+            corrected_header = corrected_header.replace("  ", " ")
+            if len(units) > 0:
+                corrected_header = corrected_header.replace(units[0], "")
+                corrected_header = corrected_header.replace("  ", " ")
+            print(corrected_header.lower())
+            print(units)
+            if corrected_header == " ":
+                key = "sample"
+                print(key)
+                results = self.update_result(results, table_entries, collumn_headers, units, key, i)
             for key in keys_to_use:
-                keywords = self._word_searcher[key].find_keywords(header)
-                if len(keywords) > 0:
-                    units = self._unit_searcher[key].find_keywords(header)
+                words_found: List[str] = self._word_searcher[key].find_keywords(corrected_header.lower())
+                if len(words_found) > 0:
+                    print(key)
                     results = self.update_result(results, table_entries, collumn_headers, units, key, i)
                     break
             i += 1
@@ -1161,27 +1212,31 @@ TYPE_COMPARISSON_REGISTRY: Dict[str, str] = {
 }
 
 MATERIALS_CHARACTERIZATION_REGISTRY: Dict[str, Any] = {
-    "sample": {"words": ["sample", "catalyst"], "units": []},
-    "surface_area": {"words": ["sbet"], "units": ["m2/g", "m2/g", "m2g-1"]},
-    "external_area": {"words": ["sext", "smeso"], "units": ["m2/g", "m2/g", "m2g-1"]},
-    "micropore_area": {"words": ["smicro"], "units": ["m2/g", "m2/g", "m2g-1"]},
-    "micropore_volume": {"words": ["vmicro"], "units": ["cm3/g", "cm3g-1"]},
-    "mesopore_volume": {"words": ["vmeso"], "units": ["cm3/g", "cm3g-1"]},
-    "total_volume": {"words": ["vp"], "units": ["cm3/g", "cm3g-1"]},
-    "sio2/al2o_gel": {"words": ["siO2/al2o3gel", "gelsiO2/al2o3"], "units": []},
-    "sio2/al2o3": {"words": ["siO2/al2o3"], "units": []},
-    "si/al_filtrate": {"words": ["si/alfiltrate", "filtratesi/al", "Si/Alﬁltrate"], "units": []},
-    "si/al": {"words": ["si/al"], "units": []},
-    "b/l ratio": {"words": ["b/l"], "units": []},
-    "l/b ratio": {"words": ["l/b"], "units": []},
-    "naoh_c": {"words": ["naoh"], "units": ["m"]},
-    "crystallinity": {"words": ["crystallinity"], "units": ["%"]},
-    "yield": {"words": ["yield"], "units": ["%"]},
-    "Si": {"words": ["si"], "units": ["wt%"]},
-    "Al": {"words": ["al"], "units": ["wt%"]},
-    "bronsted_sites": {"words": ["b"], "units": ["μmol/g"]},
-    "lewis_sites": {"words": ["l"], "units": ["μmol/g"]},
+    "sample": {"words": ["sample", "catalyst", "zeolites", "samples", "zeolite", "material", "support"], "units": ["empty"], "limit_words": False, "unique": True},
+    "yield": {"words": ["yield"], "units": ["%", "empty"],"limit_words": False,  "unique": True},
+    "external_area": {"words": ["sext", "smes", "s mes", "Surface area Meso", "External", "area external"], "units": ["m2/g", "m2/g", "m2g-1", "m2 g-1", "m2.g-1"], "limit_words": False,  "unique": True},
+    "micropore_area": {"words": ["smic", "s mic", "bet area microporous", "area micropore"], "units": ["m2/g", "m2/g", "m2g-1", "m2 g-1"], "limit_words": False,  "unique": True},
+    "surface_area": {"words": ["sbet", "Surface area BET", "Surface area", "bet area", "area total", "stotal", "s total"], "units": ["m2/g", "m2/g", "m2g-1", "m2.g-1", "m2 g-1"], "limit_words": False,  "unique": True},
+    "micropore_volume": {"words": ["vmic", "v mic", "Pore volume Micro", "Micropore volume", "Microporous volume", "volume micro"], "units": ["cm3/g", "cm3g-1", "cm3.g-1", "cm3 g-1", "mm3/g", "mm3g-1", "mm3.g-1", "mm3 g-1", "ml/g"], "limit_words": False,  "unique": True},
+    "mesopore_volume": {"words": ["vmes", "v mes", "Pore volume Meso", "Mesopore volume", "Vext", "volume meso"], "units": ["cm3/g", "cm3g-1", "cm3.g-1", "cm3 g-1", "mm3/g", "mm3g-1", "mm3.g-1", "mm3 g-1"],"limit_words": False,  "unique": True},
+    "total_volume": {"words": ["vp", "pore volume", "vtotal", "v total", "volume total", "vt"], "units": ["cm3/g", "cm3g-1", "cm3 g-1"], "limit_words": False,  "unique": True},
+    "sio2_al2o_ratio_gel": {"words": ["sio2/al2o3 gel", "gel siO2/al2o3"], "units": ["empty"], "limit_words": False,  "unique": True},
+    "sio2_al2o3_ratio": {"words": ["sio2/al2o3"], "units": ["empty"], "limit_words": False,  "unique": True},
+    "si_al_ratio_filtrate": {"words": ["si/al filtrate", "filtrate si/al", "Si/Al ﬁltrate"], "units": ["empty"], "limit_words": False,  "unique": True},
+    "si_al_ratio": {"words": ["si/al", "Molar ratio", "si/albulk", "si/ albulk", "Si/ Al"], "units": ["empty"],"limit_words": False, "unique": True},
+    "b_l_ratio": {"words": ["b/l"], "units": ["empty"],"limit_words": False,  "unique": False},
+    "l_b_ratio": {"words": ["l/b"], "units": ["empty"], "limit_words": False,  "unique": False},
+    "time": {"words": ["time", "period", "t (min)"], "units": ["min", "h"],"limit_words": False,  "unique": True},
+    "temperature": {"words": ["t (k)", "temperature"], "units": ["k", "°c"],"limit_words": False,  "unique": True},
+    "crystallinity": {"words": ["crystallinity", "cristallinity"], "units": ["%", "empty"], "limit_words": False,  "unique": True},
+    "Si": {"words": ["si", "nsi"], "units": ["wt%", "empty", "umol/g", "mmol/g"],"limit_words": True,  "unique": True},
+    "Al": {"words": ["al", "nal"], "units": ["wt%", "empty", "umol/g", "mmol/g", "umol.g-1"],"limit_words": True, "unique": True},
+    "lewis_sites": {"words": ["l", "nlewis", "lewis", "lpy", "pyl", "clewis", "cl"], "units": ["μmol/g", "mmol g-1", "umol/g", "umol.g-1", "mmolg-1", "lmol g-1"], "limit_words": True,  "unique": False},
+    "bronsted_sites": {"words": ["b", "nbronstead", "bronstead", "bronsted", "bpy", "pyh", "cbronsted", "cb"], "units": ["μmol/g", "mmol g-1", "umol/g", "umol.g-1","mmolg-1", "lmol g-1"], "limit_words": True, "unique": False},
+    "naoh_c": {"words": ["naoh", "concentration", "c (m)"], "units": ["m", "empty"],"limit_words": False,  "unique": True},
 }
+
+EMPTY_VALUES_REGISTRY = set(["-", "-"])
 
 import re
 import json
