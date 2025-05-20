@@ -394,12 +394,12 @@ class Treatment(ActionsWithChemicalAndConditions):
         else:
             action.solutions = chemicals_info.chemical_list
             action.repetitions = chemicals_info.repetitions
-        concentration = re.findall(r'\d+', str(action.suspension_concentration))
+        concentration: List[str] = re.findall(r'\d+', str(action.suspension_concentration))
         list_of_actions: List[Any] = []
         if len(action.solutions) > 0:
             list_of_actions.append(NewSolution(action_name="NewSolution").zeolite_dict())
             for solution in action.solutions:
-                banned_names: List[str] = banned_parser.find_keywords(solution["name"].lower())
+                banned_names: List[str] = banned_parser.find_keywords(solution.name.lower())
                 if len(banned_names) == 0:
                     pass
                 else:
