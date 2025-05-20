@@ -1586,8 +1586,9 @@ class IonExchange(Treatment):
         schema_parser: SchemaParser,
         amount_parser: ParametersParser,
         conditions_parser: ParametersParser,
+        banned_parser: KeywordSearching
     ) -> List[Dict[str, Any]]:
-        return Treatment.generate_treatment("IonExchange", context, schemas, schema_parser, amount_parser, conditions_parser)
+        return Treatment.generate_treatment("IonExchange", context, schemas, schema_parser, amount_parser, conditions_parser, banned_parser)
     
 class AlkalineTreatment(Treatment):
     
