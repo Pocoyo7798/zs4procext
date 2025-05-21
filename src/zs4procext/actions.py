@@ -1600,8 +1600,9 @@ class AlkalineTreatment(Treatment):
         schema_parser: SchemaParser,
         amount_parser: ParametersParser,
         conditions_parser: ParametersParser,
+        banned_parser: KeywordSearching
     ) -> List[Dict[str, Any]]:
-        return Treatment.generate_treatment("AlkalineTreatment", context, schemas, schema_parser, amount_parser, conditions_parser)
+        return Treatment.generate_treatment("AlkalineTreatment", context, schemas, schema_parser, amount_parser, conditions_parser, banned_parser)
     
 class AcidTreatment(Treatment):
 
@@ -1613,8 +1614,9 @@ class AcidTreatment(Treatment):
         schema_parser: SchemaParser,
         amount_parser: ParametersParser,
         conditions_parser: ParametersParser,
+        banned_parser: KeywordSearching
     ) -> List[Dict[str, Any]]:
-        return Treatment.generate_treatment("AcidTreatment", context, schemas, schema_parser, amount_parser, conditions_parser)
+        return Treatment.generate_treatment("AcidTreatment", context, schemas, schema_parser, amount_parser, conditions_parser, banned_parser)
 
 class Repeat(Actions):
     amount: str = 1
