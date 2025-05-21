@@ -138,3 +138,12 @@ class ModelVLM(BaseModel):
             final_response += o[1][0][0].text
             break
         return final_response
+
+    def run_image_single_prompt_rescale(self, prompt: str, image_path: str, scale: float = 1.0) -> str:
+        pil_image = Image.open(image_path)
+        if scale < 1.0:
+            new_size = (int(pil_image.width * scale), int(pil_image.height * scale))
+            pil_image = pil_image.resize(new_size, Image.BILINEAR)
+        new_prompt = [{"prompt": prompt, "multi_modal_data": {"image": pil_image}}]
+        outputs = self.model.generate(new_prompt)
+        return outputs[0][1][0][0].text
