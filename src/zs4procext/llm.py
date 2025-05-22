@@ -144,6 +144,15 @@ class ModelVLM(BaseModel):
         if scale < 1.0:
             new_size = (int(pil_image.width * scale), int(pil_image.height * scale))
             pil_image = pil_image.resize(new_size, Image.BILINEAR)
-        new_prompt = [{"prompt": prompt, "multi_modal_data": {"image": pil_image}}]
+        new_prompt: Dict[str, Any] = [
+            {
+                "prompt": prompt,
+                "multi_modal_data": {"image": pil_image},
+            }
+        ]
         outputs = self.model.generate(new_prompt)
-        return outputs[0][1][0][0].text
+        final_response = ""
+        for o in outputs:
+            final_response += o[1][0][0].text
+            break
+        return final_response
