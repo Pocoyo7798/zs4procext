@@ -449,7 +449,13 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         importlib_resources.files("zs4procext")
         / "resources"
         / "llava-onevision-qwen_default_instruct_template.json"
-    )
+    ),
 
+
+    "phi-4": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "llava-onevision-qwen_default_instruct_template.json"
+    )
 
 }
