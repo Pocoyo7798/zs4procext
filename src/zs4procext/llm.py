@@ -101,9 +101,9 @@ class ModelVLM(BaseModel):
                 trust_remote_code=self.model_parameters["trust_remote_code"],
                 use_beam_search=self.model_parameters["use_beam_search"],
                 image_input_type="pixel_values",
-                image_token_id=32000,
-                image_input_shape="1,3,336,336",
-                image_feature_size=576,
+                image_token_id=self.model_parameters["image_token_id"],
+                image_input_shape=self.model_parameters["image_input_shape"],
+                image_feature_size=self.model_parameters["image_feature_size"],
                 vllm_kwargs={
                     "gpu_memory_utilization": self.model_parameters[
                         "gpu_memory_utilization"
