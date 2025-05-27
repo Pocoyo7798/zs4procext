@@ -6,5 +6,5 @@
               "Desilication" : "Alkaline treatment used to remove silicium (Si) from the materials's structure using a base solution such as NaOH, TPAOH, TBAOH, etc...;",
               "Dealumination" : "Acid treatment used to remove Aluminium (Al) from the materials's structure using an acid solution such as nitric acid, oxalic acid, etc...;"},
   "answer_schema": {},
-  "conclusion":  "Does this paragraph describe a desilication or dealimunation proccedure? Answer yes or no with no justification."
+  "conclusion":  "Does this paragraph contains information on how to perform the desilication or dealimunation of a material? Answer yes or no with no justification."
 }
