@@ -59,6 +59,12 @@ def paragraph_classifier(
         / "resources"
         / "classify_multi_sample_schema.json"
     )
+    elif type == "material_preparation":
+        prompt_schema_path = str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "classify_material_preparation_schema.json"
+    )
     if prompt_structure_path is None:
         try:
             name = llm_model_name.split("/")[-1]
