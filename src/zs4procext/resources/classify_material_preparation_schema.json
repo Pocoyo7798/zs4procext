@@ -1,0 +1,8 @@
+{
+  "expertise": "You are an expert in material preparation.",
+  "initialization": "Answer the questions as truthfully as possible. Answer No if you are unsure.",
+  "objective":"Analyse the following paragraph:",
+  "actions": {},
+  "answer_schema": {},
+  "conclusion":  "This paragraph describe the preparation of a material, containing the experimental conditions used? Answer yes or no with no justification."
+}
