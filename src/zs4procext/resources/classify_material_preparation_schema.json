@@ -4,5 +4,5 @@
   "objective":"Analyse the following paragraph:",
   "actions": {},
   "answer_schema": {},
-  "conclusion":  "This paragraph describe the preparation of a material, containing the experimental conditions used? Answer yes or no with no justification."
+  "conclusion":  "This paragraph describe the preparation of a material, containing the experimental conditions used? Answer yes or no with no justification. Material prepation consists in procedures use to synthetize a new material or modify an alredy existing one. Note that characterization procedures such as FTIR, X-ray difraction or N2 physorption do not count as preparation procedures."
 }

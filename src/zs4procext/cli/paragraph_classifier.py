@@ -2,6 +2,7 @@ import time
 from typing import List, Optional
 import torch
 import importlib_resources
+import os
 
 import click
 
@@ -83,6 +84,8 @@ def paragraph_classifier(
         text_lines: List[str] = f.readlines()
     size = len(text_lines)
     count = 1
+    if os.path.isfile(output_file_path):
+        os.remove(output_file_path)
     for text in text_lines:
         print(f"text processed: {count}/{size}")
         results: str = str(
