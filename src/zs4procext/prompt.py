@@ -406,6 +406,12 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         / "internvl_default_instruct_template.json"
     ),
 
+    "InternVL3-8B": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "internvl_default_instruct_template.json"
+    ),
+
     "MiniCPM-o-2_6": str(
         importlib_resources.files("zs4procext")
         / "resources"
