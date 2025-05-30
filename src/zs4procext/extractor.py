@@ -82,6 +82,7 @@ class ActionExtractorFromText(BaseModel):
     llm_model_name: Optional[str] = None
     llm_model_parameters_path: Optional[str] = None
     elementar_actions: bool = False
+    post_processing: bool = True
     _action_prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
     _chemical_prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
     _wash_chemical_prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
@@ -777,7 +778,9 @@ class ActionExtractorFromText(BaseModel):
                 new_action = action.generate_action(context)
                 action_list.extend(new_action)
             i = i + 1
-        if self.actions_type == "pistachio":
+        if self.post_processing is False:
+            final_actions_list = action_list
+        elif self.actions_type == "pistachio":
             print(action_list)
             final_actions_list: List[Any] = ActionExtractorFromText.correct_pistachio_action_list(action_list)
             print(final_actions_list)
