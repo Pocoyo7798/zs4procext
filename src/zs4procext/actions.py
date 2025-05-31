@@ -382,6 +382,7 @@ class Treatment(ActionsWithChemicalAndConditions):
         schema_parser: SchemaParser,
         amount_parser: ParametersParser,
         conditions_parser: ParametersParser,
+        banned_parser: KeywordSearching
     ) -> List[Dict[str, Any]]:
         action: Treatment = cls(action_name=name, action_context=context)
         action.validate_conditions(conditions_parser)
@@ -393,15 +394,19 @@ class Treatment(ActionsWithChemicalAndConditions):
         else:
             action.solutions = chemicals_info.chemical_list
             action.repetitions = chemicals_info.repetitions
-        concentration = re.findall(r'\d+', str(action.suspension_concentration))
+        concentration: List[str] = re.findall(r'\d+', str(action.suspension_concentration))
         list_of_actions: List[Any] = []
         if len(action.solutions) > 0:
             list_of_actions.append(NewSolution(action_name="NewSolution").zeolite_dict())
             for solution in action.solutions:
-                if len(concentration) > 0 and len(solution["quantity"]) == 0:
-                    solution["quantity"].append(str(float(concentration[0]) / len(action.solutions)) + "mL")
-                new_action: Actions = AddMaterials(action_name="Add", material=solution)
-                list_of_actions.append(new_action.zeolite_dict())
+                banned_names: List[str] = banned_parser.find_keywords(solution.name.lower())
+                if len(banned_names) == 0:
+                    pass
+                else:
+                    if len(concentration) > 0 and len(solution["quantity"]) == 0:
+                        solution["quantity"].append(str(float(concentration[0]) / len(action.solutions)) + "mL")
+                    new_action: Actions = AddMaterials(action_name="Add", material=solution)
+                    list_of_actions.append(new_action.zeolite_dict())
         if action.temperature is not None:
             new_action = ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature)
             list_of_actions.append(new_action.zeolite_dict())
@@ -1581,8 +1586,9 @@ class IonExchange(Treatment):
         schema_parser: SchemaParser,
         amount_parser: ParametersParser,
         conditions_parser: ParametersParser,
+        banned_parser: KeywordSearching
     ) -> List[Dict[str, Any]]:
-        return Treatment.generate_treatment("IonExchange", context, schemas, schema_parser, amount_parser, conditions_parser)
+        return Treatment.generate_treatment("IonExchange", context, schemas, schema_parser, amount_parser, conditions_parser, banned_parser)
     
 class AlkalineTreatment(Treatment):
     
@@ -1594,8 +1600,9 @@ class AlkalineTreatment(Treatment):
         schema_parser: SchemaParser,
         amount_parser: ParametersParser,
         conditions_parser: ParametersParser,
+        banned_parser: KeywordSearching
     ) -> List[Dict[str, Any]]:
-        return Treatment.generate_treatment("AlkalineTreatment", context, schemas, schema_parser, amount_parser, conditions_parser)
+        return Treatment.generate_treatment("AlkalineTreatment", context, schemas, schema_parser, amount_parser, conditions_parser, banned_parser)
     
 class AcidTreatment(Treatment):
 
@@ -1607,8 +1614,9 @@ class AcidTreatment(Treatment):
         schema_parser: SchemaParser,
         amount_parser: ParametersParser,
         conditions_parser: ParametersParser,
+        banned_parser: KeywordSearching
     ) -> List[Dict[str, Any]]:
-        return Treatment.generate_treatment("AcidTreatment", context, schemas, schema_parser, amount_parser, conditions_parser)
+        return Treatment.generate_treatment("AcidTreatment", context, schemas, schema_parser, amount_parser, conditions_parser, banned_parser)
 
 class Repeat(Actions):
     amount: str = 1
@@ -1867,7 +1875,9 @@ class Sieve(ActionsWithConditons):
         action.validate_conditions(conditions_parser, add_others=True)
         return [action.zeolite_dict()]
 
-BANNED_CHEMICALS_REGISTRY: List[str] = [
+BANNED_CHEMICALS_REGISTRY: List[str] = ["WHEOWQDH"]
+
+"""BANNED_CHEMICALS_REGISTRY: List[str] = [
     "newsolution",
     "extract",
     "heated",
@@ -1913,7 +1923,7 @@ BANNED_CHEMICALS_REGISTRY: List[str] = [
     "prepared",
     "neutralized",
     "basified"
-]
+]"""
 
 ACTION_REGISTRY: Dict[str, Any] = {
     "add": Add,
@@ -2036,6 +2046,7 @@ MATERIAL_ACTION_REGISTRY: Dict[str, Any] = {
     "extract": WashMaterial,
     "quench": WashMaterial,
     "thermaltreatment": ThermalTreatment,
+    "posttreatment": ThermalTreatment, 
     "drysolid": DryMaterial,
     "drysolution": DryMaterial,
     "dry": DryMaterial,
@@ -2046,6 +2057,7 @@ MATERIAL_ACTION_REGISTRY: Dict[str, Any] = {
     "reflux": ChangeTemperature,
     "phaseseparation": Separate,
     "purify": WashMaterial,
+    "transfer": None,
     "degas": None,
     "invalidaction": None,
     "recrystallize": None,

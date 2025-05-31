@@ -135,6 +135,7 @@ class PromptFormatter(BaseModel):
             answer_schema=self._answer_schema,
             conclusion=self.conclusion,
         )
+        
         return formatted_prompt
     
     def prepare_image(self, image_path: str = ""):
@@ -305,6 +306,21 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         / "resources"
         / "ibm_granite3_default_template.json"
     ),
+    "granite-3.1-8b-instruct": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "ibm_granite3_default_template.json"
+    ),
+    "granite-3.1-2b-instruct": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "ibm_granite3_default_template.json"
+    ),
+    "granite-3.2-8b-instruct": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "ibm_granite3_default_template.json"
+    ),
     "merlinite-7b": str(
         importlib_resources.files("zs4procext")
         / "resources"
@@ -390,6 +406,12 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         / "internvl_default_instruct_template.json"
     ),
 
+    "InternVL3-8B": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "internvl_default_instruct_template.json"
+    ),
+
     "MiniCPM-o-2_6": str(
         importlib_resources.files("zs4procext")
         / "resources"
@@ -438,7 +460,13 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         importlib_resources.files("zs4procext")
         / "resources"
         / "llava-onevision-qwen_default_instruct_template.json"
-    )
+    ),
 
+
+    "phi-4": str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "llava-onevision-qwen_default_instruct_template.json"
+    )
 
 }

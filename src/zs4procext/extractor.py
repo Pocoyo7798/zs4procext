@@ -82,6 +82,7 @@ class ActionExtractorFromText(BaseModel):
     llm_model_name: Optional[str] = None
     llm_model_parameters_path: Optional[str] = None
     elementar_actions: bool = False
+    post_processing: bool = True
     _action_prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
     _chemical_prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
     _wash_chemical_prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
@@ -777,7 +778,9 @@ class ActionExtractorFromText(BaseModel):
                 new_action = action.generate_action(context)
                 action_list.extend(new_action)
             i = i + 1
-        if self.actions_type == "pistachio":
+        if self.post_processing is False:
+            final_actions_list = action_list
+        elif self.actions_type == "pistachio":
             print(action_list)
             final_actions_list: List[Any] = ActionExtractorFromText.correct_pistachio_action_list(action_list)
             print(final_actions_list)
@@ -1112,7 +1115,7 @@ class TableExtractor(BaseModel):
         self._vlm_model.vllm_load_model()
 
     def extract_table_info(self, image_path: str):
-        prompt = self._prompt.format_prompt("<image>")
+        prompt = self._prompt.format_prompt("")
         print(prompt)
         output = self._vlm_model.run_image_single_prompt(prompt, image_path)
         print(output)
@@ -1154,12 +1157,12 @@ class ImageExtractor(BaseModel):
         self._vlm_model.vllm_load_model()
         self._image_parser = ImageParser()
 
-    def extract_image_info(self, image_path: str):
+    def extract_image_info(self, image_path: str, scale: float = 1.0):
         image_name = os.path.basename(image_path)
 
         prompt = self._prompt.format_prompt("<image>")
 
-        output = self._vlm_model.run_image_single_prompt(prompt, image_path)
+        output = self._vlm_model.run_image_single_prompt_rescale(prompt, image_path,scale = scale)
         print(f"Raw Model Output for {image_path}:\n{output}")
         
         self._image_parser.parse(output)
