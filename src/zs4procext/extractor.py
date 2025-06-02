@@ -1157,12 +1157,12 @@ class ImageExtractor(BaseModel):
         self._vlm_model.vllm_load_model()
         self._image_parser = ImageParser()
 
-    def extract_image_info(self, image_path: str, scale: float = 1.0):
+    def extract_image_info(self, image_path: str, scale: float = 1.0, x: float = 1000, y: float = 1000):
         image_name = os.path.basename(image_path)
 
         prompt = self._prompt.format_prompt("<image>")
 
-        output = self._vlm_model.run_image_single_prompt_rescale(prompt, image_path,scale = scale)
+        output = self._vlm_model.run_image_single_prompt_rescale(prompt, image_path,scale = scale, x = x, y = y)
         print(f"Raw Model Output for {image_path}:\n{output}")
         
         self._image_parser.parse(output)

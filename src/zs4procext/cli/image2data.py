@@ -37,6 +37,20 @@ from zs4procext.prompt import TEMPLATE_REGISTRY
     type=float,
     help="Scale factor to reduce image resolution (e.g., 0.5 for 50%)."
 )
+@click.option(
+    "--x",
+    default = 1000,
+    type = float,
+    help = "X dimension of the image"
+)
+
+@click.option(
+    "--y",
+    default = 1000,
+    type = float,
+    help = "Y dimension of the image"
+)
+
 def image2data(
     image_folder: str,
     output_file_path: str,
@@ -45,6 +59,8 @@ def image2data(
     vlm_model_name: str,
     vlm_model_parameters_path: Optional[str],
     scale: float,
+    x: float, 
+    y: float
 ):
     start_time = time.time()
     
@@ -76,7 +92,7 @@ def image2data(
             
             try:
                 # Extract image info with the image name as a key in the parsed data
-                parsed_data = extractor.extract_image_info(file_path, scale =scale)
+                parsed_data = extractor.extract_image_info(file_path, scale =scale, x = x, y = y)
                 print(f"Parsed data for {parsed_data}")
                 
                 # Update aggregated_data using a nested dictionary merge logic
