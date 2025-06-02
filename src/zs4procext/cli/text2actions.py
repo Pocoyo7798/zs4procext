@@ -18,6 +18,11 @@ from zs4procext.prompt import TEMPLATE_REGISTRY
     help="Type of actions to considered. Options: All or pistachio or materials.",
 )
 @click.option(
+    "--post_processing",
+    default=True,
+    help="True if you want to process the LLM output, False otherwise",
+)
+@click.option(
     "--action_prompt_structure_path",
     default=None,
     help="Path to the file containing the structure of the action prompt",
@@ -71,6 +76,7 @@ def text2actions(
     text_file_path: str,
     output_file_path: str,
     actions_type: str,
+    post_processing: bool,
     action_prompt_structure_path: Optional[str],
     chemical_prompt_structure_path: Optional[str],
     action_prompt_schema_path: Optional[str],
@@ -98,6 +104,7 @@ def text2actions(
             pass
     extractor: ActionExtractorFromText = ActionExtractorFromText(
         actions_type=actions_type,
+        post_processing=post_processing,
         action_prompt_structure_path=action_prompt_structure_path,
         chemical_prompt_structure_path=chemical_prompt_structure_path,
         action_prompt_schema_path=action_prompt_schema_path,

@@ -316,7 +316,7 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         / "resources"
         / "ibm_granite3_default_template.json"
     ),
-    "granite-3.2-2b-instruct": str(
+    "granite-3.2-8b-instruct": str(
         importlib_resources.files("zs4procext")
         / "resources"
         / "ibm_granite3_default_template.json"
