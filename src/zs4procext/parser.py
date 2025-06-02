@@ -12,7 +12,6 @@ from trieregex import TrieRegEx as TRE
 import pandas as pd
 import os 
 
-
 class Amount(BaseModel):
     value: List[str] = []
     repetitions: List[int] = []
@@ -1238,10 +1237,7 @@ MATERIALS_CHARACTERIZATION_REGISTRY: Dict[str, Any] = {
 
 EMPTY_VALUES_REGISTRY = set(["-", "-"])
 
-import re
-import json
-from typing import ClassVar
-from pydantic import BaseModel, Field
+
 
 class ImageParser(BaseModel):
     data_dict: dict = Field(default_factory=dict)
@@ -1258,7 +1254,7 @@ class ImageParser(BaseModel):
 
     def _remove_square_brackets(self, data_string: str) -> str:
         data_string = data_string.replace('_{', ' ')
-        return re.sub(r'[\[\]{}]', '', data_string).replace('_', '')
+        return re.sub(r'[<>{}\[\]]', '', data_string).replace('_', '')
 
     def _remove_unicode_subscripts_superscripts(self, data: str) -> str:
         cleaned_data = re.sub(r'\\u208', '', data)
@@ -1280,7 +1276,7 @@ class ImageParser(BaseModel):
         header_line = data_string[header_start:].split('\n')[0]
         header = [h.strip() for h in header_line.split(delimiter)]
         if len(header) != 3:
-            print("Header does not have the expected format (Catalyst;x-axis label;y-axis label).")
+            print("Header does not have the expected format (Serie-name;x-axis label;y-axis label).")
             return
 
         self.catalyst_label = header[0]

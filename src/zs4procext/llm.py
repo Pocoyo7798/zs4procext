@@ -144,10 +144,18 @@ class ModelVLM(BaseModel):
         if scale < 1.0:
             new_size = (int(pil_image.width * scale), int(pil_image.height * scale))
             pil_image = pil_image.resize(new_size, Image.BILINEAR)
+
+        padded_image = Image.new("RGB", (1000, 1000), color=(255, 255, 255))
+
+    
+        x_offset = (1000 - pil_image.width) // 2
+        y_offset = (1000 - pil_image.height) // 2
+        padded_image.paste(pil_image, (x_offset, y_offset))
+
         new_prompt: Dict[str, Any] = [
             {
                 "prompt": prompt,
-                "multi_modal_data": {"image": pil_image},
+                "multi_modal_data": {"image": padded_image},
             }
         ]
         outputs = self.model.generate(new_prompt)
