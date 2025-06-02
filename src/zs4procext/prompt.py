@@ -388,6 +388,7 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         / "resources"
         / "qwen_default_instruct_template.json"
     ),
+    
     "POINTS-Qwen-2-5-7B-Chat": str(
         importlib_resources.files("zs4procext")
         / "resources"
