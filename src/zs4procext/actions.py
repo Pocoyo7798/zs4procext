@@ -1875,9 +1875,7 @@ class Sieve(ActionsWithConditons):
         action.validate_conditions(conditions_parser, add_others=True)
         return [action.zeolite_dict()]
 
-BANNED_CHEMICALS_REGISTRY: List[str] = ["WHEOWQDH"]
-
-"""BANNED_CHEMICALS_REGISTRY: List[str] = [
+BANNED_CHEMICALS_REGISTRY: List[str] = [
     "newsolution",
     "extract",
     "heated",
@@ -1923,7 +1921,7 @@ BANNED_CHEMICALS_REGISTRY: List[str] = ["WHEOWQDH"]
     "prepared",
     "neutralized",
     "basified"
-]"""
+]
 
 ACTION_REGISTRY: Dict[str, Any] = {
     "add": Add,
