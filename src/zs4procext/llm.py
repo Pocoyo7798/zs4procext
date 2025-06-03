@@ -139,7 +139,7 @@ class ModelVLM(BaseModel):
             break
         return final_response
 
-    def run_image_single_prompt_rescale(self, prompt: str, image_path: str, scale: float = 1.0, x: float = 1000, y: float = 1000) -> str:
+    def run_image_single_prompt_rescale(self, prompt: str, image_path: str, scale: float = 1.0, x: int= 1000, y: int = 1000) -> str:
         pil_image = Image.open(image_path)
         if scale < 1.0:
             new_size = (int(pil_image.width * scale), int(pil_image.height * scale))

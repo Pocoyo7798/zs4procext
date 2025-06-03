@@ -40,14 +40,14 @@ from zs4procext.prompt import TEMPLATE_REGISTRY
 @click.option(
     "--x",
     default = 1000,
-    type = float,
+    type = int,
     help = "X dimension of the image"
 )
 
 @click.option(
     "--y",
     default = 1000,
-    type = float,
+    type = int,
     help = "Y dimension of the image"
 )
 
