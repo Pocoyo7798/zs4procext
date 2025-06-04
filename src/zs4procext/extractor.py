@@ -1184,7 +1184,7 @@ class EmbeddingExtractor(BaseModel):
 
     def __init__(self, **data):
         super().__init__(**data)
-        model_id = "Qwen/Qwen2.5-VL-3B-Instruct"
+        model_id = "/projects/F202407080CPCAA1/Lea/models/Qwen2.5-VL-7B-Instruct"
         self._device = "cuda" if torch.cuda.is_available() else "cpu"
 
         self._model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
