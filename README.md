@@ -1,4 +1,5 @@
 # **zs4Procext**
+[![PyPI - License](https://img.shields.io/pypi/l/langchain-core?style=flat-square)](https://opensource.org/licenses/MIT)
 [![GitHub star chart](https://img.shields.io/github/stars/Pocoyo7798/zs4procext?style=flat-square)](https://star-history.com/#Pocoyo7798/zs4procext)
 [![Open Issues](https://img.shields.io/github/issues-raw/Pocoyo7798/zs4procext?style=flat-square)](https://github.com/Pocoyo7798/zs4procext/issues)
 
