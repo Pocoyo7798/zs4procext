@@ -11,7 +11,7 @@
     "input_types": {},
     "output_parser": null,
     "partial_variables": {},
-    "template": "<|im_start|>user <image>*0\n{expertise}{initialization}{actions}{objective}{context}{answer_schema}{conclusion}<|im_end|>\n<|im_start|>assistant\n",
+    "template": "<|im_start|>user <image>\n{expertise}{initialization}{actions}{objective}{context}{answer_schema}{conclusion}<|im_end|>\n<|im_start|>assistant\n",
     "template_format": "f-string",
     "validate_template": true,
     "_type": "prompt"
