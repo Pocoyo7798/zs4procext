@@ -1,5 +1,5 @@
 # **zs4Procext**
-
+[![Open Issues](https://img.shields.io/github/issues-raw/langchain-ai/langchain?style=flat-square)]([https://github.com/langchain-ai/langchain/issues](https://github.com/Pocoyo7798/zs4procext/issues))
 TODO: include CI badges here.
 
 ## Instalation
