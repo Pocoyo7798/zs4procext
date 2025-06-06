@@ -2,6 +2,7 @@ import time
 from typing import List, Optional
 import torch
 import importlib_resources
+import os
 
 import click
 
@@ -59,6 +60,12 @@ def paragraph_classifier(
         / "resources"
         / "classify_multi_sample_schema.json"
     )
+    elif type == "material_preparation":
+        prompt_schema_path = str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "classify_material_preparation_schema.json"
+    )
     if prompt_structure_path is None:
         try:
             name = llm_model_name.split("/")[-1]
@@ -77,6 +84,8 @@ def paragraph_classifier(
         text_lines: List[str] = f.readlines()
     size = len(text_lines)
     count = 1
+    if os.path.isfile(output_file_path):
+        os.remove(output_file_path)
     for text in text_lines:
         print(f"text processed: {count}/{size}")
         results: str = str(

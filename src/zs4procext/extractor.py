@@ -6,6 +6,12 @@ import re
 import importlib_resources
 from pydantic import BaseModel, PrivateAttr, validator
 
+import numpy as np
+import torch
+from PIL import Image
+import click
+from transformers import AutoProcessor, Qwen2_5_VLForConditionalGeneration
+
 from zs4procext.actions import (
     ACTION_REGISTRY,
     AQUEOUS_REGISTRY,
@@ -82,6 +88,7 @@ class ActionExtractorFromText(BaseModel):
     llm_model_name: Optional[str] = None
     llm_model_parameters_path: Optional[str] = None
     elementar_actions: bool = False
+    post_processing: bool = True
     _action_prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
     _chemical_prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
     _wash_chemical_prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
@@ -777,7 +784,9 @@ class ActionExtractorFromText(BaseModel):
                 new_action = action.generate_action(context)
                 action_list.extend(new_action)
             i = i + 1
-        if self.actions_type == "pistachio":
+        if self.post_processing is False:
+            final_actions_list = action_list
+        elif self.actions_type == "pistachio":
             print(action_list)
             final_actions_list: List[Any] = ActionExtractorFromText.correct_pistachio_action_list(action_list)
             print(final_actions_list)
@@ -1112,7 +1121,7 @@ class TableExtractor(BaseModel):
         self._vlm_model.vllm_load_model()
 
     def extract_table_info(self, image_path: str):
-        prompt = self._prompt.format_prompt("<image>")
+        prompt = self._prompt.format_prompt("")
         print(prompt)
         output = self._vlm_model.run_image_single_prompt(prompt, image_path)
         print(output)
@@ -1125,7 +1134,7 @@ class ImageExtractor(BaseModel):
     vlm_model_parameters_path: Optional[str] = None
     _prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
     _vlm_model: Optional[ModelVLM] = PrivateAttr(default=None)
-    _image_parser: Optional[ImageParser] = PrivateAttr(default=None)  
+    _image_parser: Optional[ImageParser2] = PrivateAttr(default=None)  
 
     def model_post_init(self, __context: Any) -> None:
         if self.vlm_model_parameters_path is None:
@@ -1152,17 +1161,51 @@ class ImageExtractor(BaseModel):
             self._vlm_model = ModelVLM(model_name=self.vlm_model_name)
         self._vlm_model.load_model_parameters(vlm_param_path)
         self._vlm_model.vllm_load_model()
-        self._image_parser = ImageParser()
+        self._image_parser = ImageParser2()
 
-    def extract_image_info(self, image_path: str):
+    def extract_image_info(self, image_path: str, scale: float = 1.0):
         image_name = os.path.basename(image_path)
 
         prompt = self._prompt.format_prompt("<image>")
 
-        output = self._vlm_model.run_image_single_prompt(prompt, image_path)
+        output = self._vlm_model.run_image_single_prompt_rescale(prompt, image_path,scale = scale)
         print(f"Raw Model Output for {image_path}:\n{output}")
         
         self._image_parser.parse(output)
         parsed_output = self._image_parser.get_data_dict()
         print (parsed_output)
         return {image_name: parsed_output}
+
+
+class EmbeddingExtractor(BaseModel):
+    _device: str = PrivateAttr()
+    _model: Qwen2_5_VLForConditionalGeneration = PrivateAttr()
+    _processor: AutoProcessor = PrivateAttr()
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        model_id = "/projects/F202407080CPCAA1/Lea/models/Qwen2.5-VL-7B-Instruct"
+        self._device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        self._model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+            model_id,
+            attn_implementation="eager",
+            torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
+        )
+        self._model.to(self._device)
+        self._model.eval()
+
+        self._processor = AutoProcessor.from_pretrained(model_id)
+
+    def extract_embedding(self, image_path: str) -> np.ndarray:
+        img = Image.open(image_path).convert("RGB")
+        inputs = self._processor.image_processor(images=img, return_tensors="pt")
+        pixel_values = inputs["pixel_values"].to(self._device)
+        grid_thw = inputs["image_grid_thw"].to(self._device)
+
+        with torch.no_grad():
+            vision_outputs = self._model.visual(pixel_values, grid_thw)
+            visual_embeds = vision_outputs.squeeze(0).cpu()
+            pooled,_ = visual_embeds.max(dim=0)
+            normalized = pooled / pooled.norm(p=2)
+        return normalized.numpy()
