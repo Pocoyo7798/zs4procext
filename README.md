@@ -1,5 +1,5 @@
 # **zs4Procext**
-[![Open Issues](https://img.shields.io/github/issues-raw/langchain-ai/langchain?style=flat-square)](https://github.com/Pocoyo7798/zs4procext/issues)
+[![Open Issues](https://img.shields.io/github/issues-raw/Pocoyo7798/zs4procext?style=flat-square)](https://github.com/Pocoyo7798/zs4procext/issues)
 
 ## Instalation
 
