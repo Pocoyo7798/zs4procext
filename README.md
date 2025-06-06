@@ -8,6 +8,7 @@ zs4Procext is tool built to create and run LLM based extraction pipelines. It al
 
 ```bash
 conda create --name zs4procext python=3.10
+conda activate zs4procext
 git clone git@github.com:Pocoyo7798/zs4procext.git
 cd zs4procext
 pip install -e .
