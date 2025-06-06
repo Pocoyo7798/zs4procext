@@ -13,12 +13,7 @@ git clone git@github.com:Pocoyo7798/zs4procext.git
 cd zs4procext
 pip install -e .
 ```
-1. Clone the repository to your computer
-2. Open the repository in your terminal
-3. Create and activate a new conda enviroment
-4. run "pip install -e .[dev,vllm]"
-
-## Commands
+## Extraction Pipelines
 
 zs4procext-data-visual --help
 zs4procext-prompt-template-creator --help
