@@ -1206,6 +1206,6 @@ class EmbeddingExtractor(BaseModel):
         with torch.no_grad():
             vision_outputs = self._model.visual(pixel_values, grid_thw)
             visual_embeds = vision_outputs.squeeze(0).cpu()
-            pooled = visual_embeds.mean(dim=0)
+            pooled,_ = visual_embeds.max(dim=0)
             normalized = pooled / pooled.norm(p=2)
         return normalized.numpy()
