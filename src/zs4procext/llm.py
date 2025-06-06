@@ -138,23 +138,16 @@ class ModelVLM(BaseModel):
             break
         return final_response
 
-    def run_image_single_prompt_rescale(self, prompt: str, image_path: str, scale: float = 1.0, x: int= 1000, y: int =600) -> str:
+    def run_image_single_prompt_rescale(self, prompt: str, image_path: str, scale: float = 1.0) -> str:
         pil_image = Image.open(image_path)
         if scale < 1.0:
             new_size = (int(pil_image.width * scale), int(pil_image.height * scale))
             pil_image = pil_image.resize(new_size, Image.BILINEAR)
 
-        padded_image = Image.new("RGB", (x, y), color=(255, 255, 255))
-
-    
-        x_offset = (x - pil_image.width) // 2
-        y_offset = (y - pil_image.height) // 2
-        padded_image.paste(pil_image, (x_offset, y_offset))
-
         new_prompt: Dict[str, Any] = [
             {
                 "prompt": prompt,
-                "multi_modal_data": {"image": padded_image},
+                "multi_modal_data": {"image": pil_image},
             }
         ]
         outputs = self.model.generate(new_prompt)
