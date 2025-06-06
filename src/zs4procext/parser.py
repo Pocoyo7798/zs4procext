@@ -1330,3 +1330,48 @@ class ImageParser(BaseModel):
 
     def to_json(self):
         return json.dumps(self.data_dict, indent=4)
+
+
+
+class ImageParser2(BaseModel):
+    data_dict: Dict[str, Dict[str, list]] = Field(default_factory=dict)
+    data_string: str = ""
+
+    def __init__(self, data_string: Union[str, dict] = "", **data):
+        super().__init__(data_string=data_string, **data)
+        self._parse_input(data_string)
+
+    def _parse_input(self, input_data: Union[str, dict]):
+        if isinstance(input_data, dict):
+            self.data_dict = input_data
+        else:
+            try:
+                # Attempt to parse the input string as JSON
+                parsed_data = json.loads(input_data)
+                # If the JSON has a filename key, unwrap one level
+                if isinstance(parsed_data, dict) and len(parsed_data) == 1:
+                    only_key = next(iter(parsed_data))
+                    if isinstance(parsed_data[only_key], dict):
+                        parsed_data = parsed_data[only_key]
+                self.data_dict = parsed_data
+            except json.JSONDecodeError as e:
+                print(f"JSON parsing failed: {e}")
+                self.data_dict = {}
+
+    def get_data_dict(self):
+        return self.data_dict
+
+    def to_json(self):
+        return json.dumps(self.data_dict, indent=4)
+
+    def get_axis_labels(self):
+        """Extract x and y axis labels for each series."""
+        axis_labels = {}
+        for series, axes in self.data_dict.items():
+            keys = list(axes.keys())
+            if len(keys) >= 2:
+                axis_labels[series] = {
+                    "x_axis": keys[0],
+                    "y_axis": keys[1]
+                }
+        return axis_labels
