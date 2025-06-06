@@ -1,4 +1,4 @@
-# llm-for-zero-shot-procedure-extraction
+# **zs4Procext
 
 TODO: include CI badges here.
 
