@@ -3,7 +3,7 @@
 [![GitHub star chart](https://img.shields.io/github/stars/Pocoyo7798/zs4procext?style=flat-square)](https://star-history.com/#Pocoyo7798/zs4procext)
 [![Open Issues](https://img.shields.io/github/issues-raw/Pocoyo7798/zs4procext?style=flat-square)](https://github.com/Pocoyo7798/zs4procext/issues)
 
-zs4Procext is tool built to create and run LLM based extraction pipelines. It allows you to create loops of prompt - model response - parsing for a Q&A aproach for data extraction.
+zs4Procext is tool built to create and run LLM and VLM based extraction pipelines. It allows you to create loops of prompt - model response - parsing for a Q&A aproach for data extraction, accelariting multiple model comparison and model optimization.
 ## Getting Started
 
 ```bash
