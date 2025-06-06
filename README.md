@@ -1,10 +1,17 @@
-# **zs4Procext**
+# **zs4procext**
 [![PyPI - License](https://img.shields.io/pypi/l/langchain-core?style=flat-square)](https://opensource.org/licenses/MIT)
 [![GitHub star chart](https://img.shields.io/github/stars/Pocoyo7798/zs4procext?style=flat-square)](https://star-history.com/#Pocoyo7798/zs4procext)
 [![Open Issues](https://img.shields.io/github/issues-raw/Pocoyo7798/zs4procext?style=flat-square)](https://github.com/Pocoyo7798/zs4procext/issues)
 
-## Instalation
+zs4Procext is tool built to create and run LLM based extraction pipelines. It allows you to create loops of prompt - model response - parsing for a Q&A aproach for data extraction.
+## Getting Started
 
+```bash
+conda create --name zs4procext python=3.10
+git clone git@github.com:Pocoyo7798/zs4procext.git
+cd zs4procext
+pip install -e .
+```
 1. Clone the repository to your computer
 2. Open the repository in your terminal
 3. Create and activate a new conda enviroment
