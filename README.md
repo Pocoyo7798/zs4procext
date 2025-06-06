@@ -15,6 +15,10 @@ pip install -e .
 ```
 ## Extraction Pipelines
 
+Here is the list of extraction pipelines already created. If the extraction pipeline that you need is not here look at the next chapter to create one or contact us help you. For any pipeline to work there are 4 things you need to pass:
+
+### Paragraph Classification
+Paragraph classification consists in identifying as True or False if the paragraph is in a certain class. 
 zs4procext-data-visual --help
 zs4procext-prompt-template-creator --help
 zs4procext-text2actions --help
