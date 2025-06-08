@@ -1238,7 +1238,6 @@ MATERIALS_CHARACTERIZATION_REGISTRY: Dict[str, Any] = {
 EMPTY_VALUES_REGISTRY = set(["-", "-"])
 
 
-
 class ImageParser(BaseModel):
     data_dict: dict = Field(default_factory=dict)
     catalyst_label: str = ""
@@ -1346,9 +1345,7 @@ class ImageParser2(BaseModel):
             self.data_dict = input_data
         else:
             try:
-                # Attempt to parse the input string as JSON
                 parsed_data = json.loads(input_data)
-                # If the JSON has a filename key, unwrap one level
                 if isinstance(parsed_data, dict) and len(parsed_data) == 1:
                     only_key = next(iter(parsed_data))
                     if isinstance(parsed_data[only_key], dict):
@@ -1358,6 +1355,10 @@ class ImageParser2(BaseModel):
                 print(f"JSON parsing failed: {e}")
                 self.data_dict = {}
 
+    def parse(self, data_string: Union[str, dict]):
+        self._parse_input(data_string)
+        return self.get_data_dict()
+
     def get_data_dict(self):
         return self.data_dict
 
@@ -1365,7 +1366,6 @@ class ImageParser2(BaseModel):
         return json.dumps(self.data_dict, indent=4)
 
     def get_axis_labels(self):
-        """Extract x and y axis labels for each series."""
         axis_labels = {}
         for series, axes in self.data_dict.items():
             keys = list(axes.keys())

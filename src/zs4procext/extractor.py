@@ -61,7 +61,7 @@ from zs4procext.parser import (
     ActionsParser,
     ComplexParametersParser,
     EquationFinder,
-    ImageParser,
+    ImageParser2,
     KeywordSearching,
     ListParametersParser,
     MolarRatioFinder,
