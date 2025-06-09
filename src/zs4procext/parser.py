@@ -1331,6 +1331,27 @@ class ImageParser(BaseModel):
         return json.dumps(self.data_dict, indent=4)
 
 
+subscript_map = {
+    '₀': '0', '₁': '1', '₂': '2', '₃': '3', '₄': '4',
+    '₅': '5', '₆': '6', '₇': '7', '₈': '8', '₉': '9',
+    'ₐ': 'A', 'ₑ': 'E', 'ₕ': 'H', 'ᵢ': 'I', 'ⱼ': 'J',
+    'ₖ': 'K', 'ₗ': 'L', 'ₘ': 'M', 'ₙ': 'N', 'ₒ': 'O',
+    'ₚ': 'P', 'ᵣ': 'R', 'ₛ': 'S', 'ₜ': 'T', 'ᵤ': 'U',
+    'ᵥ': 'V', 'ₓ': 'X'
+}
+
+superscript_map = {
+    '⁰': '0', '¹': '1', '²': '2', '³': '3', '⁴': '4',
+    '⁵': '5', '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9',
+    '⁺': '+', '⁻': '-', '⁼': '=', '⁽': '(', '⁾': ')',
+    'ⁿ': 'N', 'ᵃ': 'A', 'ᵇ': 'B', 'ᶜ': 'C', 'ᵈ': 'D',
+    'ᵉ': 'E', 'ᶠ': 'F', 'ᵍ': 'G', 'ʰ': 'H', 'ᶦ': 'I',
+    'ʲ': 'J', 'ᵏ': 'K', 'ˡ': 'L', 'ᵐ': 'M', 'ⁱ': 'I',
+    'ᵒ': 'O', 'ᵖ': 'P', 'ʳ': 'R', 'ˢ': 'S', 'ᵗ': 'T',
+    'ᵘ': 'U', 'ᵛ': 'V', 'ʷ': 'W', 'ˣ': 'X', 'ʸ': 'Y',
+    'ᶻ': 'Z'
+}
+
 class ImageParser2(BaseModel):
     data_dict: Dict[str, Dict[str, list]] = Field(default_factory=dict)
     data_string: str = ""
@@ -1341,50 +1362,100 @@ class ImageParser2(BaseModel):
 
     def _parse_input(self, input_data: Union[str, dict]):
         if isinstance(input_data, dict):
+            input_data = self._convert_na_to_null(input_data)
+            input_data = self._clean_keys(input_data)
             self.data_dict = self._filter_na_points(input_data)
         else:
             try:
                 input_data = input_data.strip()
 
-                # Remove Markdown-style code fences like ```json ... ```
                 if input_data.startswith("```json") and input_data.endswith("```"):
                     input_data = input_data[7:-3].strip()
                 elif input_data.startswith("```") and input_data.endswith("```"):
                     input_data = input_data[3:-3].strip()
 
-                # Parse JSON
+                input_data = re.sub(r'"\{\}"', '""', input_data)
+                input_data = re.sub(r'\\u208', '', input_data) 
+                input_data = re.sub(r'\\u00b', '', input_data)
+
+                input_data = re.sub(
+                    r'(?<=[:\[,])\s*(?:"N/A"|N/A|NA|NaN|nan|na)\s*(?=[,\]\}])',
+                    ' null',
+                    input_data,
+                    flags=re.IGNORECASE
+                )
+
                 parsed_data = json.loads(input_data)
 
-                # Unwrap top-level filename key if exists
                 if isinstance(parsed_data, dict) and len(parsed_data) == 1:
                     only_key = next(iter(parsed_data))
                     if isinstance(parsed_data[only_key], dict):
                         parsed_data = parsed_data[only_key]
 
+                parsed_data = self._convert_na_to_null(parsed_data)
+                parsed_data = self._clean_keys(parsed_data)
                 self.data_dict = self._filter_na_points(parsed_data)
 
             except json.JSONDecodeError as e:
-                print(f"JSON parsing failed: {e}")
+                print(f"JSON parsing failed: {e}\nInput was:\n{input_data}")
                 self.data_dict = {}
+
+    def _convert_na_to_null(self, data: Dict) -> Dict:
+        def convert(value):
+            if isinstance(value, str) and value.strip().lower() in {"n/a", "na", "nan"}:
+                return None
+            return value
+
+        converted = {}
+        for key, subdict in data.items():
+            if isinstance(subdict, dict):
+                converted_sub = {
+                    k: [convert(v) for v in vals] if isinstance(vals, list) else vals
+                    for k, vals in subdict.items()
+                }
+                converted[key] = converted_sub
+            else:
+                converted[key] = subdict
+        return converted
+
+    def _normalize_sub_super_scripts(self, text: str) -> str:
+        return ''.join(
+            subscript_map.get(char, superscript_map.get(char, char)) for char in text
+        )
+
+    def _clean_keys(self, data: Dict) -> Dict:
+        def clean_key(k: str) -> str:
+            k = self._normalize_sub_super_scripts(k)
+            k = re.sub(r'\{_?(\d+)\}', r'\1', k)
+            k = re.sub(r'\{.*?\}', '', k)
+            return k.replace("_", "").strip()
+
+        cleaned = {}
+        for key, value in data.items():
+            new_key = clean_key(key)
+            if isinstance(value, dict):
+                cleaned[new_key] = self._clean_keys(value)
+            else:
+                cleaned[new_key] = value
+        return cleaned
 
     def _filter_na_points(self, data: Dict[str, Dict[str, list]]) -> Dict[str, Dict[str, list]]:
         filtered = {}
         for series_name, axes in data.items():
             keys = list(axes.keys())
             if len(keys) < 2:
-                continue  # skip if not enough axes
+                continue
 
             x_key, y_key = keys[0], keys[1]
             x_vals = axes[x_key]
             y_vals = axes[y_key]
 
             if len(x_vals) != len(y_vals):
-                continue  # malformed data, skip
+                continue
 
-            x_filtered = []
-            y_filtered = []
+            x_filtered, y_filtered = [], []
             for x, y in zip(x_vals, y_vals):
-                if x != "N/A" and y != "N/A":
+                if x is not None and y is not None:
                     x_filtered.append(x)
                     y_filtered.append(y)
 
@@ -1415,4 +1486,3 @@ class ImageParser2(BaseModel):
                     "y_axis": keys[1]
                 }
         return axis_labels
-
