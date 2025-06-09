@@ -1331,7 +1331,6 @@ class ImageParser(BaseModel):
         return json.dumps(self.data_dict, indent=4)
 
 
-
 class ImageParser2(BaseModel):
     data_dict: Dict[str, Dict[str, list]] = Field(default_factory=dict)
     data_string: str = ""
@@ -1342,28 +1341,60 @@ class ImageParser2(BaseModel):
 
     def _parse_input(self, input_data: Union[str, dict]):
         if isinstance(input_data, dict):
-            self.data_dict = input_data
+            self.data_dict = self._filter_na_points(input_data)
         else:
             try:
-                # Remove Markdown-style code fences if present
                 input_data = input_data.strip()
+
+                # Remove Markdown-style code fences like ```json ... ```
                 if input_data.startswith("```json") and input_data.endswith("```"):
                     input_data = input_data[7:-3].strip()
                 elif input_data.startswith("```") and input_data.endswith("```"):
                     input_data = input_data[3:-3].strip()
 
+                # Parse JSON
                 parsed_data = json.loads(input_data)
 
-                # If the JSON has a filename key, unwrap one level
+                # Unwrap top-level filename key if exists
                 if isinstance(parsed_data, dict) and len(parsed_data) == 1:
                     only_key = next(iter(parsed_data))
                     if isinstance(parsed_data[only_key], dict):
                         parsed_data = parsed_data[only_key]
 
-                self.data_dict = parsed_data
+                self.data_dict = self._filter_na_points(parsed_data)
+
             except json.JSONDecodeError as e:
                 print(f"JSON parsing failed: {e}")
                 self.data_dict = {}
+
+    def _filter_na_points(self, data: Dict[str, Dict[str, list]]) -> Dict[str, Dict[str, list]]:
+        filtered = {}
+        for series_name, axes in data.items():
+            keys = list(axes.keys())
+            if len(keys) < 2:
+                continue  # skip if not enough axes
+
+            x_key, y_key = keys[0], keys[1]
+            x_vals = axes[x_key]
+            y_vals = axes[y_key]
+
+            if len(x_vals) != len(y_vals):
+                continue  # malformed data, skip
+
+            x_filtered = []
+            y_filtered = []
+            for x, y in zip(x_vals, y_vals):
+                if x != "N/A" and y != "N/A":
+                    x_filtered.append(x)
+                    y_filtered.append(y)
+
+            filtered[series_name] = {
+                x_key: x_filtered,
+                y_key: y_filtered
+            }
+
+        return filtered
+
     def parse(self, data_string: Union[str, dict]):
         self._parse_input(data_string)
         return self.get_data_dict()
@@ -1384,3 +1415,4 @@ class ImageParser2(BaseModel):
                     "y_axis": keys[1]
                 }
         return axis_labels
+
