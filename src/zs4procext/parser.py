@@ -1340,29 +1340,30 @@ class ImageParser2(BaseModel):
         super().__init__(data_string=data_string, **data)
         self._parse_input(data_string)
 
-def _parse_input(self, input_data: Union[str, dict]):
-    if isinstance(input_data, dict):
-        self.data_dict = input_data
-    else:
-        try:
-            # Remove Markdown-style code fences if present
-            input_data = input_data.strip()
-            if input_data.startswith("```json") and input_data.endswith("```"):
-                input_data = input_data[7:-3].strip()
-                
-            parsed_data = json.loads(input_data)
+    def _parse_input(self, input_data: Union[str, dict]):
+        if isinstance(input_data, dict):
+            self.data_dict = input_data
+        else:
+            try:
+                # Remove Markdown-style code fences if present
+                input_data = input_data.strip()
+                if input_data.startswith("```json") and input_data.endswith("```"):
+                    input_data = input_data[7:-3].strip()
+                elif input_data.startswith("```") and input_data.endswith("```"):
+                    input_data = input_data[3:-3].strip()
 
-            # If the JSON has a filename key, unwrap one level
-            if isinstance(parsed_data, dict) and len(parsed_data) == 1:
-                only_key = next(iter(parsed_data))
-                if isinstance(parsed_data[only_key], dict):
-                    parsed_data = parsed_data[only_key]
+                parsed_data = json.loads(input_data)
 
-            self.data_dict = parsed_data
-        except json.JSONDecodeError as e:
-            print(f"JSON parsing failed: {e}")
-            self.data_dict = {}
+                # If the JSON has a filename key, unwrap one level
+                if isinstance(parsed_data, dict) and len(parsed_data) == 1:
+                    only_key = next(iter(parsed_data))
+                    if isinstance(parsed_data[only_key], dict):
+                        parsed_data = parsed_data[only_key]
 
+                self.data_dict = parsed_data
+            except json.JSONDecodeError as e:
+                print(f"JSON parsing failed: {e}")
+                self.data_dict = {}
     def parse(self, data_string: Union[str, dict]):
         self._parse_input(data_string)
         return self.get_data_dict()
