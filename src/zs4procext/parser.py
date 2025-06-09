@@ -1369,13 +1369,13 @@ class ImageParser2(BaseModel):
             try:
                 input_data = input_data.strip()
 
-                if input_data.startswith("```json") and input_data.endswith("```"):
-                    input_data = input_data[7:-3].strip()
-                elif input_data.startswith("```") and input_data.endswith("```"):
-                    input_data = input_data[3:-3].strip()
+                # Extract content inside triple backticks
+                matches = re.findall(r"```(?:json)?(.*?)```", input_data, re.DOTALL)
+                if matches:
+                    input_data = matches[0].strip()
 
                 input_data = re.sub(r'"\{\}"', '""', input_data)
-                input_data = re.sub(r'\\u208', '', input_data) 
+                input_data = re.sub(r'\\u208', '', input_data)
                 input_data = re.sub(r'\\u00b', '', input_data)
 
                 input_data = re.sub(
@@ -1425,10 +1425,14 @@ class ImageParser2(BaseModel):
 
     def _clean_keys(self, data: Dict) -> Dict:
         def clean_key(k: str) -> str:
+
+            k = re.sub(r'\{_?([^{}]+)\}', r'\1', k)
+
             k = self._normalize_sub_super_scripts(k)
-            k = re.sub(r'\{_?(\d+)\}', r'\1', k)
-            k = re.sub(r'\{.*?\}', '', k)
-            return k.replace("_", "").strip()
+
+            k = k.replace("_", "").strip()
+
+            return k
 
         cleaned = {}
         for key, value in data.items():
