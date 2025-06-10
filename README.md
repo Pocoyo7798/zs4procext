@@ -95,3 +95,26 @@ final_prompt = prompt.format_prompt(text)
 response = llm_model.run_single_prompt(prompt).strip()
 print(response)
 ```
+With this is loaded the prompt structure and the model parameters. With this setup you can obtain the model response for multiple paragaphs as well if you need to apply it in large scale. After this the model response should be something like this:
+
+```diff
+"For the alkaline treatment 1 g of zeolite was treated with 100 mL 0.2 mol. L-1 NaOH at 338 K"
+```
+
+Now the alkaline tratment tempereture value is isolated from other temperatures, however other conditions are also present. To solve it we will use a parameters parser to identify only the temperature and convert it to degrees celsius:
+
+```python
+aaaa
+```
+
+With this we obtain the temperature in degree celsius:
+
+```diff
+"64.85 ªC"
+```
+
+Obviously different extraction pipelines will require different parser or a combiantion of them. Hence here it is a table containing all the parser available right and a description on how to use them:
+
+| Parser    | Description |
+| -------- | ------- |
+| ParametersParser  | $250    |
