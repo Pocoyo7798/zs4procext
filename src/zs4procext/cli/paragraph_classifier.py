@@ -6,7 +6,7 @@ import os
 
 import click
 
-from zs4procext.classifier import ParagraphClassifier
+from zs4procext.extractor import ParagraphClassifier
 from zs4procext.prompt import TEMPLATE_REGISTRY
 
 @click.command()

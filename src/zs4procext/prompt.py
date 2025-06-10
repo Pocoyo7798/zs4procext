@@ -12,56 +12,56 @@ class PromptFormatter(BaseModel):
     expertise: str = ""
     initialization: str = ""
     objective: str = "No specific objective, just chatting..."
-    actions: Dict[str, str] = {}
+    definitions: Dict[str, str] = {}
     answer_schema: Dict[str, str] = {}
     conclusion: str = ""
     _loaded_prompt: Optional[BasePromptTemplate] = PrivateAttr(default=None)
-    _action_sperators: Optional[List[str]] = PrivateAttr(default=None)
+    _definition_sperators: Optional[List[str]] = PrivateAttr(default=None)
     _answer_schema: Optional[str] = PrivateAttr(default=None)
-    _action_list: Optional[str] = PrivateAttr(default=[None])
+    _definition_list: Optional[str] = PrivateAttr(default=[None])
 
-    def actions_to_string(
-        self, action_intialization_key: str = "Initialization"
+    def definitions_to_string(
+        self, definition_intialization_key: str = "Initialization"
     ) -> str:
-        """Generate a formatted action list
+        """Generate a formatted definition list
 
         Args:
-            action_intialization_key: Key of the intialization text. Defaults to "Initialization".
+            definition_intialization_key: Key of the intialization text. Defaults to "Initialization".
 
         Raises:
-            Warning: If the action_initializatio_key does not exist in the action dictionary
+            Warning: If the definition_initializatio_key does not exist in the definition dictionary
 
         Returns:
-            a formatted action list
+            a formatted definition list
         """
-        if self.actions == {}:
+        if self.definitions == {}:
             return ""
-        self._action_separators: List[str] = [
-            action_key
-            for action_key in self.actions.keys()
-            if action_intialization_key not in action_key
+        self._definition_separators: List[str] = [
+            definition_key
+            for definition_key in self.definitions.keys()
+            if definition_intialization_key not in definition_key
         ]
-        actions: List[str] = []
-        if action_intialization_key not in self.actions:
+        definitions: List[str] = []
+        if definition_intialization_key not in self.definitions:
             (
-                "Warning: The actions were provided without a valid action_initializatio_key"
+                "Warning: The definitions were provided without a valid definition_initializatio_key"
             )
         else:
-            actions.append(f"{self.actions[action_intialization_key]}\n")
-        for action in self._action_separators:
-            actions.append(f"-'{action}' : {self.actions[action]}\n")
-        return "".join(actions)
+            definitions.append(f"{self.definitions[definition_intialization_key]}\n")
+        for definition in self._definition_separators:
+            definitions.append(f"-'{definition}' : {self.definitions[definition]}\n")
+        return "".join(definitions)
 
     def answer_schema_to_string(
-        self, action_intialization_key: str = "Initialization"
+        self, definition_intialization_key: str = "Initialization"
     ) -> str:
         """Generate a formatted answer schema
 
         Args:
-            action_intialization_key: Key of the intialization text. Defaults to "Initialization".
+            definition_intialization_key: Key of the intialization text. Defaults to "Initialization".
 
         Raises:
-            Warning: If the action_initializatio_key does not exist in the action dictionary
+            Warning: If the definition_initializatio_key does not exist in the definition dictionary
 
         Returns:
             a formatted answer schema
@@ -71,16 +71,16 @@ class PromptFormatter(BaseModel):
         schema_list: List[str] = [
             schema_key
             for schema_key in self.answer_schema.keys()
-            if action_intialization_key not in schema_key
+            if definition_intialization_key not in schema_key
         ]
         answer_schema_list: List[str] = []
-        if action_intialization_key not in self.answer_schema:
+        if definition_intialization_key not in self.answer_schema:
             (
-                "Warning: The answer schema was provided without a valid action_initialization_key"
+                "Warning: The answer schema was provided without a valid definition_initialization_key"
             )
         else:
             answer_schema_list.append(
-                f"{self.answer_schema[action_intialization_key]}\n"
+                f"{self.answer_schema[definition_intialization_key]}\n"
             )
         for schema in schema_list:
             answer_schema_list.append(f"{self.answer_schema[schema]}\n")
@@ -91,15 +91,15 @@ class PromptFormatter(BaseModel):
             __context = str(
                 importlib_resources.files("zs4procext")
                 / "resources"
-                / "organic_synthesis_actions_last_template.json"
+                / "organic_synthesis_definitions_last_template.json"
             )
             loaded_prompt = load_prompt(__context)
             self._loaded_prompt = loaded_prompt
         else:
             loaded_prompt = load_prompt(__context)
             self._loaded_prompt = loaded_prompt
-        action_list = self.actions_to_string()
-        self._action_list = action_list
+        definition_list = self.definitions_to_string()
+        self._definition_list = definition_list
         answer_schema = self.answer_schema_to_string()
         self._answer_schema = answer_schema
         if self.expertise != "":
@@ -131,7 +131,7 @@ class PromptFormatter(BaseModel):
             initialization=self.initialization,
             objective=self.objective,
             context=f"{context}\n",
-            actions=self._action_list,
+            definitions=self._definition_list,
             answer_schema=self._answer_schema,
             conclusion=self.conclusion,
         )

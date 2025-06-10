@@ -4,14 +4,14 @@
         "initialization",
         "objective",
         "context",
-        "actions",
+        "definitions",
         "answer_schema",
         "conclusion"
     ],
     "input_types": {},
     "output_parser": null,
     "partial_variables": {},
-    "template": "{expertise}{initialization}Q: {objective}{context}{answer_schema}{actions}{conclusion}\nA:",
+    "template": "{expertise}{initialization}Q: {objective}{context}{answer_schema}{definitions}{conclusion}\nA:",
     "template_format": "f-string",
     "validate_template": true,
     "_type": "prompt"

@@ -2,7 +2,7 @@
   "expertise": "You are an expert data scientist specializing in catalysis research, with extensive knowledge of graph interpretation and data extraction techniques.",
   "initialization": "",
   "objective": "Extract structured data from catalytic graphs.",
-  "actions": {
+  "definitions": {
     "description": "Each marker in the graph represents a data point. Ensure all visible data points are counted and included.\n If any points are ambiguous, occluded, or unclear, mark their values as 'N/A'.\n Do not alter or simplify any axis or series labels — copy them exactly as written in the image or figure."
   },
   "answer_schema": {
