@@ -74,8 +74,5 @@ You can also find the reference files in [here](src/zs4procext/resources/dataset
 ## **Creating New Pipelines**
 
 The zs4procext tool comes with a bunch of parsers based on regex for you to create your own extraction tool. In this part we will give you an example on how create one. So, imagine that you want to create a tool to identify the desilication temperature used in the following procedure:
-<span style="color: orange;">'The alkaline treatment process was carried out using a 0.2 mol.
-L-1 NaOH solution and two forms of heating: conventional electric
-and microwave. In all experiments, 1 g of ZSM-5 zeolite, 100 mL of
-solution and heating at 338 K under reflux system were used. The
-duration of the process was limited to 30 and 10 min for conventional electric and microwave (500 W) heating’s, respectively.'</span>
+
+<span style="color: orange;">'The alkaline treatment process was carried out using a 0.2 mol. L-1 NaOH solution and two forms of heating: conventional electric and microwave. In all experiments, 1 g of ZSM-5 zeolite, 100 mL of solution and heating at 338 K under reflux system were used. The duration of the process was limited to 30 and 10 min for conventional electric and microwave (500 W) heating’s, respectively.'</span>
