@@ -22,7 +22,7 @@ In this repository you have multiple extraction pipelines available. Every pipel
 --prompt_template_path
 --prompt_schema_path
 ```
-Right now we support any hugginface model supported by the [vllm](https://docs.vllm.ai/en/v0.7.0/models/supported_models.html) python library. You can define the model you want to run by passing the model name on huggingface or the model folder on your computer on the ```--llm_model_name``` argument. The improve the performance of any pre-trained model you can rely on two things. First you can set the model parameters as temperature and top p passing a file containing the parameters such a [this one](src/zs4procext/resources/vllm_default_params.json) on the ```--llm_model_parameters_path``` argument. The performance of a model is also improved by passing the correct prompt template file. Multiple models already have the correct prompt template associated with their name. You can find the list [here](src/zs4procext/prompt.py) under the ```TEMPLATE_REGISTRY```. If you want to use custom template, download this file, change the content of the "template" key, based on what your need and then pass the new prompt template path on the ```--prompt_template_path``` argument.  Finnaly the prompt is defined on a schema file that can be passed on the ```--prompt_template_path```. The prompt is divided in 6 parts:
+Right now we support any hugginface model supported by the [vllm](https://docs.vllm.ai/en/v0.7.0/models/supported_models.html) python library. You can define the model you want to run by passing the model name on huggingface or the model folder on your computer on the ```--llm_model_name``` argument. The improve the performance of any pre-trained model you can rely on two things. First you can set the model parameters as temperature and top p passing a file containing the parameters such a [this one](src/zs4procext/resources/vllm_default_params.json) on the ```--llm_model_parameters_path``` argument. The performance of a model is also improved by passing the correct prompt template file. Multiple models already have the correct prompt template associated with their name. You can find the list [here](src/zs4procext/prompt.py) under the ```TEMPLATE_REGISTRY```. If you want to use custom template, download this file, change the content of the "template" key, based on what your need and then pass the new prompt template path on the ```--prompt_template_path``` argument.  Finnaly the prompt is defined on a schema file that can be passed on the ```--prompt_schema_path```. The prompt is divided in 6 parts:
 
 * **Expertise**: Define the closest field related to your problem.
 * **Initialization**: Give general tips for the LLM answer.
@@ -39,9 +39,43 @@ You can find multiple explamples of prompt schemas [here](src/zs4procext/resourc
 ### Paragraph Classification
 Paragraph classification consists in identifying as True or False if the paragraph is in a certain class. For example you can use it to paragraphas cotnaining experimental procedures from other paragraphs. You can run it in the following way:
 ```bash
-zs4procext-paragraph_classifier --type "n2_physisorption" --llm_model_name meta-llama/Meta-Llama-3.1-8B-Instruct --llm_model_parameters_path model_params/vllm_vision_sampling_t_0_mxt_50.json pathe_to_paragraphs.txt path_to_results.txt
+zs4procext-paragraph_classifier --type "n2_physisorption" pathe_to_paragraphs.txt path_to_results.txt
 ```
-zs4procext-data-visual --help
-zs4procext-prompt-template-creator --help
-zs4procext-text2actions --help
-zs4procext-eval_actions --help
+The input should be a .txt file containing a different paragraph in each line, while the output is also a .txt file with True or False in each line. Right now there are 3 options for the ```--type``` argument implemented: 'n2_physisorption' to identify nitrogen physorption experimental procedures paragraphs, 'ftir_pyridine' to identity FTIR spectroscopy with adsorbed pyridine experimental procedures pragraphs and 'desilication_dealumination' to identify desilication and dealumination experiemetanl procedures paragraphs. You can run it for other by passing a new prompt on the ```--prompt_schema_path``` argument. You can find a example of a clssifying prompt [here](src/zs4procext/resources/classify_n2_physisorption_schema.json)
+### Action Extraction
+Action Extraction consists in extracting a sequence of experimental actions that describe the procedure present in the paragraph. To apply run the following line:
+```bash
+zs4procext-text2actions --actions_type materials  pathe_to_paragraphs.txt path_to_results.txt
+```
+The input should be a .txt file containing a different paragraph in each line, while the output is also a .txt with a list of actions as python dictionaries. Right now you have 4 options for the ```--actions_type```: 'organic' that uses the the action set defined [here](https://www.nature.com/articles/s41467-020-17266-6), 'pistachio' that uses the same action set from organic with small changes to adapt to the [pistachio dataset](https://www.nextmovesoftware.com/pistachio.html), sac that uses the action set defined [here](https://www.nature.com/articles/s41467-023-43836-5) and "materials" that uses the action set defined [here](https://research.ibm.com/publications/catalysts-synthesis-procedures-extraction-from-synthesis-paragraphs-using-large-language-models). An example of a action extraction prompt is available [here](src/zs4procext/resources/material_synthesis_actions_schema.json). Note that if you want to not use any post processing for your model response you need to set the ```--actions_type``` argument to ```None```, otherwise the post processing of that field will be aplied on the model response. If you want to run the pipeline on a subset of the existing action sets you just need to remove the action that you do not want from the prompt. To augment an existing action set you need to add the new action at the respective action registry [here](src/zs4procext/actions.py). To create a complete new action set you can contact us for further colaborations.
+
+###Sample Finder
+The extraction pipeline is Work in Progress
+
+###Table Extraction
+Table extraction consists in extracting data from samples or experiments present in tables. For example, for a table containing characterization data all the characterized properties will be extract for each sample, with the names standardized. You can run it using the following line.
+```bash
+zs4procext-table2data --type catalyst_characterization  image_folder_path path_to_results.txt
+```
+The input should be a folder containing the table images, while the output is a .txt files containing a list of dictionaries containing the info associated to each samples/experiment. Right now, only one option for ```--type``` argument, that is used to extract data from tables containing characterization data from heteregeneous catalysts. To apply it to other kind of tables, you just need to pass a .json file containing the a new table schema on ```--table_schema_path``` argument. The schema should have a structure like [this](src/zs4procext/randomization.py), where for each type of data you want to extract you need to identify the possible keywords and units associated with it.
+
+###Graphic Extraction
+
+## **Model and Settings Evaluation**
+
+There could be the case that you have a new model or a setting combination that could improve an existing. For this, we have an evaluator for each pipleine to speed up LLM screning and parameter optimization. You can already find multiple model paremeter files [here](src/zs4procext/resources/model_parameters). To do the evaluation you should run the extraction pipeline with the new settings on a reference dataset available [here](src/zs4procext/resources/datasets). Then the following evaluator are availble:
+```bash
+zs4procext-eval_classifier path_to_reference_file path_to_results_file path_to_evaluation_file.xlxs
+zs4procext-eval_actions path_to_reference_file path_to_results_file path_to_evaluation_file.xlxs
+zs4procext-eval_graphs path_to_reference_file path_to_results_file path_to_evaluation_file.xlxs
+```
+You can also find the reference files in [here](src/zs4procext/resources/datasets). Note that each evaluator as a set of paremeters pre defined. If you want to change them run the ```--help``` argument to verify what are the paraemeters available for you to tune.
+
+## **Creating New Pipelines**
+
+The zs4procext tool comes with a bunch of parsers based on regex for you to create your own extraction tool. In this part we will give you an example on how create one. So, imagine that you want to create a tool to identify the desilication temperature used in the following procedure:
+<span style="color: orange;">'The alkaline treatment process was carried out using a 0.2 mol.
+L-1 NaOH solution and two forms of heating: conventional electric
+and microwave. In all experiments, 1 g of ZSM-5 zeolite, 100 mL of
+solution and heating at 338 K under reflux system were used. The
+duration of the process was limited to 30 and 10 min for conventional electric and microwave (500 W) heating’s, respectively.'</span>
