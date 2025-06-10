@@ -73,9 +73,25 @@ You can also find the reference files in [here](src/zs4procext/resources/dataset
 
 ## **Creating New Pipelines**
 
-The zs4procext tool comes with a bunch of parsers based on regex for you to create your own extraction tool. In this part we will give you an example on how create one. So, imagine that you want to create a tool to identify the desilication temperature used in the following procedure:
+The zs4procext tool comes with a bunch of parsers based on regex for you to create your own extraction tool. In this part we will give you an example on how create one. Note all the files used in the example are [here](put_link_here.com) So, imagine that you want to create a tool to identify the alkaline treatment temperature used in the following procedure:
 
 ```diff
 "The alkaline treatment process was carried out using a 0.2 mol. L-1 NaOH solution on a parent zeolite calined at 673.15 K. In all experiments, 1 g of ZSM-5 zeolite, 100 mL of solution and heating at 338 K under reflux system were used. The duration of the process was limited to 30 and 10 min for conventional electric and microwave (500 W) heating’s, respectively."
 ```
+As you can see even if you look at text you can see that two temeperatures are given. So how can you extract only the alkaline treatment temperature? Lets use LLMs to helps. First we are going to ask to the LLMs to give us the alkaline treatment temperature:
 
+```python
+from zs4procext.prompt import PromptFormatter
+from zs4procext.llm import ModelLLM
+
+with open("prompt_schema.json", "r") as f:
+            prompt_dict = json.load(f)
+prompt = PromptFormatter(**prompt_dict)
+prompt.model_post_init("phi_mini_4k_template.json")
+llm_model = ModelLLM("microsoft/Phi-3-mini-4k-instruct")
+llm_model.load_model_parameters("model_parameters.json")
+llm_model.vllm_load_model()
+final_prompt = prompt.format_prompt(text)
+response = llm_model.run_single_prompt(prompt).strip()
+print(response)
+```
