@@ -18,11 +18,11 @@ pip install -e .
 Here is the list of extraction pipelines already created. If the extraction pipeline that you need is not here look at the next chapter to create one or contact us help you. For any pipeline to work there are 4 things you need to pass:
 ```bash
 --llm_model_name
---prompt_structure_path
 --llm_model_parameters_path
+--prompt_template_path
 --prompt_schema_path
 ```
-Right now we support any hugginface model supported by the vllm python library. You can define the model you want to run by passing the model name on huggingface or the model folder on your computer on teh ```bash --llm_model_name```. 
+Right now we support any hugginface model supported by the [vllm](https://docs.vllm.ai/en/v0.7.0/models/supported_models.html) python library. You can define the model you want to run by passing the model name on huggingface or the model folder on your computer on the ```--llm_model_name``` argument. The improve the performance of any pre-trained model you can rely on two things. First you can set the model parameters as temperature and top p passing a file containing the parameters such a [this one](src/zs4procext/resources/material_synthesis_actions_schema.json) on the ```--llm_model_parameters_path``` argument. Other thing you can do is 
 ### Paragraph Classification
 Paragraph classification consists in identifying as True or False if the paragraph is in a certain class. 
 zs4procext-data-visual --help
