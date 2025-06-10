@@ -4,7 +4,7 @@
 [![Open Issues](https://img.shields.io/github/issues-raw/Pocoyo7798/zs4procext?style=flat-square)](https://github.com/Pocoyo7798/zs4procext/issues)
 
 zs4Procext is tool built to create and run LLM and VLM based extraction pipelines. It allows you to create loops of prompt - model response - parsing for a Q&A aproach for data extraction, accelariting multiple model comparison and model optimization.
-## Getting Started
+## **Getting Started**
 
 ```bash
 conda create --name zs4procext python=3.10
@@ -13,9 +13,9 @@ git clone git@github.com:Pocoyo7798/zs4procext.git
 cd zs4procext
 pip install -e .
 ```
-## Extraction Pipelines
+## **Extraction Pipelines**
 
-Here is the list of extraction pipelines already created. If the extraction pipeline that you need is not here look at the next chapter to create one or contact us help you. For any pipeline to work there are 4 things you need to pass:
+In this repository you have multiple extraction pipelines available. Every pipeline comes with pre-defined models, model parameters, model template and prompts. Hence you just pass the requirement to run each extraction command. In the case that you want to test different combinations for an existing extraction pipeline we can play with this 4 different arguments:
 ```bash
 --llm_model_name
 --llm_model_parameters_path
@@ -34,9 +34,13 @@ Right now we support any hugginface model supported by the [vllm](https://docs.v
   * **Initialization**:Indicate the part of the response that should follow the format and describe it.
   * **Format**:Give an example of the format.
 * **Conclusion**: End your prompt giving the last details and take the opportunity to be kind.
-  
+
+You can find multiple explamples of prompt schemas [here](src/zs4procext/resources). Now lets look at all the pipelines you have available now!
 ### Paragraph Classification
-Paragraph classification consists in identifying as True or False if the paragraph is in a certain class. 
+Paragraph classification consists in identifying as True or False if the paragraph is in a certain class. For example you can use it to paragraphas cotnaining experimental procedures from other paragraphs. You can run it in the following way:
+```bash
+zs4procext-paragraph_classifier --type "n2_physisorption" --llm_model_name meta-llama/Meta-Llama-3.1-8B-Instruct --llm_model_parameters_path model_params/vllm_vision_sampling_t_0_mxt_50.json pathe_to_paragraphs.txt path_to_results.txt
+```
 zs4procext-data-visual --help
 zs4procext-prompt-template-creator --help
 zs4procext-text2actions --help
