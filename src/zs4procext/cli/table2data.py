@@ -35,6 +35,11 @@ from zs4procext.prompt import TEMPLATE_REGISTRY
     default=None,
     help="Parameters of the LLM used to process the tables",
 )
+@click.option(
+    "--table_schema_path",
+    default=None,
+    help="Parameters of the LLM used to process the tables",
+)
 def table2data(
     image_folder: str,
     output_file_path: str,
@@ -43,6 +48,7 @@ def table2data(
     prompt_schema_path: Optional[str],
     llm_model_name: str,
     llm_model_parameters_path: Optional[str],
+    table_schema_path: Optional[str]
 ):
     start_time = time.time()
     if prompt_template_path is None:
