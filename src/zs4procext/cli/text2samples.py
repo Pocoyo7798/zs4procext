@@ -12,7 +12,7 @@ from zs4procext.prompt import TEMPLATE_REGISTRY
 @click.argument("text_file_path", type=str)
 @click.argument("output_file_path", type=str)
 @click.option(
-    "--prompt_structure_path",
+    "--prompt_template_path",
     default=None,
     help="Path to the file containing the structure of the prompt",
 )
@@ -34,21 +34,21 @@ from zs4procext.prompt import TEMPLATE_REGISTRY
 def text2samples(
     text_file_path: str,
     output_file_path: str,
-    prompt_structure_path: Optional[str],
+    prompt_template_path: Optional[str],
     prompt_schema_path: Optional[str],
     llm_model_name: str,
     llm_model_parameters_path: Optional[str],
 ):
     torch.cuda.empty_cache()
     start_time = time.time()
-    if prompt_structure_path is None:
+    if prompt_template_path is None:
         try:
             name = llm_model_name.split("/")[-1]
-            prompt_structure_path = TEMPLATE_REGISTRY[name]
+            prompt_template_path = TEMPLATE_REGISTRY[name]
         except KeyError:
             pass
     extractor: SamplesExtractorFromText = SamplesExtractorFromText(
-        prompt_structure_path=prompt_structure_path,
+        prompt_template_path=prompt_template_path,
         prompt_schema_path=prompt_schema_path,
         llm_model_name=llm_model_name,
         llm_model_parameters_path=llm_model_parameters_path,
