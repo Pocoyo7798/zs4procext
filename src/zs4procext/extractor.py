@@ -61,7 +61,7 @@ from zs4procext.parser import (
     ActionsParser,
     ComplexParametersParser,
     EquationFinder,
-    ImageParser,
+    ImageParser2,
     KeywordSearching,
     ListParametersParser,
     MolarRatioFinder,
@@ -1173,7 +1173,7 @@ class ImageExtractor(BaseModel):
     vlm_model_parameters_path: Optional[str] = None
     _prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
     _vlm_model: Optional[ModelVLM] = PrivateAttr(default=None)
-    _image_parser: Optional[ImageParser] = PrivateAttr(default=None)  
+    _image_parser: Optional[ImageParser2] = PrivateAttr(default=None)  
 
     def model_post_init(self, __context: Any) -> None:
         if self.vlm_model_parameters_path is None:
@@ -1200,14 +1200,14 @@ class ImageExtractor(BaseModel):
             self._vlm_model = ModelVLM(model_name=self.vlm_model_name)
         self._vlm_model.load_model_parameters(vlm_param_path)
         self._vlm_model.vllm_load_model()
-        self._image_parser = ImageParser()
+        self._image_parser = ImageParser2()
 
-    def extract_image_info(self, image_path: str, scale: float = 1.0, x: int = 1000, y: int = 1000):
+    def extract_image_info(self, image_path: str, scale: float = 1.0):
         image_name = os.path.basename(image_path)
 
         prompt = self._prompt.format_prompt("<image>")
 
-        output = self._vlm_model.run_image_single_prompt_rescale(prompt, image_path,scale = scale, x = x, y = y)
+        output = self._vlm_model.run_image_single_prompt_rescale(prompt, image_path,scale = scale)
         print(f"Raw Model Output for {image_path}:\n{output}")
         
         self._image_parser.parse(output)
@@ -1245,6 +1245,6 @@ class EmbeddingExtractor(BaseModel):
         with torch.no_grad():
             vision_outputs = self._model.visual(pixel_values, grid_thw)
             visual_embeds = vision_outputs.squeeze(0).cpu()
-            pooled = visual_embeds.mean(dim=0)
+            pooled = visual_embeds.sum(dim=0)
             normalized = pooled / pooled.norm(p=2)
         return normalized.numpy()
