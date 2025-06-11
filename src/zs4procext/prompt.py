@@ -91,7 +91,7 @@ class PromptFormatter(BaseModel):
             __context = str(
                 importlib_resources.files("zs4procext")
                 / "resources"
-                / "organic_synthesis_definitions_last_template.json"
+                / "organic_synthesis_actions_last_template.json"
             )
             loaded_prompt = load_prompt(__context)
             self._loaded_prompt = loaded_prompt
