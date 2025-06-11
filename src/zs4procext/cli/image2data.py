@@ -12,7 +12,7 @@ from zs4procext.prompt import TEMPLATE_REGISTRY
 @click.argument("image_folder", type=str)
 @click.argument("output_file_path", type=str)
 @click.option(
-    "--prompt_structure_path",
+    "--prompt_template_path",
     default=None,
     help="Path to the file containing the structure of the prompt",
 )
@@ -40,7 +40,7 @@ from zs4procext.prompt import TEMPLATE_REGISTRY
 def image2data(
     image_folder: str,
     output_file_path: str,
-    prompt_structure_path: Optional[str],
+    prompt_template_path: Optional[str],
     prompt_schema_path: Optional[str],
     vlm_model_name: str,
     vlm_model_parameters_path: Optional[str],
@@ -48,15 +48,15 @@ def image2data(
 ):
     start_time = time.time()
     
-    if prompt_structure_path is None:
+    if prompt_template_path is None:
         try:
             name = vlm_model_name.split("/")[-1]
-            prompt_structure_path = TEMPLATE_REGISTRY[name]
+            prompt_template_path = TEMPLATE_REGISTRY[name]
         except KeyError:
             pass
     
     extractor: ImageExtractor = ImageExtractor(
-        prompt_structure_path=prompt_structure_path, 
+        prompt_template_path=prompt_template_path, 
         prompt_schema_path=prompt_schema_path, 
         vlm_model_name=vlm_model_name, 
         vlm_model_parameters_path=vlm_model_parameters_path

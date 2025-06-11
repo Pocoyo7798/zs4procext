@@ -77,8 +77,8 @@ from zs4procext.prompt import PromptFormatter
 
 class ActionExtractorFromText(BaseModel):
     actions_type: str = "All"
-    action_prompt_structure_path: Optional[str] = None
-    chemical_prompt_structure_path: Optional[str] = None
+    action_prompt_template_path: Optional[str] = None
+    chemical_prompt_template_path: Optional[str] = None
     action_prompt_schema_path: Optional[str] = None
     chemical_prompt_schema_path: Optional[str] = None
     wash_chemical_prompt_schema_path: Optional[str] = None
@@ -125,28 +125,28 @@ class ActionExtractorFromText(BaseModel):
         with open(self.chemical_prompt_schema_path, "r") as f:
             chemical_prompt_dict = json.load(f)
         self._chemical_prompt = PromptFormatter(**chemical_prompt_dict)
-        self._chemical_prompt.model_post_init(self.chemical_prompt_structure_path)
+        self._chemical_prompt.model_post_init(self.chemical_prompt_template_path)
         if self.wash_chemical_prompt_schema_path is None:
             self._wash_chemical_prompt = self._chemical_prompt
         else:
             with open(self.wash_chemical_prompt_schema_path, "r") as f:
                 wash_chemical_prompt_dict = json.load(f)
             self._wash_chemical_prompt = PromptFormatter(**wash_chemical_prompt_dict)
-            self._wash_chemical_prompt.model_post_init(self.chemical_prompt_structure_path)
+            self._wash_chemical_prompt.model_post_init(self.chemical_prompt_template_path)
         if self.add_chemical_prompt_schema_path is None:
             self._add_chemical_prompt = self._chemical_prompt
         else:
             with open(self.add_chemical_prompt_schema_path, "r") as f:
                 add_chemical_prompt_dict = json.load(f)
             self._add_chemical_prompt = PromptFormatter(**add_chemical_prompt_dict)
-            self._add_chemical_prompt.model_post_init(self.chemical_prompt_structure_path)
+            self._add_chemical_prompt.model_post_init(self.chemical_prompt_template_path)
         if self.solution_chemical_prompt_schema_path is None:
             self._solution_chemical_prompt = self._chemical_prompt
         else:
             with open(self.solution_chemical_prompt_schema_path, "r") as f:
                 solution_chemical_prompt_dict = json.load(f)
             self._solution_chemical_prompt = PromptFormatter(**solution_chemical_prompt_dict)
-            self._solution_chemical_prompt.model_post_init(self.chemical_prompt_structure_path)
+            self._solution_chemical_prompt.model_post_init(self.chemical_prompt_template_path)
         self.transfer_prompt_schema_path = str(
                     importlib_resources.files("zs4procext")
                     / "resources"
@@ -155,7 +155,7 @@ class ActionExtractorFromText(BaseModel):
         with open(self.transfer_prompt_schema_path, "r") as f:
             transfer_prompt_dict = json.load(f)
         self._transfer_prompt = PromptFormatter(**transfer_prompt_dict)
-        self._transfer_prompt.model_post_init(self.chemical_prompt_structure_path)
+        self._transfer_prompt.model_post_init(self.chemical_prompt_template_path)
         if self.llm_model_parameters_path is None:
             llm_param_path = str(
                 importlib_resources.files("zs4procext")
@@ -256,7 +256,7 @@ class ActionExtractorFromText(BaseModel):
         with open(self.action_prompt_schema_path, "r") as f:
                 action_prompt_dict = json.load(f)
         self._action_prompt = PromptFormatter(**action_prompt_dict)
-        self._action_prompt.model_post_init(self.action_prompt_structure_path)
+        self._action_prompt.model_post_init(self.action_prompt_template_path)
         self._llm_model.load_model_parameters(llm_param_path)
         self._llm_model.vllm_load_model()
         self._action_parser = ActionsParser(type=self.actions_type, separators=self._action_prompt._action_separators)
@@ -802,8 +802,47 @@ class ActionExtractorFromText(BaseModel):
             final_actions_list = ActionExtractorFromText.transform_elementary(final_actions_list)
         return final_actions_list
 
+class ParagraphClassifier(BaseModel):
+    llm_model_name: str = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+    prompt_template_path: Optional[str] = None
+    prompt_schema_path: Optional[str] = None
+    llm_model_parameters_path: Optional[str] = None
+    _prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
+    _llm_model: Optional[ModelLLM] = PrivateAttr(default=None)
+
+    def model_post_init(self, __context: Any) -> None:
+        with open(self.prompt_schema_path, "r") as f:
+            prompt_dict = json.load(f)
+        self._prompt = PromptFormatter(**prompt_dict)
+        self._prompt.model_post_init(self.prompt_template_path)
+        if self.llm_model_parameters_path is None:
+            llm_param_path = str(
+                importlib_resources.files("zs4procext")
+                / "resources"
+                / "vllm_default_params.json"
+            )
+        else:
+            llm_param_path = self.llm_model_parameters_path
+        self._llm_model = ModelLLM(model_name=self.llm_model_name)
+        self._llm_model.load_model_parameters(llm_param_path)
+        self._llm_model.vllm_load_model()
+
+    def classify_paragraph(self, text) -> bool:
+        prompt: str = self._prompt.format_prompt(text)
+        print(prompt)
+        response: str = self._llm_model.run_single_prompt(prompt).strip()
+        print(response)
+        answer_amount: List[str] = re.findall(r"\b(yes|Yes|no|No)\b", response)
+        if len(answer_amount) == 0:
+            result: bool = True
+        elif answer_amount[0].lower() == "yes":
+            result = True
+        else:
+            result = False
+        return result
+
 class SamplesExtractorFromText(BaseModel):
-    prompt_structure_path: Optional[str] = None
+    prompt_template_path: Optional[str] = None
     prompt_schema_path: Optional[str] = None
     llm_model_name: Optional[str] = None
     llm_model_parameters_path: Optional[str] = None
@@ -822,7 +861,7 @@ class SamplesExtractorFromText(BaseModel):
         with open(self.prompt_schema_path, "r") as f:
             prompt_dict = json.load(f)
         self._prompt = PromptFormatter(**prompt_dict)
-        self._prompt.model_post_init(self.prompt_structure_path)
+        self._prompt.model_post_init(self.prompt_template_path)
         if self.llm_model_parameters_path is None:
             llm_param_path = str(
                 importlib_resources.files("zs4procext")
@@ -1086,7 +1125,7 @@ class MolarRatioExtractorFromText(BaseModel):
 
 class TableExtractor(BaseModel):
     table_type: str = "All"
-    prompt_structure_path: Optional[str] = None
+    prompt_template_path: Optional[str] = None
     prompt_schema_path: Optional[str] = None
     vlm_model_name: Optional[str] = None
     vlm_model_parameters_path: Optional[str] = None
@@ -1112,7 +1151,7 @@ class TableExtractor(BaseModel):
         with open(self.prompt_schema_path, "r") as f:
                 prompt_dict = json.load(f)
         self._prompt = PromptFormatter(**prompt_dict)
-        self._prompt.model_post_init(self.prompt_structure_path)
+        self._prompt.model_post_init(self.prompt_template_path)
         if self.vlm_model_name is None:
             self._vlm_model = ModelVLM(model_name="Llama2-70B-chat-hf")
         else:
@@ -1128,7 +1167,7 @@ class TableExtractor(BaseModel):
 
 
 class ImageExtractor(BaseModel):
-    prompt_structure_path: Optional[str] = None 
+    prompt_template_path: Optional[str] = None 
     prompt_schema_path: Optional[str] = None
     vlm_model_name: Optional[str] = None
     vlm_model_parameters_path: Optional[str] = None
@@ -1154,7 +1193,7 @@ class ImageExtractor(BaseModel):
         with open(self.prompt_schema_path, "r") as f:
                 prompt_dict = json.load(f)
         self._prompt = PromptFormatter(**prompt_dict)
-        self._prompt.model_post_init(self.prompt_structure_path)
+        self._prompt.model_post_init(self.prompt_template_path)
         if self.vlm_model_name is None:
             self._vlm_model = ModelVLM(model_name="Llama2-70B-chat-hf")
         else:
