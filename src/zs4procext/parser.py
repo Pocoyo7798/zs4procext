@@ -1401,22 +1401,41 @@ class ImageParser2(BaseModel):
                 self.data_dict = {}
 
     def _convert_na_to_null(self, data: Dict) -> Dict:
-        def convert(value):
-            if isinstance(value, str) and value.strip().lower() in {"n/a", "na", "nan"}:
-                return None
-            return value
+        def convert_list(vals):
+            cleaned = []
+            for v in vals:
+                if isinstance(v, (int, float)):
+                    cleaned.append(v)
+                elif isinstance(v, str):
+                    stripped = v.strip().lower()
+                    if stripped in {"", "na", "n/a", "nan"}:
+                        cleaned.append(None)
+                    else:
+                        try:
+                            # Convert numeric strings to float
+                            num = float(v)
+                            cleaned.append(num)
+                        except ValueError:
+                            # Remove any non-numeric strings
+                            cleaned.append(None)
+                elif v is None:
+                    cleaned.append(None)
+                else:
+                    cleaned.append(None)  # Catch anything unexpected
+            return cleaned
 
         converted = {}
         for key, subdict in data.items():
             if isinstance(subdict, dict):
                 converted_sub = {
-                    k: [convert(v) for v in vals] if isinstance(vals, list) else vals
+                    k: convert_list(vals) if isinstance(vals, list) else vals
                     for k, vals in subdict.items()
                 }
                 converted[key] = converted_sub
             else:
                 converted[key] = subdict
         return converted
+
 
     def _normalize_sub_super_scripts(self, text: str) -> str:
         return ''.join(
