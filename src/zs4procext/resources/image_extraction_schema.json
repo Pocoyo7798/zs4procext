@@ -3,10 +3,11 @@
   "initialization": "",
   "objective": "Extract structured data from catalytic graphs.",
   "definitions": {
+
     "initialization": "Each marker in the graph represents a data point. Ensure all visible data points are counted and included.\nIf any points are ambiguous, occluded, or unclear, mark their values as 'N/A'.\nDo not alter or simplify any axis or series labels — copy them exactly as written in the image or figure."
   },
   "answer_schema": {
-    "initialization": "Return the data in the following JSON format:\n{\n  \"<series_name>\": {\n    \"<x_axis_label>\": [x1, x2, ...],\n    \"<y_axis_label>\": [y1, y2, ...]\n  },\n  ...\n}\nReplace `<...>` with the actual text and values from the image.\n\n**If any data point is unreadable or missing, use 'N/A' in place of that value.**\n\n**Important:** Copy axis labels and series names *exactly* as shown in the graph, and *convert only superscripts/subscripts to plain text*."
+    "initialization": "Return the data in the following JSON format:\n{\n  \"<serie_name>\": {\n    \"<x_axis_label>\": [x1, x2, ...],\n    \"<y_axis_label>\": [y1, y2, ...]\n  },\n  ...\n}\nReplace '<...>' with the actual text and values from the image.\n\n**If any data point is unreadable or missing, use 'N/A' in place of that value.**\n\n**Important:** Copy axis labels and series names *exactly* as shown in the graph, and *convert only superscripts/subscripts to plain text*."
   },
   "conclusion": "Do not summarize or modify labels or series names. They must be copied exactly as presented, converting only superscripts and subscripts to plain numbers/text. If you're unsure about any data point, mark it as 'N/A'."
 }
