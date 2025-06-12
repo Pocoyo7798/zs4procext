@@ -13,7 +13,7 @@ git clone git@github.com:Pocoyo7798/zs4procext.git
 cd zs4procext
 pip install -e .
 ```
-## **Extraction Pipelines**
+## **LLM-based Extraction Pipelines**
 
 In this repository you have multiple extraction pipelines available. Every pipeline comes with pre-defined models, model parameters, model template and prompts. Hence you just pass the requirement to run each extraction command. In the case that you want to test different combinations for an existing extraction pipeline we can play with this 4 different arguments:
 ```bash
@@ -45,7 +45,7 @@ The input should be a .txt file containing a different paragraph in each line, w
 ### Action Extraction
 Action Extraction consists in extracting a sequence of experimental actions that describe the procedure present in the paragraph. To apply run the following line:
 ```bash
-zs4procext-text2actions --actions_type materials  pathe_to_paragraphs.txt path_to_results.txt
+zs4procext-text2actions --actions_type materials  path_to_paragraphs.txt path_to_results.txt
 ```
 The input should be a .txt file containing a different paragraph in each line, while the output is also a .txt with a list of actions as python dictionaries. Right now you have 4 options for the ```--actions_type```: 'organic' that uses the the action set defined [here](https://www.nature.com/articles/s41467-020-17266-6), 'pistachio' that uses the same action set from organic with small changes to adapt to the [pistachio dataset](https://www.nextmovesoftware.com/pistachio.html), sac that uses the action set defined [here](https://www.nature.com/articles/s41467-023-43836-5) and "materials" that uses the action set defined [here](https://research.ibm.com/publications/catalysts-synthesis-procedures-extraction-from-synthesis-paragraphs-using-large-language-models). An example of a action extraction prompt is available [here](src/zs4procext/resources/material_synthesis_actions_schema.json). Note that if you want to not use any post processing for your model response you need to set the ```--actions_type``` argument to ```None```, otherwise the post processing of that field will be aplied on the model response. If you want to run the pipeline on a subset of the existing action sets you just need to remove the action that you do not want from the prompt. To augment an existing action set you need to add the new action at the respective action registry [here](src/zs4procext/actions.py). To create a complete new action set you can contact us for further colaborations.
 
@@ -60,6 +60,18 @@ zs4procext-table2data --type catalyst_characterization  image_folder_path path_t
 The input should be a folder containing the table images, while the output is a .txt files containing a list of dictionaries containing the info associated to each samples/experiment. Right now, only one option for ```--type``` argument, that is used to extract data from tables containing characterization data from heteregeneous catalysts. To apply it to other kind of tables, you just need to pass a .json file containing the a new table schema on ```--table_schema_path``` argument. The schema should have a structure like [this](src/zs4procext/randomization.py), where for each type of data you want to extract you need to identify the possible keywords and units associated with it.
 
 ###Graphic Extraction
+
+## **Non LLM-based Extraction Pipelines**
+
+In this section we present some extraction pipelines that use only a parser applied directly on a data source. Generally, this pipelines were built to support LLM based pipeline, but since they can also be usefull indivdually we added command line support for them.
+
+###Molar Ratio Extraction
+Molar Ratio Extraction consists in finding molar ratios in a paragraph, together with the equation associated if it is the case. You can run it like this:
+
+```bash
+zs4procext-text2molar_ratios --valid_chemicals_path path_to_chemical_file.txt  path_to_paragraphs.txt path_to_results.txt
+```
+The input is a .txt file containing all the paragraphs that you want to process line by line, while the uput file is also a .txt file containing a list od dcitionaries containing the molar ratio information. The ```--valid_chemicals_path``` argmuent takes a .txt file containing chemicals substances line by line (as they would apperar in a molar ratio). If you do not pass this argument, a pre defined one setted up for zeolites will be used.
 
 ## **Model and Settings Evaluation**
 
@@ -115,7 +127,7 @@ temperature_parser = ParametersParser(
             size=False
         )
 temperature = conditions_parser.get_parameters(response)["temperature"]
-print(tmperature)
+print(temperature)
 ```
 
 With this we obtain the temperature in degree celsius:
@@ -128,4 +140,14 @@ Obviously different extraction pipelines will require different parser or a comb
 
 | Parser    | Description |
 | -------- | ------- |
-| ParametersParser  | $250    |
+| ParametersParser  | Used to find values associated with basic units as temperetura, time, mass or volume. For using it you need to set a file like [this](src/zs4procext/resources/synthesis_parsing_parameters.json) containing the units that you want to consider |
+| ListParametersParser | Used to find seuqence of number in text like "The treatment was performe at **10, 30 and 60** min"|
+| ComplexParametersParser  | Used to find values associated with complex units (that can be formed from basic one) such as concentration, heating speed, flow rates and stirring speed. For using it you need to set a file like [this](src/zs4procext/resources/synthesis_parsing_parameters.json) containing the units that you want to consider |
+| ActionsParser  | Used to separate action and respective context from text, by passing the respective list of action on your action set |
+| KeywordSearching  | Used to find keywords defined in a python list |
+| SchemaParser  | Used to find and extract specfific schema patterns that you dfined on your prompt. For example "The chemical substance information is: **{'name': NaOH, 'quantity': 2 g}**" by specifying "{" and "}" as limiter and "name" and "quantity" as atributes you can separate the dicitoonary from the text a get the value in each key.|
+| DimensionlessParser  | Used to ding numbers without a unit. |
+| MolarRatioFinder  | Used to find molar ratios and other information associeated as equation and relations in text. |
+| NumberFinder  | Used to find number independently of having units or not    |
+| EquationFinder  |Used to find equations using a,b,c,x,y,z letters and +, /, = signals |
+| TableParser  | Parses a table built as a list of python lists, organizing the information based on a regsitry of words |
