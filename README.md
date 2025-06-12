@@ -93,11 +93,9 @@ The zs4procext tool comes with a bunch of parsers based on regex for you to crea
 As you can see even if you look at text you can see that two temeperatures are given. So how can you extract only the alkaline treatment temperature? Lets use LLMs to helps. First we are going to ask to the LLMs to give us the alkaline treatment temperature:
 
 ```python
-from zs4procext.prompt import PromptFormatter
-from zs4procext.llm import ModelLLM
-
 with open("prompt_schema.json", "r") as f:
             prompt_dict = json.load(f)
+text = "The alkaline treatment process was carried out using a 0.2 mol. L-1 NaOH solution on a parent zeolite calined at 673.15 K. In all experiments, 1 g of ZSM-5 zeolite, 100 mL of solution and heating at 338 K under reflux system were used. The duration of the process was limited to 30 and 10 min for conventional electric and microwave (500 W) heating’s, respectively."
 prompt = PromptFormatter(**prompt_dict)
 prompt.model_post_init("phi_mini_4k_template.json")
 llm_model = ModelLLM("microsoft/Phi-3-mini-4k-instruct")
@@ -118,6 +116,7 @@ Now the alkaline tratment tempereture value is isolated from other temperatures,
 ```python
 from zs4procext.parser import ParametersParser
 temperature_parser = ParametersParser(
+            parser_params_path = "parser_parameters.json"
             convert_units=True,
             time=False,
             temperature=True,
@@ -126,7 +125,7 @@ temperature_parser = ParametersParser(
             atmosphere=False,
             size=False
         )
-temperature = conditions_parser.get_parameters(response)["temperature"]
+temperature = temperature_parser.get_parameters(response)["temperature"]
 print(temperature)
 ```
 
