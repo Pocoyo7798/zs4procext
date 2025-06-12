@@ -88,27 +88,27 @@ You can also find the reference files in [here](src/zs4procext/resources/dataset
 The zs4procext tool comes with a bunch of parsers based on regex for you to create your own extraction tool. In this part we will give you an example on how create one. Note all the files used in the example are [here](put_link_here.com) So, imagine that you want to create a tool to identify the alkaline treatment temperature used in the following procedure:
 
 ```diff
-"The alkaline treatment process was carried out using a 0.2 mol. L-1 NaOH solution on a parent zeolite calined at 673.15 K. In all experiments, 1 g of ZSM-5 zeolite, 100 mL of solution and heating at 338 K under reflux system were used. The duration of the process was limited to 30 and 10 min for conventional electric and microwave (500 W) heating’s, respectively."
+"The alkaline treatment process was carried out using a 0.2 mol at 338 K. L-1 NaOH solution. In all experiments, 1 g of ZSM-5 zeolite and 100 mL of solution were used. The duration of the process was limited to 30 and 10 min for conventional electric and microwave (500 W) heating’s, respectively."
 ```
 As you can see even if you look at text you can see that two temeperatures are given. So how can you extract only the alkaline treatment temperature? Lets use LLMs to helps. First we are going to ask to the LLMs to give us the alkaline treatment temperature:
 
 ```python
 with open("prompt_schema.json", "r") as f:
             prompt_dict = json.load(f)
-text = "The alkaline treatment process was carried out using a 0.2 mol. L-1 NaOH solution on a parent zeolite calined at 673.15 K. In all experiments, 1 g of ZSM-5 zeolite, 100 mL of solution and heating at 338 K under reflux system were used. The duration of the process was limited to 30 and 10 min for conventional electric and microwave (500 W) heating’s, respectively."
+text = "The alkaline treatment process was carried out using a 0.2 mol at 338 K. L-1 NaOH solution. In all experiments, 1 g of ZSM-5 zeolite and 100 mL of solution were used. The duration of the process was limited to 30 and 10 min for conventional electric and microwave (500 W) heating’s, respectively."
 prompt = PromptFormatter(**prompt_dict)
 prompt.model_post_init("phi_mini_4k_template.json")
-llm_model = ModelLLM("microsoft/Phi-3-mini-4k-instruct")
+llm_model = ModelLLM(model_name="microsoft/Phi-3-mini-4k-instruct")
 llm_model.load_model_parameters("model_parameters.json")
 llm_model.vllm_load_model()
 final_prompt = prompt.format_prompt(text)
-response = llm_model.run_single_prompt(prompt).strip()
+response = llm_model.run_single_prompt(final_prompt).strip()
 print(response)
 ```
 With this is loaded the prompt structure and the model parameters. With this setup you can obtain the model response for multiple paragaphs as well if you need to apply it in large scale. After this the model response should be something like this:
 
 ```diff
-"For the alkaline treatment 1 g of zeolite was treated with 100 mL 0.2 mol. L-1 NaOH at 338 K"
+"The temperature of the alkaline treatment is 338 K."
 ```
 
 Now the alkaline tratment tempereture value is isolated from other temperatures, however other conditions are also present. To solve it we will use a parameters parser to identify only the temperature and convert it to degrees celsius:
@@ -125,14 +125,14 @@ temperature_parser = ParametersParser(
             atmosphere=False,
             size=False
         )
-temperature = temperature_parser.get_parameters(response)["temperature"]
+temperature = temperature_parser.get_parameters(response).temperature
 print(temperature)
 ```
 
 With this we obtain the temperature in degree celsius:
 
 ```diff
-["64.85 °C"]
+['64.85000000000002 degree_Celsius']
 ```
 
 Obviously different extraction pipelines will require different parser or a combiantion of them. Hence here it is a table containing all the parser available right and a description on how to use them:
