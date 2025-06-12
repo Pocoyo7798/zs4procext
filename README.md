@@ -116,7 +116,7 @@ Now the alkaline tratment tempereture value is isolated from other temperatures,
 ```python
 from zs4procext.parser import ParametersParser
 temperature_parser = ParametersParser(
-            parser_params_path = "parser_parameters.json"
+            parser_params_path = "parser_parameters.json",
             convert_units=True,
             time=False,
             temperature=True,
