@@ -104,13 +104,24 @@ With this is loaded the prompt structure and the model parameters. With this set
 Now the alkaline tratment tempereture value is isolated from other temperatures, however other conditions are also present. To solve it we will use a parameters parser to identify only the temperature and convert it to degrees celsius:
 
 ```python
-aaaa
+from zs4procext.parser import ParametersParser
+temperature_parser = ParametersParser(
+            convert_units=True,
+            time=False,
+            temperature=True,
+            pressure=False,
+            amount=False,
+            atmosphere=False,
+            size=False
+        )
+temperature = conditions_parser.get_parameters(response)["temperature"]
+print(tmperature)
 ```
 
 With this we obtain the temperature in degree celsius:
 
 ```diff
-"64.85 ªC"
+["64.85 °C"]
 ```
 
 Obviously different extraction pipelines will require different parser or a combiantion of them. Hence here it is a table containing all the parser available right and a description on how to use them:
