@@ -116,6 +116,56 @@ class ActionExtractorFromText(BaseModel):
     _action_dict: Dict[str, Any] = PrivateAttr(default=ACTION_REGISTRY)
 
     def model_post_init(self, __context: Any) -> None:
+        if self.actions_type == "pistachio":
+            if self.action_prompt_schema_path is None:
+                self.action_prompt_schema_path = str(
+                    importlib_resources.files("zs4procext")
+                    / "resources"
+                    / "organic_synthesis_actions_schema.json"
+                )
+            self._action_dict = PISTACHIO_ACTION_REGISTRY
+            ph_keywords: List[str] = ["&^%#@&#@(*)"]
+            atributes = ["name", "dropwise"]
+        elif self.actions_type == "organic":
+            if self.action_prompt_schema_path is None:
+                self.action_prompt_schema_path = str(
+                    importlib_resources.files("zs4procext")
+                    / "resources"
+                    / "organic_synthesis_actions_schema.json"
+                )
+            self._action_dict = ORGANIC_ACTION_REGISTRY
+            ph_keywords = ["&^%#@&#@(*)"]
+            atributes = ["name", "dropwise"]
+        elif self.actions_type == "materials":
+            if self.action_prompt_schema_path is None:
+                self.action_prompt_schema_path = str(
+                    importlib_resources.files("zs4procext")
+                    / "resources"
+                    / "material_synthesis_actions_schema.json"
+                )
+            self._action_dict = MATERIAL_ACTION_REGISTRY
+            ph_keywords = PH_REGISTRY
+            atributes = ["type", "name", "dropwise", "concentration", "amount"]
+        elif self.actions_type == "sac":
+            if self.action_prompt_schema_path is None:
+                self.action_prompt_schema_path = str(
+                    importlib_resources.files("zs4procext")
+                    / "resources"
+                    / "sac_synthesis_actions_schema.json"
+                )
+            self._action_dict = SAC_ACTION_REGISTRY
+            ph_keywords = PH_REGISTRY
+            atributes = ["type", "name", "dropwise", "concentration", "amount"]
+        elif self.actions_type == "elementary":
+            if self.action_prompt_schema_path is None:
+                self.action_prompt_schema_path = str(
+                    importlib_resources.files("zs4procext")
+                    / "resources"
+                    / "material_synthesis_actions_schema.json"
+                )
+            self._action_dict = ELEMENTARY_ACTION_REGISTRY
+            ph_keywords = PH_REGISTRY
+            atributes = ["type", "name", "dropwise", "concentration", "amount"]
         if self.chemical_prompt_schema_path is None:
             self.chemical_prompt_schema_path = str(
                 importlib_resources.files("zs4procext")
@@ -165,94 +215,9 @@ class ActionExtractorFromText(BaseModel):
         else:
             llm_param_path = self.llm_model_parameters_path
         if self.llm_model_name is None:
-            self._llm_model = ModelLLM(model_name="Llama2-70B-chat-hf")
+            self._llm_model = ModelLLM(model_name="microsoft/Phi-3-medium-4k-instruct")
         else:
             self._llm_model = ModelLLM(model_name=self.llm_model_name)
-        if self.actions_type == "pistachio":
-            if self.action_prompt_schema_path is None:
-                self.action_prompt_schema_path = str(
-                    importlib_resources.files("zs4procext")
-                    / "resources"
-                    / "organic_synthesis_actions_schema.json"
-                )
-            self._action_dict = PISTACHIO_ACTION_REGISTRY
-            self._ph_parser = KeywordSearching(keywords_list=["&^%#@&#@(*)"])
-            self._aqueous_parser = KeywordSearching(keywords_list=AQUEOUS_REGISTRY)
-            self._organic_parser = KeywordSearching(keywords_list=ORGANIC_REGISTRY)
-            self._centri_parser = KeywordSearching(keywords_list=CENTRIFUGATION_REGISTRY)
-            self._filter_parser = KeywordSearching(keywords_list=FILTER_REGISTRY)
-            atributes = ["name", "dropwise"]
-        elif self.actions_type == "organic":
-            if self.action_prompt_schema_path is None:
-                self.action_prompt_schema_path = str(
-                    importlib_resources.files("zs4procext")
-                    / "resources"
-                    / "organic_synthesis_actions_schema.json"
-                )
-            self._action_dict = ORGANIC_ACTION_REGISTRY
-            self._ph_parser = KeywordSearching(keywords_list=["&^%#@&#@(*)"])
-            self._aqueous_parser = KeywordSearching(keywords_list=AQUEOUS_REGISTRY)
-            self._organic_parser = KeywordSearching(keywords_list=ORGANIC_REGISTRY)
-            self._centri_parser = KeywordSearching(keywords_list=CENTRIFUGATION_REGISTRY)
-            self._filter_parser = KeywordSearching(keywords_list=FILTER_REGISTRY)
-            atributes = ["name", "dropwise"]
-        elif self.actions_type == "materials":
-            if self.action_prompt_schema_path is None:
-                self.action_prompt_schema_path = str(
-                    importlib_resources.files("zs4procext")
-                    / "resources"
-                    / "material_synthesis_actions_schema.json"
-                )
-            self._action_dict = MATERIAL_ACTION_REGISTRY
-            self._ph_parser = KeywordSearching(keywords_list=PH_REGISTRY)
-            self._ph_parser.model_post_init(None)
-            self._filter_parser = KeywordSearching(keywords_list=FILTER_REGISTRY)
-            self._filter_parser.model_post_init(None)
-            self._centri_parser = KeywordSearching(keywords_list=CENTRIFUGATION_REGISTRY)
-            self._centri_parser.model_post_init(None)
-            self._evaporation_parser = KeywordSearching(keywords_list=EVAPORATION_REGISTRY)
-            self._evaporation_parser.model_post_init(None)
-            self._complex_parser = ComplexParametersParser()
-            self._complex_parser.model_post_init(None)
-            atributes = ["type", "name", "dropwise", "concentration", "amount"]
-        elif self.actions_type == "sac":
-            if self.action_prompt_schema_path is None:
-                self.action_prompt_schema_path = str(
-                    importlib_resources.files("zs4procext")
-                    / "resources"
-                    / "material_synthesis_actions_schema.json"
-                )
-            self._action_dict = SAC_ACTION_REGISTRY
-            self._ph_parser = KeywordSearching(keywords_list=PH_REGISTRY)
-            self._ph_parser.model_post_init(None)
-            self._filter_parser = KeywordSearching(keywords_list=FILTER_REGISTRY)
-            self._filter_parser.model_post_init(None)
-            self._centri_parser = KeywordSearching(keywords_list=CENTRIFUGATION_REGISTRY)
-            self._centri_parser.model_post_init(None)
-            self._evaporation_parser = KeywordSearching(keywords_list=EVAPORATION_REGISTRY)
-            self._evaporation_parser.model_post_init(None)
-            self._complex_parser = ComplexParametersParser()
-            self._complex_parser.model_post_init(None)
-            atributes = ["type", "name", "dropwise", "concentration", "amount"]
-        elif self.actions_type == "elementary":
-            if self.action_prompt_schema_path is None:
-                self.action_prompt_schema_path = str(
-                    importlib_resources.files("zs4procext")
-                    / "resources"
-                    / "material_synthesis_actions_schema.json"
-                )
-            self._action_dict = ELEMENTARY_ACTION_REGISTRY
-            self._ph_parser = KeywordSearching(keywords_list=PH_REGISTRY)
-            self._ph_parser.model_post_init(None)
-            self._filter_parser = KeywordSearching(keywords_list=FILTER_REGISTRY)
-            self._filter_parser.model_post_init(None)
-            self._centri_parser = KeywordSearching(keywords_list=CENTRIFUGATION_REGISTRY)
-            self._centri_parser.model_post_init(None)
-            self._evaporation_parser = KeywordSearching(keywords_list=EVAPORATION_REGISTRY)
-            self._evaporation_parser.model_post_init(None)
-            self._complex_parser = ComplexParametersParser()
-            self._complex_parser.model_post_init(None)
-            atributes = ["type", "name", "dropwise", "concentration", "amount"]
         with open(self.action_prompt_schema_path, "r") as f:
                 action_prompt_dict = json.load(f)
         self._action_prompt = PromptFormatter(**action_prompt_dict)
@@ -270,6 +235,13 @@ class ActionExtractorFromText(BaseModel):
             size=False
         )
         transfer_atributes = ["type", "volume"]
+        self._ph_parser = KeywordSearching(keywords_list=ph_keywords)
+        self._complex_parser = ComplexParametersParser()
+        self._evaporation_parser = KeywordSearching(keywords_list=EVAPORATION_REGISTRY)
+        self._aqueous_parser = KeywordSearching(keywords_list=AQUEOUS_REGISTRY)
+        self._organic_parser = KeywordSearching(keywords_list=ORGANIC_REGISTRY)
+        self._centri_parser = KeywordSearching(keywords_list=CENTRIFUGATION_REGISTRY)
+        self._filter_parser = KeywordSearching(keywords_list=FILTER_REGISTRY)
         self._transfer_schema_parser = SchemaParser(atributes_list=transfer_atributes)
         self._schema_parser = SchemaParser(atributes_list=atributes)
         self._filtrate_parser = KeywordSearching(keywords_list=FILTRATE_REGISTRY)
