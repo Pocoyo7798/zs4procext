@@ -16,7 +16,7 @@ class PromptFormatter(BaseModel):
     answer_schema: Dict[str, str] = {}
     conclusion: str = ""
     _loaded_prompt: Optional[BasePromptTemplate] = PrivateAttr(default=None)
-    _definition_sperators: Optional[List[str]] = PrivateAttr(default=None)
+    _definition_seperators: Optional[List[str]] = PrivateAttr(default=None)
     _answer_schema: Optional[str] = PrivateAttr(default=None)
     _definition_list: Optional[str] = PrivateAttr(default=[None])
 
