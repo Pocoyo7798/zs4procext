@@ -10,7 +10,7 @@ import numpy as np
 import torch
 from PIL import Image
 import click
-from transformers import AutoProcessor, Qwen2_5_VLForConditionalGeneration
+#from transformers import AutoProcessor, Qwen2_5_VLForConditionalGeneration
 
 from zs4procext.actions import (
     ACTION_REGISTRY,
@@ -1187,7 +1187,7 @@ class ImageExtractor(BaseModel):
         print (parsed_output)
         return {image_name: parsed_output}
 
-
+"""
 class EmbeddingExtractor(BaseModel):
     _device: str = PrivateAttr()
     _model: Qwen2_5_VLForConditionalGeneration = PrivateAttr()
@@ -1220,3 +1220,4 @@ class EmbeddingExtractor(BaseModel):
             pooled = visual_embeds.sum(dim=0)
             normalized = pooled / pooled.norm(p=2)
         return normalized.numpy()
+"""
