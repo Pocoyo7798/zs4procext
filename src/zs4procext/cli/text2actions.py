@@ -96,7 +96,7 @@ def text2actions(
         action_prompt_template_path=prompt_template_path,
         chemical_prompt_template_path=prompt_template_path,
         action_prompt_schema_path=prompt_schema_path,
-        chemical_prompt_schema_path=prompt_schema_path,
+        chemical_prompt_schema_path=chemical_prompt_schema_path,
         wash_chemical_prompt_schema_path=wash_chemical_prompt_schema_path,
         add_chemical_prompt_schema_path=add_chemical_prompt_schema_path,
         solution_chemical_prompt_schema_path=solution_chemical_prompt_schema_path,
