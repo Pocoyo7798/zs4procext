@@ -224,7 +224,7 @@ class ActionExtractorFromText(BaseModel):
         self._action_prompt.model_post_init(self.action_prompt_template_path)
         self._llm_model.load_model_parameters(llm_param_path)
         self._llm_model.vllm_load_model()
-        self._action_parser = ActionsParser(type=self.actions_type, separators=self._action_prompt._action_separators)
+        self._action_parser = ActionsParser(type=self.actions_type, separators=self._action_prompt._definition_separators)
         self._condition_parser = ParametersParser(convert_units=False, amount=False)
         self._quantity_parser = ParametersParser(
             convert_units=False,
