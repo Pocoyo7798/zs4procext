@@ -224,6 +224,7 @@ class ActionExtractorFromText(BaseModel):
         print(action_prompt_dict)
         self._action_prompt = PromptFormatter(**action_prompt_dict)
         self._action_prompt.model_post_init(self.action_prompt_template_path)
+        print(self._action_prompt)
         self._llm_model.load_model_parameters(llm_param_path)
         self._llm_model.vllm_load_model()
         self._action_parser = ActionsParser(type=self.actions_type, separators=self._action_prompt._definition_separators)
