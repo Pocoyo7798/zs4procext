@@ -16,7 +16,7 @@ from zs4procext.prompt import TEMPLATE_REGISTRY
     help="Type of actions to considered. Options: All or pistachio or materials.",
 )
 @click.option(
-    "--prompt_structure_path",
+    "--prompt_template_path",
     default=None,
     help="Path to the file containing the structure of the prompt",
 )
@@ -26,12 +26,17 @@ from zs4procext.prompt import TEMPLATE_REGISTRY
     help="Path to the file containing the schema of the prompt",
 )
 @click.option(
-    "--vlm_model_name",
+    "--llm_model_name",
     default=None,
     help="Name of the LLM used to process the tables",
 )
 @click.option(
-    "--vlm_model_parameters_path",
+    "--llm_model_parameters_path",
+    default=None,
+    help="Parameters of the LLM used to process the tables",
+)
+@click.option(
+    "--table_schema_path",
     default=None,
     help="Parameters of the LLM used to process the tables",
 )
@@ -39,19 +44,20 @@ def table2data(
     image_folder: str,
     output_file_path: str,
     table_type: str,
-    prompt_structure_path: Optional[str],
+    prompt_template_path: Optional[str],
     prompt_schema_path: Optional[str],
-    vlm_model_name: str,
-    vlm_model_parameters_path: Optional[str],
+    llm_model_name: str,
+    llm_model_parameters_path: Optional[str],
+    table_schema_path: Optional[str]
 ):
     start_time = time.time()
-    if prompt_structure_path is None:
+    if prompt_template_path is None:
         try:
-            name = vlm_model_name.split("/")[-1]
-            prompt_structure_path = TEMPLATE_REGISTRY[name]
+            name = llm_model_name.split("/")[-1]
+            prompt_template_path = TEMPLATE_REGISTRY[name]
         except KeyError:
             pass
-    extractor: TableExtractor = TableExtractor(table_type=table_type, prompt_structure_path=prompt_structure_path, prompt_schema_path=prompt_schema_path, vlm_model_name=vlm_model_name, vlm_model_parameters_path=vlm_model_parameters_path)
+    extractor: TableExtractor = TableExtractor(table_type=table_type, prompt_template_path=prompt_template_path, prompt_schema_path=prompt_schema_path, vlm_model_name=llm_model_name, vlm_model_parameters_path=llm_model_parameters_path)
     file_list = os.listdir(image_folder)
     if os.path.isfile(output_file_path):
         os.remove(output_file_path)
