@@ -2,7 +2,7 @@
   "expertise": "You are an expert in chemistry!",
   "initialization": "Take your time and extract information as truthfully as possible using the provided context. If any information is not provided or you are unsure, use 'N/A'.",
   "objective":"Extract the solution created and all the chemicals used to create it in the following text:",
-  "actions": {},
+  "definitions": {},
   "answer_schema": {
                     "Initialization" : "For each chemical used to create the solution, create a Json schema with the following format:",
                     "Format1" : "{'type': Compound or Solution, 'name': name of the chemical, 'amount': quantity of the chemical ,'concentration': Concentration of the chemical, 'dropwise': True or False}"

@@ -218,13 +218,16 @@ class ActionExtractorFromText(BaseModel):
             self._llm_model = ModelLLM(model_name="microsoft/Phi-3-medium-4k-instruct")
         else:
             self._llm_model = ModelLLM(model_name=self.llm_model_name)
+        print(self.action_prompt_schema_path)
         with open(self.action_prompt_schema_path, "r") as f:
                 action_prompt_dict = json.load(f)
+        print(action_prompt_dict)
         self._action_prompt = PromptFormatter(**action_prompt_dict)
         self._action_prompt.model_post_init(self.action_prompt_template_path)
+        print(self._action_prompt)
         self._llm_model.load_model_parameters(llm_param_path)
         self._llm_model.vllm_load_model()
-        self._action_parser = ActionsParser(type=self.actions_type, separators=self._action_prompt._action_separators)
+        self._action_parser = ActionsParser(type=self.actions_type, separators=self._action_prompt._definition_separators)
         self._condition_parser = ParametersParser(convert_units=False, amount=False)
         self._quantity_parser = ParametersParser(
             convert_units=False,
