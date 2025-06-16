@@ -772,7 +772,7 @@ class SchemaParser(BaseModel):
         for atribute in self.atributes_list:
             self._atributes_regex[atribute] = re.compile(
                 #rf"[\"']*{atribute}[\"']*\s*[:=-]\s*[\"']*([^\"'{self.limiters['initial']}{self.limiters['final']}]*)[\"']*,*",
-                rf"[\"']*{atribute}[\"']*\s*[:=-]\s*[\"',]*([^\"',]*)[\"']*",
+                rf"[\"']*{atribute}[\"']*\s*[:=-]\s*[\"']*([^\"']*)[\"']*",
                 re.IGNORECASE | re.MULTILINE,
             )
 
@@ -821,8 +821,15 @@ class SchemaParser(BaseModel):
                 f"The give atribute is not valid, the valid atributes are {self.atributes_list}"
             )
         regex: re.Pattern[str] = self._atributes_regex[atribute]
-        result: List[Any] = regex.findall(text)
-        return result
+        results: List[Any] = regex.findall(text)
+        i = 0
+        for result in results:
+            while result[-1] in set([",", " "]):
+                result = result[:-1]
+                print(result)
+            results[i] = result
+            i += 1
+        return results
 
 
 class DimensionlessParser:

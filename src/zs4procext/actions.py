@@ -1652,12 +1652,28 @@ class Transfer(Actions):
             pass
         elif len(schemas) == 1:
             name: str = schemas_parser.get_atribute_value(schemas[0], "type")
+            if name[0] in BANNED_TRANSFER_REGISTRY:
+                final_name = ""
+            else:
+                final_name = name[0]
             size = schemas_parser.get_atribute_value(schemas[0], "volume")
-            action.recipient = f"{size[0]} {name[0]}".strip()
+            if size[0] in BANNED_TRANSFER_REGISTRY:
+                final_size = size[0]
+            else:
+                final_size = size[0] + " "
+            action.recipient = f"{final_size}{final_name}".strip()
         else:
             name: str = schemas_parser.get_atribute_value(schemas[0], "type")
+            if name[0] in BANNED_TRANSFER_REGISTRY:
+                final_name = ""
+            else:
+                final_name = name[0]
             size = schemas_parser.get_atribute_value(schemas[0], "volume")
-            action.recipient = f"{size[0]} {name[0]}".strip()
+            if size[0] in BANNED_TRANSFER_REGISTRY:
+                final_size = size[0]
+            else:
+                final_size = size[0] + " "
+            action.recipient = f"{final_size}{final_name}".strip()
             print(
                 "Warning: More than one recipient was found, only the first one was considered"
                 )
@@ -1875,7 +1891,11 @@ class Sieve(ActionsWithConditons):
         action.validate_conditions(conditions_parser, add_others=True)
         return [action.zeolite_dict()]
 
+BANNED_TRANSFER_REGISTRY: List[str] = ["N/A"]
+
 BANNED_CHEMICALS_REGISTRY: List[str] = [
+    "reaction",
+    "title",
     "newsolution",
     "extract",
     "heated",
