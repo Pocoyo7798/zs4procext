@@ -1645,31 +1645,35 @@ class Transfer(Actions):
     recipient: str = ""
     
     @classmethod
-    def generate_action(cls, context: str, schemas: List[str], schemas_parser: SchemaParser):
+    def generate_action(cls, context: str, schemas: List[str], schemas_parser: SchemaParser, banned_transfer_parser: KeywordSearching):
         print(context)
         action: Transfer = cls(action_name="Transfer", action_context=context)
         if len(schemas) == 0:
             pass
         elif len(schemas) == 1:
-            name: str = schemas_parser.get_atribute_value(schemas[0], "type")
-            if name[0] in BANNED_TRANSFER_REGISTRY:
+            name: List[str] = schemas_parser.get_atribute_value(schemas[0], "type")
+            banned_keywords_name: List[str] = banned_transfer_parser.find_keywords(name[0].lower())
+            if len(banned_keywords_name) > 0:
                 final_name = ""
             else:
                 final_name = name[0]
-            size = schemas_parser.get_atribute_value(schemas[0], "volume")
-            if size[0] in BANNED_TRANSFER_REGISTRY:
+            size: List[str]= schemas_parser.get_atribute_value(schemas[0], "volume")
+            banned_keywords_size: List[str] = banned_transfer_parser.find_keywords(size[0].lower())
+            if len(banned_keywords_size) > 0:
                 final_size = size[0]
             else:
                 final_size = size[0] + " "
             action.recipient = f"{final_size}{final_name}".strip()
         else:
             name: str = schemas_parser.get_atribute_value(schemas[0], "type")
-            if name[0] in BANNED_TRANSFER_REGISTRY:
+            banned_keywords_name = banned_transfer_parser.find_keywords(name[0].lower())
+            if len(banned_keywords_name) > 0:
                 final_name = ""
             else:
                 final_name = name[0]
             size = schemas_parser.get_atribute_value(schemas[0], "volume")
-            if size[0] in BANNED_TRANSFER_REGISTRY:
+            banned_keywords_size: List[str] = banned_transfer_parser.find_keywords(size[0].lower())
+            if len(banned_keywords_size) > 0:
                 final_size = size[0]
             else:
                 final_size = size[0] + " "

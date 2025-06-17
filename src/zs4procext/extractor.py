@@ -16,6 +16,7 @@ from zs4procext.actions import (
     ACTION_REGISTRY,
     AQUEOUS_REGISTRY,
     BANNED_CHEMICALS_REGISTRY,
+    BANNED_TRANSFER_REGISTRY,
     CENTRIFUGATION_REGISTRY,
     ELEMENTARY_ACTION_REGISTRY,
     EVAPORATION_REGISTRY,
@@ -112,6 +113,7 @@ class ActionExtractorFromText(BaseModel):
     _microwave_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
     _ph_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
     _banned_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
+    _transfer_banned_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
     _molar_ratio_parser: Optional[MolarRatioFinder] = PrivateAttr(default=None)
     _action_dict: Dict[str, Any] = PrivateAttr(default=ACTION_REGISTRY)
 
@@ -247,6 +249,7 @@ class ActionExtractorFromText(BaseModel):
         self._filter_parser = KeywordSearching(keywords_list=FILTER_REGISTRY)
         self._transfer_schema_parser = SchemaParser(atributes_list=transfer_atributes)
         self._schema_parser = SchemaParser(atributes_list=atributes)
+        self._transfer_banned_parser = KeywordSearching(keywords_list=BANNED_TRANSFER_REGISTRY)
         self._filtrate_parser = KeywordSearching(keywords_list=FILTRATE_REGISTRY)
         self._banned_parser = KeywordSearching(keywords_list=BANNED_CHEMICALS_REGISTRY)
         self._precipitate_parser = KeywordSearching(keywords_list=PRECIPITATE_REGISTRY)
@@ -704,7 +707,7 @@ class ActionExtractorFromText(BaseModel):
                 print(transfer_response)
                 schemas = self._transfer_schema_parser.parse_schema(transfer_response)
                 new_action = action.generate_action(
-                    context, schemas, self._transfer_schema_parser
+                    context, schemas, self._transfer_schema_parser, self._transfer_banned_parser
                 )
                 action_list.extend(new_action)
             elif action is Separate:
