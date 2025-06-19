@@ -416,6 +416,7 @@ class Treatment(ActionsWithChemicalAndConditions):
         if action.duration is not None:
             new_action = StirMaterial(action_name="Stir", duration=action.duration)
             list_of_actions.append(new_action.zeolite_dict())
+        list_of_actions.extend(Repeat.generate_action(action.context))
         return list_of_actions
 
 ### Actions for Organic Synthesis
@@ -1442,6 +1443,8 @@ class WashMaterial(ActionsWithchemicals):
                     list_of_actions.append(action.zeolite_dict())
         if chemicals_info.repetitions > 1:
             list_of_actions.append(Repeat(action_name="Repeat", amount=chemicals_info.repetitions).zeolite_dict())
+        else:
+            list_of_actions.extend(Repeat.generate_action(action.context))
         return list_of_actions
     
 class WashSAC(ActionsWithChemicalAndConditions):
@@ -2057,6 +2060,8 @@ MATERIAL_ACTION_REGISTRY: Dict[str, Any] = {
     "calcination": ThermalTreatment,
     "stir": StirMaterial,
     "ionexchange": IonExchange,
+    "ion-exchange": IonExchange,
+    "ion exchange": IonExchange,
     "alkalinetreatment": AlkalineTreatment,
     "acidtreatment": AcidTreatment,
     "repeat": Repeat,
