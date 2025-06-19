@@ -416,6 +416,7 @@ class Treatment(ActionsWithChemicalAndConditions):
         if action.duration is not None:
             new_action = StirMaterial(action_name="Stir", duration=action.duration)
             list_of_actions.append(new_action.zeolite_dict())
+        list_of_actions.extend(Repeat.generate_action(action.context))
         return list_of_actions
 
 ### Actions for Organic Synthesis
@@ -1442,6 +1443,8 @@ class WashMaterial(ActionsWithchemicals):
                     list_of_actions.append(action.zeolite_dict())
         if chemicals_info.repetitions > 1:
             list_of_actions.append(Repeat(action_name="Repeat", amount=chemicals_info.repetitions).zeolite_dict())
+        else:
+            list_of_actions.extend(Repeat.generate_action(action.context))
         return list_of_actions
     
 class WashSAC(ActionsWithChemicalAndConditions):
@@ -1645,31 +1648,35 @@ class Transfer(Actions):
     recipient: str = ""
     
     @classmethod
-    def generate_action(cls, context: str, schemas: List[str], schemas_parser: SchemaParser):
+    def generate_action(cls, context: str, schemas: List[str], schemas_parser: SchemaParser, banned_transfer_parser: KeywordSearching):
         print(context)
         action: Transfer = cls(action_name="Transfer", action_context=context)
         if len(schemas) == 0:
             pass
         elif len(schemas) == 1:
-            name: str = schemas_parser.get_atribute_value(schemas[0], "type")
-            if name[0] in BANNED_TRANSFER_REGISTRY:
+            name: List[str] = schemas_parser.get_atribute_value(schemas[0], "type")
+            banned_keywords_name: List[str] = banned_transfer_parser.find_keywords(name[0].lower())
+            if len(banned_keywords_name) > 0:
                 final_name = ""
             else:
                 final_name = name[0]
-            size = schemas_parser.get_atribute_value(schemas[0], "volume")
-            if size[0] in BANNED_TRANSFER_REGISTRY:
+            size: List[str]= schemas_parser.get_atribute_value(schemas[0], "volume")
+            banned_keywords_size: List[str] = banned_transfer_parser.find_keywords(size[0].lower())
+            if len(banned_keywords_size) > 0:
                 final_size = size[0]
             else:
                 final_size = size[0] + " "
             action.recipient = f"{final_size}{final_name}".strip()
         else:
             name: str = schemas_parser.get_atribute_value(schemas[0], "type")
-            if name[0] in BANNED_TRANSFER_REGISTRY:
+            banned_keywords_name = banned_transfer_parser.find_keywords(name[0].lower())
+            if len(banned_keywords_name) > 0:
                 final_name = ""
             else:
                 final_name = name[0]
             size = schemas_parser.get_atribute_value(schemas[0], "volume")
-            if size[0] in BANNED_TRANSFER_REGISTRY:
+            banned_keywords_size: List[str] = banned_transfer_parser.find_keywords(size[0].lower())
+            if len(banned_keywords_size) > 0:
                 final_size = size[0]
             else:
                 final_size = size[0] + " "
@@ -2053,6 +2060,8 @@ MATERIAL_ACTION_REGISTRY: Dict[str, Any] = {
     "calcination": ThermalTreatment,
     "stir": StirMaterial,
     "ionexchange": IonExchange,
+    "ion-exchange": IonExchange,
+    "ion exchange": IonExchange,
     "alkalinetreatment": AlkalineTreatment,
     "acidtreatment": AcidTreatment,
     "repeat": Repeat,
