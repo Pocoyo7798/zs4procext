@@ -416,7 +416,7 @@ class Treatment(ActionsWithChemicalAndConditions):
         if action.duration is not None:
             new_action = StirMaterial(action_name="Stir", duration=action.duration)
             list_of_actions.append(new_action.zeolite_dict())
-        list_of_actions.extend(Repeat.generate_action(action.context))
+        list_of_actions.extend(Repeat.generate_action(context))
         return list_of_actions
 
 ### Actions for Organic Synthesis
@@ -1444,7 +1444,7 @@ class WashMaterial(ActionsWithchemicals):
         if chemicals_info.repetitions > 1:
             list_of_actions.append(Repeat(action_name="Repeat", amount=chemicals_info.repetitions).zeolite_dict())
         else:
-            list_of_actions.extend(Repeat.generate_action(action.context))
+            list_of_actions.extend(Repeat.generate_action(context))
         return list_of_actions
     
 class WashSAC(ActionsWithChemicalAndConditions):
