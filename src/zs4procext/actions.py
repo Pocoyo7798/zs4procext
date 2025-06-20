@@ -396,15 +396,14 @@ class Treatment(ActionsWithChemicalAndConditions):
             action.repetitions = chemicals_info.repetitions
         concentration: List[str] = re.findall(r'\d+', str(action.suspension_concentration))
         list_of_actions: List[Any] = []
+        print(action.solutions)
         if len(action.solutions) > 0:
             list_of_actions.append(NewSolution(action_name="NewSolution").zeolite_dict())
             for solution in action.solutions:
                 banned_names: List[str] = banned_parser.find_keywords(solution.name.lower())
-                if len(banned_names) == 0:
+                if len(banned_names) > 0:
                     pass
                 else:
-                    if len(concentration) > 0 and len(solution["quantity"]) == 0:
-                        solution["quantity"].append(str(float(concentration[0]) / len(action.solutions)) + "mL")
                     new_action: Actions = AddMaterials(action_name="Add", material=solution)
                     list_of_actions.append(new_action.zeolite_dict())
         if action.temperature is not None:
@@ -1441,6 +1440,7 @@ class WashMaterial(ActionsWithchemicals):
                 if len(banned_names) == 0:
                     action.material = material
                     list_of_actions.append(action.zeolite_dict())
+        list_of_actions.append(action.zeolite_dict())
         if chemicals_info.repetitions > 1:
             list_of_actions.append(Repeat(action_name="Repeat", amount=chemicals_info.repetitions).zeolite_dict())
         else:
