@@ -99,11 +99,10 @@ class ModelVLM(BaseModel):
                 top_k=self.model_parameters["top_k"],
                 top_p=self.model_parameters["top_p"],
                 trust_remote_code=self.model_parameters["trust_remote_code"],
-                use_beam_search=self.model_parameters["use_beam_search"],
                 image_input_type="pixel_values",
-                image_token_id=32000,
-                image_input_shape="1,3,336,336",
-                image_feature_size=576,
+                image_token_id=self.model_parameters["image_token_id"],
+                image_input_shape=self.model_parameters["image_input_shape"],
+                image_feature_size=self.model_parameters["image_feature_size"],
                 vllm_kwargs={
                     "gpu_memory_utilization": self.model_parameters[
                         "gpu_memory_utilization"
@@ -126,6 +125,25 @@ class ModelVLM(BaseModel):
 
     def run_image_single_prompt(self, prompt: str, image_path: str) -> str:
         pil_image = Image.open(image_path)
+        new_prompt: Dict[str, Any] = [
+            {
+                "prompt": prompt,
+                "multi_modal_data": {"image": pil_image},
+            }
+        ]
+        outputs = self.model.generate(new_prompt)
+        final_response = ""
+        for o in outputs:
+            final_response += o[1][0][0].text
+            break
+        return final_response
+
+    def run_image_single_prompt_rescale(self, prompt: str, image_path: str, scale: float = 1.0) -> str:
+        pil_image = Image.open(image_path)
+        if scale < 1.0:
+            new_size = (int(pil_image.width * scale), int(pil_image.height * scale))
+            pil_image = pil_image.resize(new_size, Image.BILINEAR)
+
         new_prompt: Dict[str, Any] = [
             {
                 "prompt": prompt,
