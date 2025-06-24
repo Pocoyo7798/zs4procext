@@ -157,11 +157,11 @@ class ModelVLM(BaseModel):
         ]
 
         lora_request = (
-            LoRARequest("sql_adapter", "lora_adapter", self.sql_lora_path)
+            LoRARequest("sql_adapter", 1, self.sql_lora_path)
             if self.sql_lora_path
             else None
         ) #added
-        outputs = self.model.generate(new_prompt, lora_request) #added
+        outputs = self.model.generate(prompt=new_prompt, lora_request=lora_request) #added
         final_response = ""
         for o in outputs:
             final_response += o[1][0][0].text
