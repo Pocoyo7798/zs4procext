@@ -37,6 +37,12 @@ from zs4procext.prompt import TEMPLATE_REGISTRY
     type=float,
     help="Scale factor to reduce image resolution (e.g., 0.5 for 50%)."
 )
+@click.option(
+    "--sql_lora_path",
+    default=None,
+    help="Path to the LoRA adapter for SQL. If not provided, LoRA won't be used.",
+)#added
+
 def image2data(
     image_folder: str,
     output_file_path: str,
@@ -45,6 +51,7 @@ def image2data(
     vlm_model_name: str,
     vlm_model_parameters_path: Optional[str],
     scale: float,
+    sql_lora_path: Optional[str], #added
 ):
     start_time = time.time()
     
@@ -59,7 +66,8 @@ def image2data(
         prompt_template_path=prompt_template_path, 
         prompt_schema_path=prompt_schema_path, 
         vlm_model_name=vlm_model_name, 
-        vlm_model_parameters_path=vlm_model_parameters_path
+        vlm_model_parameters_path=vlm_model_parameters_path,
+        sql_lora_path=sql_lora_path #added
     )
     
     file_list = os.listdir(image_folder)
