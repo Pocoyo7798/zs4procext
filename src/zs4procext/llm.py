@@ -76,10 +76,10 @@ class ModelVLM(BaseModel):
 
     def vllm_load_model(self) -> None:
         """Load a model using vllm library"""
-        enable_lora = self.sql_lora_path is not None #added
+        #enable_lora = self.sql_lora_path is not None #added
 
         if self.model_parameters == {}:
-            self.model = VLLM(model=self.model_name, enable_lora=enable_lora) #added
+            self.model = VLLM(model=self.model_name, enable_lora=True) #added
         else:
             self.model = VLLM(
                 model=self.model_name,
@@ -89,7 +89,7 @@ class ModelVLM(BaseModel):
                 callbacks=self.model_parameters["callbacks"],
                 download_dir=self.model_parameters["download_dir"],
                 dtype=self.model_parameters["dtype"],
-                enable_lora=enable_lora, #addded
+                enable_lora=True, #addded
                 frequency_penalty=self.model_parameters["frequency_penalty"],
                 ignore_eos=self.model_parameters["ignore_eos"],
                 logprobs=self.model_parameters["logprobs"],
@@ -157,7 +157,7 @@ class ModelVLM(BaseModel):
         ]
 
         lora_request = (
-            LoRARequest("sql_adapter", 1, self.sql_lora_path)
+            LoRARequest("sql_adapter", 1, lora_local_path=self.sql_lora_path)
             if self.sql_lora_path
             else None
         ) #added
