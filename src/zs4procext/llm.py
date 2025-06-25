@@ -89,7 +89,7 @@ class ModelVLM(BaseModel):
                 callbacks=self.model_parameters["callbacks"],
                 download_dir=self.model_parameters["download_dir"],
                 dtype=self.model_parameters["dtype"],
-                enable_lora=True, #addded
+                enable_lora=self.model_parameters["enable_lora"], #addded
                 frequency_penalty=self.model_parameters["frequency_penalty"],
                 ignore_eos=self.model_parameters["ignore_eos"],
                 logprobs=self.model_parameters["logprobs"],
