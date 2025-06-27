@@ -4,14 +4,14 @@
         "initialization",
         "objective",
         "context",
-        "actions",
+        "definitions",
         "answer_schema",
         "conclusion"
     ],
     "input_types": {},
     "output_parser": null,
     "partial_variables": {},
-    "template": "<|im_start|>user\n{expertise}{initialization}{objective}{context}{actions}{answer_schema}{conclusion}<|im_end|>",
+    "template": "<|im_start|>user\n{expertise}{initialization}{objective}{context}{definitions}{answer_schema}{conclusion}<|im_end|>",
     "template_format": "f-string",
     "validate_template": true,
     "_type": "prompt"

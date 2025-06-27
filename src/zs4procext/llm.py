@@ -5,7 +5,7 @@ from langchain_community.llms import VLLM
 from pydantic import BaseModel
 from PIL import Image
 import numpy as np
-
+from vllm.lora.request import LoRARequest
 
 class ModelLLM(BaseModel):
     model_name: str
@@ -71,11 +71,15 @@ class ModelVLM(BaseModel):
     model_parameters: Dict[str, Any] = {}
     model_library: str = "vllm"
     model: Optional[VLLM] = None
+    sql_lora_path: Optional[str] = None #added
+
 
     def vllm_load_model(self) -> None:
         """Load a model using vllm library"""
+        #enable_lora = self.sql_lora_path is not None #added
+
         if self.model_parameters == {}:
-            self.model = VLLM(model=self.model_name)
+            self.model = VLLM(model=self.model_name, enable_lora=True) #added
         else:
             self.model = VLLM(
                 model=self.model_name,
@@ -85,6 +89,7 @@ class ModelVLM(BaseModel):
                 callbacks=self.model_parameters["callbacks"],
                 download_dir=self.model_parameters["download_dir"],
                 dtype=self.model_parameters["dtype"],
+                enable_lora=self.model_parameters["enable_lora"], #addded
                 frequency_penalty=self.model_parameters["frequency_penalty"],
                 ignore_eos=self.model_parameters["ignore_eos"],
                 logprobs=self.model_parameters["logprobs"],
@@ -99,11 +104,10 @@ class ModelVLM(BaseModel):
                 top_k=self.model_parameters["top_k"],
                 top_p=self.model_parameters["top_p"],
                 trust_remote_code=self.model_parameters["trust_remote_code"],
-                use_beam_search=self.model_parameters["use_beam_search"],
                 image_input_type="pixel_values",
-                image_token_id=32000,
-                image_input_shape="1,3,336,336",
-                image_feature_size=576,
+                image_token_id=self.model_parameters["image_token_id"],
+                image_input_shape=self.model_parameters["image_input_shape"],
+                image_feature_size=self.model_parameters["image_feature_size"],
                 vllm_kwargs={
                     "gpu_memory_utilization": self.model_parameters[
                         "gpu_memory_utilization"
@@ -111,7 +115,8 @@ class ModelVLM(BaseModel):
                     "seed": self.model_parameters["seed"],
                     "enforce_eager": self.model_parameters["enforce-eager"],
                     "quantization": self.model_parameters["quantization"],
-                    "max_model_len": self.model_parameters["max_model_len"]
+                    "max_model_len": self.model_parameters["max_model_len"],
+                    "enable_lora": self.model_parameters["enable_lora"], #addded
                 },
             )
 
@@ -133,6 +138,31 @@ class ModelVLM(BaseModel):
             }
         ]
         outputs = self.model.generate(new_prompt)
+        final_response = ""
+        for o in outputs:
+            final_response += o[1][0][0].text
+            break
+        return final_response
+
+    def run_image_single_prompt_rescale(self, prompt: str, image_path: str, scale: float = 1.0) -> str:
+        pil_image = Image.open(image_path)
+        if scale < 1.0:
+            new_size = (int(pil_image.width * scale), int(pil_image.height * scale))
+            pil_image = pil_image.resize(new_size, Image.BILINEAR)
+
+        new_prompt: Dict[str, Any] = [
+            {
+                "prompt": prompt,
+                "multi_modal_data": {"image": pil_image},
+            }
+        ]
+
+        lora_request = (
+            LoRARequest("sql_adapter", 1, lora_local_path=self.sql_lora_path)
+            if self.sql_lora_path
+            else None
+        ) #added
+        outputs = self.model.generate(prompts=new_prompt, lora_request=lora_request) #added
         final_response = ""
         for o in outputs:
             final_response += o[1][0][0].text

@@ -12,7 +12,7 @@ from zs4procext.prompt import TEMPLATE_REGISTRY
 @click.argument("image_folder", type=str)
 @click.argument("output_file_path", type=str)
 @click.option(
-    "--prompt_structure_path",
+    "--prompt_template_path",
     default=None,
     help="Path to the file containing the structure of the prompt",
 )
@@ -31,28 +31,43 @@ from zs4procext.prompt import TEMPLATE_REGISTRY
     default=None,
     help="Parameters of the LLM used to process the tables",
 )
+@click.option(
+    "--scale",
+    default=1.0,
+    type=float,
+    help="Scale factor to reduce image resolution (e.g., 0.5 for 50%)."
+)
+@click.option(
+    "--sql_lora_path",
+    default=None,
+    help="Path to the LoRA adapter for SQL. If not provided, LoRA won't be used.",
+)#added
+
 def image2data(
     image_folder: str,
     output_file_path: str,
-    prompt_structure_path: Optional[str],
+    prompt_template_path: Optional[str],
     prompt_schema_path: Optional[str],
     vlm_model_name: str,
     vlm_model_parameters_path: Optional[str],
+    scale: float,
+    sql_lora_path: Optional[str], #added
 ):
     start_time = time.time()
     
-    if prompt_structure_path is None:
+    if prompt_template_path is None:
         try:
             name = vlm_model_name.split("/")[-1]
-            prompt_structure_path = TEMPLATE_REGISTRY[name]
+            prompt_template_path = TEMPLATE_REGISTRY[name]
         except KeyError:
             pass
     
     extractor: ImageExtractor = ImageExtractor(
-        prompt_structure_path=prompt_structure_path, 
+        prompt_template_path=prompt_template_path, 
         prompt_schema_path=prompt_schema_path, 
         vlm_model_name=vlm_model_name, 
-        vlm_model_parameters_path=vlm_model_parameters_path
+        vlm_model_parameters_path=vlm_model_parameters_path,
+        sql_lora_path=sql_lora_path #added
     )
     
     file_list = os.listdir(image_folder)
@@ -69,7 +84,7 @@ def image2data(
             
             try:
                 # Extract image info with the image name as a key in the parsed data
-                parsed_data = extractor.extract_image_info(file_path)
+                parsed_data = extractor.extract_image_info(file_path, scale =scale)
                 print(f"Parsed data for {parsed_data}")
                 
                 # Update aggregated_data using a nested dictionary merge logic
