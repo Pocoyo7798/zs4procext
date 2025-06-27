@@ -1152,7 +1152,8 @@ class ImageExtractor(BaseModel):
     vlm_model_parameters_path: Optional[str] = None
     _prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
     _vlm_model: Optional[ModelVLM] = PrivateAttr(default=None)
-    _image_parser: Optional[ImageParser2] = PrivateAttr(default=None)  
+    _image_parser: Optional[ImageParser2] = PrivateAttr(default=None) 
+    sql_lora_path: Optional[str] = None #adicionado
 
     def model_post_init(self, __context: Any) -> None:
         if self.vlm_model_parameters_path is None:
@@ -1174,9 +1175,9 @@ class ImageExtractor(BaseModel):
         self._prompt = PromptFormatter(**prompt_dict)
         self._prompt.model_post_init(self.prompt_template_path)
         if self.vlm_model_name is None:
-            self._vlm_model = ModelVLM(model_name="Llama2-70B-chat-hf")
+            self._vlm_model = ModelVLM(model_name="Llama2-70B-chat-hf", sql_lora_path=self.sql_lora_path) #adicionado
         else:
-            self._vlm_model = ModelVLM(model_name=self.vlm_model_name)
+            self._vlm_model = ModelVLM(model_name=self.vlm_model_name, sql_lora_path=self.sql_lora_path) #adicionado
         self._vlm_model.load_model_parameters(vlm_param_path)
         self._vlm_model.vllm_load_model()
         self._image_parser = ImageParser2()

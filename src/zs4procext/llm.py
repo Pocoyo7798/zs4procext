@@ -5,7 +5,7 @@ from langchain_community.llms import VLLM
 from pydantic import BaseModel
 from PIL import Image
 import numpy as np
-
+from vllm.lora.request import LoRARequest
 
 class ModelLLM(BaseModel):
     model_name: str
@@ -71,11 +71,15 @@ class ModelVLM(BaseModel):
     model_parameters: Dict[str, Any] = {}
     model_library: str = "vllm"
     model: Optional[VLLM] = None
+    sql_lora_path: Optional[str] = None #added
+
 
     def vllm_load_model(self) -> None:
         """Load a model using vllm library"""
+        #enable_lora = self.sql_lora_path is not None #added
+
         if self.model_parameters == {}:
-            self.model = VLLM(model=self.model_name)
+            self.model = VLLM(model=self.model_name, enable_lora=True) #added
         else:
             self.model = VLLM(
                 model=self.model_name,
@@ -85,6 +89,7 @@ class ModelVLM(BaseModel):
                 callbacks=self.model_parameters["callbacks"],
                 download_dir=self.model_parameters["download_dir"],
                 dtype=self.model_parameters["dtype"],
+                enable_lora=self.model_parameters["enable_lora"], #addded
                 frequency_penalty=self.model_parameters["frequency_penalty"],
                 ignore_eos=self.model_parameters["ignore_eos"],
                 logprobs=self.model_parameters["logprobs"],
@@ -110,7 +115,8 @@ class ModelVLM(BaseModel):
                     "seed": self.model_parameters["seed"],
                     "enforce_eager": self.model_parameters["enforce-eager"],
                     "quantization": self.model_parameters["quantization"],
-                    "max_model_len": self.model_parameters["max_model_len"]
+                    "max_model_len": self.model_parameters["max_model_len"],
+                    "enable_lora": self.model_parameters["enable_lora"], #addded
                 },
             )
 
@@ -150,7 +156,13 @@ class ModelVLM(BaseModel):
                 "multi_modal_data": {"image": pil_image},
             }
         ]
-        outputs = self.model.generate(new_prompt)
+
+        lora_request = (
+            LoRARequest("sql_adapter", 1, lora_local_path=self.sql_lora_path)
+            if self.sql_lora_path
+            else None
+        ) #added
+        outputs = self.model.generate(prompts=new_prompt, lora_request=lora_request) #added
         final_response = ""
         for o in outputs:
             final_response += o[1][0][0].text
