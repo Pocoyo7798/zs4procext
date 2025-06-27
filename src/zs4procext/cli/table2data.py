@@ -69,6 +69,7 @@ def table2data(
             file_path = f"{image_folder}/{file}"
             extractor.extract_table_info(file_path)
     print(f"{(time.time() - start_time) / 60} minutes")
+
 def main():
     table2data()
 

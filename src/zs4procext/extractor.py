@@ -1131,16 +1131,17 @@ class TableExtractor(BaseModel):
         self._prompt = PromptFormatter(**prompt_dict)
         self._prompt.model_post_init(self.prompt_template_path)
         if self.vlm_model_name is None:
-            self._vlm_model = ModelVLM(model_name="Llama2-70B-chat-hf")
+            self._vlm_model = ModelVLM(model_name="microsoft/Phi-3-medium-4k-instruct")
         else:
             self._vlm_model = ModelVLM(model_name=self.vlm_model_name)
         self._vlm_model.load_model_parameters(vlm_param_path)
         self._vlm_model.vllm_load_model()
 
-    def extract_table_info(self, image_path: str):
-        prompt = self._prompt.format_prompt("")
+    def extract_table_info(self, image_path: str, scale: float = 1.0):
+        image_name = os.path.basename(image_path)
+        prompt = self._prompt.format_prompt("<image>")
         print(prompt)
-        output = self._vlm_model.run_image_single_prompt(prompt, image_path)
+        output = self._vlm_model.run_image_single_prompt_rescale(prompt, image_path, scale = scale)
         print(output)
 
 
