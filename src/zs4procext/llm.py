@@ -170,7 +170,9 @@ class InferencebyHF(BaseModel):
 
 
     def model_post_init(self, __context: Any) -> None:
-        config = LORA_MODEL_CONFIGS[self.model_name]
+        model_name_key = os.path.basename(self.model_name.rstrip("/"))
+
+        config = LORA_MODEL_CONFIGS[model_name_key]
 
         model_path = config["model_class"]
         module_name, class_name = model_path.rsplit(".", 1)
