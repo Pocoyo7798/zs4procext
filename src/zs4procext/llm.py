@@ -7,6 +7,8 @@ from PIL import Image
 import numpy as np
 from vllm.lora.request import LoRARequest
 
+import os
+
 class ModelLLM(BaseModel):
     model_name: str
     model_parameters: Dict[str, Any] = {}
