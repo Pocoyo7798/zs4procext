@@ -7,6 +7,8 @@ from PIL import Image
 import numpy as np
 from vllm.lora.request import LoRARequest
 
+import importlib
+import torch
 import os
 
 class ModelLLM(BaseModel):
