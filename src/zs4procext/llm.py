@@ -2,7 +2,7 @@ import json
 from typing import Any, Dict, Optional
 
 from langchain_community.llms import VLLM
-from pydantic import BaseModel
+from pydantic import BaseModel, PrivateAttr
 from PIL import Image
 import numpy as np
 from vllm.lora.request import LoRARequest
@@ -173,7 +173,7 @@ class InferencebyHF(BaseModel):
     
     processor: Optional[Any]=None
     process_vision_info: Optional[Any]=None
-
+    _model: Any = PrivateAttr(default=None)
 
     def model_post_init(self, __context: Any) -> None:
         model_name_key = os.path.basename(self.model_name.rstrip("/"))
@@ -190,9 +190,9 @@ class InferencebyHF(BaseModel):
             device_map="auto")
 
         if self.lora_path:
-            self.model = PeftModel.from_pretrained(base_model, self.lora_path)
+            self._model = PeftModel.from_pretrained(base_model, self.lora_path)
         else:
-            self.model = base_model
+            self._model = base_model
 
         self.processor = AutoProcessor.from_pretrained(self.model_name)
 
