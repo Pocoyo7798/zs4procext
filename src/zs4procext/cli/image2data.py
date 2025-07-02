@@ -93,7 +93,7 @@ def image2data(
             
             try:
                 # Extract image info with the image name as a key in the parsed data
-                parsed_data = extractor.extract_image_info(file_path, scale =scale)
+                parsed_data = extractor.extract_image_info(file_path)
                 print(f"Parsed data for {parsed_data}")
                 
                 # Update aggregated_data using a nested dictionary merge logic
