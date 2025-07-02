@@ -11,6 +11,8 @@ import importlib
 import torch
 import os
 
+from peft import PeftModel
+
 class ModelLLM(BaseModel):
     model_name: str
     model_parameters: Dict[str, Any] = {}
