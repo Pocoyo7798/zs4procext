@@ -10,7 +10,7 @@ from vllm.lora.request import LoRARequest
 import importlib
 import torch
 import os
-
+from transformers import AutoProcessor
 from peft import PeftModel
 
 class ModelLLM(BaseModel):
