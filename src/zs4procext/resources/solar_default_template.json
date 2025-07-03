@@ -4,14 +4,14 @@
         "initialization",
         "objective",
         "context",
-        "actions",
+        "definitions",
         "answer_schema",
         "conclusion"
     ],
     "input_types": {},
     "output_parser": null,
     "partial_variables": {},
-    "template": "### User:\n{expertise}{initialization}{actions}{objective}{context}{answer_schema}{conclusion}\n\n### Assistant:",
+    "template": "### User:\n{expertise}{initialization}{definitions}{objective}{context}{answer_schema}{conclusion}\n\n### Assistant:",
     "template_format": "f-string",
     "validate_template": true,
     "_type": "prompt"

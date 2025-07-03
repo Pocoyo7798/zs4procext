@@ -382,6 +382,7 @@ class Treatment(ActionsWithChemicalAndConditions):
         schema_parser: SchemaParser,
         amount_parser: ParametersParser,
         conditions_parser: ParametersParser,
+        banned_parser: KeywordSearching
     ) -> List[Dict[str, Any]]:
         action: Treatment = cls(action_name=name, action_context=context)
         action.validate_conditions(conditions_parser)
@@ -393,15 +394,18 @@ class Treatment(ActionsWithChemicalAndConditions):
         else:
             action.solutions = chemicals_info.chemical_list
             action.repetitions = chemicals_info.repetitions
-        concentration = re.findall(r'\d+', str(action.suspension_concentration))
+        concentration: List[str] = re.findall(r'\d+', str(action.suspension_concentration))
         list_of_actions: List[Any] = []
+        print(action.solutions)
         if len(action.solutions) > 0:
             list_of_actions.append(NewSolution(action_name="NewSolution").zeolite_dict())
             for solution in action.solutions:
-                if len(concentration) > 0 and len(solution["quantity"]) == 0:
-                    solution["quantity"].append(str(float(concentration[0]) / len(action.solutions)) + "mL")
-                new_action: Actions = AddMaterials(action_name="Add", material=solution)
-                list_of_actions.append(new_action.zeolite_dict())
+                banned_names: List[str] = banned_parser.find_keywords(solution.name.lower())
+                if len(banned_names) > 0:
+                    pass
+                else:
+                    new_action: Actions = AddMaterials(action_name="Add", material=solution)
+                    list_of_actions.append(new_action.zeolite_dict())
         if action.temperature is not None:
             new_action = ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature)
             list_of_actions.append(new_action.zeolite_dict())
@@ -411,6 +415,7 @@ class Treatment(ActionsWithChemicalAndConditions):
         if action.duration is not None:
             new_action = StirMaterial(action_name="Stir", duration=action.duration)
             list_of_actions.append(new_action.zeolite_dict())
+        list_of_actions.extend(Repeat.generate_action(context))
         return list_of_actions
 
 ### Actions for Organic Synthesis
@@ -1435,8 +1440,11 @@ class WashMaterial(ActionsWithchemicals):
                 if len(banned_names) == 0:
                     action.material = material
                     list_of_actions.append(action.zeolite_dict())
+        list_of_actions.append(action.zeolite_dict())
         if chemicals_info.repetitions > 1:
             list_of_actions.append(Repeat(action_name="Repeat", amount=chemicals_info.repetitions).zeolite_dict())
+        else:
+            list_of_actions.extend(Repeat.generate_action(context))
         return list_of_actions
     
 class WashSAC(ActionsWithChemicalAndConditions):
@@ -1581,8 +1589,9 @@ class IonExchange(Treatment):
         schema_parser: SchemaParser,
         amount_parser: ParametersParser,
         conditions_parser: ParametersParser,
+        banned_parser: KeywordSearching
     ) -> List[Dict[str, Any]]:
-        return Treatment.generate_treatment("IonExchange", context, schemas, schema_parser, amount_parser, conditions_parser)
+        return Treatment.generate_treatment("IonExchange", context, schemas, schema_parser, amount_parser, conditions_parser, banned_parser)
     
 class AlkalineTreatment(Treatment):
     
@@ -1594,8 +1603,9 @@ class AlkalineTreatment(Treatment):
         schema_parser: SchemaParser,
         amount_parser: ParametersParser,
         conditions_parser: ParametersParser,
+        banned_parser: KeywordSearching
     ) -> List[Dict[str, Any]]:
-        return Treatment.generate_treatment("AlkalineTreatment", context, schemas, schema_parser, amount_parser, conditions_parser)
+        return Treatment.generate_treatment("AlkalineTreatment", context, schemas, schema_parser, amount_parser, conditions_parser, banned_parser)
     
 class AcidTreatment(Treatment):
 
@@ -1607,8 +1617,9 @@ class AcidTreatment(Treatment):
         schema_parser: SchemaParser,
         amount_parser: ParametersParser,
         conditions_parser: ParametersParser,
+        banned_parser: KeywordSearching
     ) -> List[Dict[str, Any]]:
-        return Treatment.generate_treatment("AcidTreatment", context, schemas, schema_parser, amount_parser, conditions_parser)
+        return Treatment.generate_treatment("AcidTreatment", context, schemas, schema_parser, amount_parser, conditions_parser, banned_parser)
 
 class Repeat(Actions):
     amount: str = 1
@@ -1637,19 +1648,39 @@ class Transfer(Actions):
     recipient: str = ""
     
     @classmethod
-    def generate_action(cls, context: str, schemas: List[str], schemas_parser: SchemaParser):
+    def generate_action(cls, context: str, schemas: List[str], schemas_parser: SchemaParser, banned_transfer_parser: KeywordSearching):
         print(context)
         action: Transfer = cls(action_name="Transfer", action_context=context)
         if len(schemas) == 0:
             pass
         elif len(schemas) == 1:
-            name: str = schemas_parser.get_atribute_value(schemas[0], "type")
-            size = schemas_parser.get_atribute_value(schemas[0], "volume")
-            action.recipient = f"{size[0]} {name[0]}".strip()
+            name: List[str] = schemas_parser.get_atribute_value(schemas[0], "type")
+            banned_keywords_name: List[str] = banned_transfer_parser.find_keywords(name[0].lower())
+            if len(banned_keywords_name) > 0:
+                final_name = ""
+            else:
+                final_name = name[0]
+            size: List[str]= schemas_parser.get_atribute_value(schemas[0], "volume")
+            banned_keywords_size: List[str] = banned_transfer_parser.find_keywords(size[0].lower())
+            if len(banned_keywords_size) > 0:
+                final_size = size[0]
+            else:
+                final_size = size[0] + " "
+            action.recipient = f"{final_size}{final_name}".strip()
         else:
             name: str = schemas_parser.get_atribute_value(schemas[0], "type")
+            banned_keywords_name = banned_transfer_parser.find_keywords(name[0].lower())
+            if len(banned_keywords_name) > 0:
+                final_name = ""
+            else:
+                final_name = name[0]
             size = schemas_parser.get_atribute_value(schemas[0], "volume")
-            action.recipient = f"{size[0]} {name[0]}".strip()
+            banned_keywords_size: List[str] = banned_transfer_parser.find_keywords(size[0].lower())
+            if len(banned_keywords_size) > 0:
+                final_size = size[0]
+            else:
+                final_size = size[0] + " "
+            action.recipient = f"{final_size}{final_name}".strip()
             print(
                 "Warning: More than one recipient was found, only the first one was considered"
                 )
@@ -1867,7 +1898,11 @@ class Sieve(ActionsWithConditons):
         action.validate_conditions(conditions_parser, add_others=True)
         return [action.zeolite_dict()]
 
+BANNED_TRANSFER_REGISTRY: List[str] = ["N/A"]
+
 BANNED_CHEMICALS_REGISTRY: List[str] = [
+    "reaction",
+    "title",
     "newsolution",
     "extract",
     "heated",
@@ -2025,6 +2060,8 @@ MATERIAL_ACTION_REGISTRY: Dict[str, Any] = {
     "calcination": ThermalTreatment,
     "stir": StirMaterial,
     "ionexchange": IonExchange,
+    "ion-exchange": IonExchange,
+    "ion exchange": IonExchange,
     "alkalinetreatment": AlkalineTreatment,
     "acidtreatment": AcidTreatment,
     "repeat": Repeat,
@@ -2036,6 +2073,7 @@ MATERIAL_ACTION_REGISTRY: Dict[str, Any] = {
     "extract": WashMaterial,
     "quench": WashMaterial,
     "thermaltreatment": ThermalTreatment,
+    "posttreatment": ThermalTreatment, 
     "drysolid": DryMaterial,
     "drysolution": DryMaterial,
     "dry": DryMaterial,
@@ -2046,6 +2084,7 @@ MATERIAL_ACTION_REGISTRY: Dict[str, Any] = {
     "reflux": ChangeTemperature,
     "phaseseparation": Separate,
     "purify": WashMaterial,
+    "transfer": None,
     "degas": None,
     "invalidaction": None,
     "recrystallize": None,
