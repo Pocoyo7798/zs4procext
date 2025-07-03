@@ -6,6 +6,7 @@ import json
 import click
 
 from zs4procext.extractor import ImageExtractor
+from zs4procext.extractor import ImageExtractorHF_LORA
 from zs4procext.prompt import TEMPLATE_REGISTRY
 
 @click.command()
@@ -24,12 +25,12 @@ from zs4procext.prompt import TEMPLATE_REGISTRY
 @click.option(
     "--vlm_model_name",
     default=None,
-    help="Name of the LLM used to process the tables",
+    help="Name of the VLM used to process the figures",
 )
 @click.option(
     "--vlm_model_parameters_path",
     default=None,
-    help="Parameters of the LLM used to process the tables",
+    help="Parameters of the VLM used to process the figures, (only in case of vllm inference).",
 )
 @click.option(
     "--scale",
@@ -38,9 +39,9 @@ from zs4procext.prompt import TEMPLATE_REGISTRY
     help="Scale factor to reduce image resolution (e.g., 0.5 for 50%)."
 )
 @click.option(
-    "--sql_lora_path",
+    "--lora_path",
     default=None,
-    help="Path to the LoRA adapter for SQL. If not provided, LoRA won't be used.",
+    help="Path to the LoRA adapter. If not provided, LoRA won't be used.",
 )#added
 
 def image2data(
@@ -51,7 +52,7 @@ def image2data(
     vlm_model_name: str,
     vlm_model_parameters_path: Optional[str],
     scale: float,
-    sql_lora_path: Optional[str], #added
+    lora_path: Optional[str], #added
 ):
     start_time = time.time()
     
@@ -62,13 +63,21 @@ def image2data(
         except KeyError:
             pass
     
-    extractor: ImageExtractor = ImageExtractor(
-        prompt_template_path=prompt_template_path, 
-        prompt_schema_path=prompt_schema_path, 
-        vlm_model_name=vlm_model_name, 
-        vlm_model_parameters_path=vlm_model_parameters_path,
-        sql_lora_path=sql_lora_path #added
-    )
+    if lora_path is not None:
+        print(f"Using HF+LoRA extractor with adapter at {lora_path}")
+        extractor = ImageExtractorHF_LORA(
+            prompt_template_path=prompt_template_path,
+            vlm_model_name=vlm_model_name,
+            lora_path=lora_path,
+        )
+    else:
+        print("Using default VLLM extractor")
+        extractor = ImageExtractor(
+            prompt_template_path=prompt_template_path,
+            prompt_schema_path=prompt_schema_path,
+            vlm_model_name=vlm_model_name,
+            vlm_model_parameters_path=vlm_model_parameters_path,
+        )
     
     file_list = os.listdir(image_folder)
     aggregated_data = {}
@@ -84,7 +93,7 @@ def image2data(
             
             try:
                 # Extract image info with the image name as a key in the parsed data
-                parsed_data = extractor.extract_image_info(file_path, scale =scale)
+                parsed_data = extractor.extract_image_info(file_path)
                 print(f"Parsed data for {parsed_data}")
                 
                 # Update aggregated_data using a nested dictionary merge logic
