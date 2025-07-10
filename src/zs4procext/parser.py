@@ -53,7 +53,7 @@ class Parameters(BaseModel):
 class ParametersParser(BaseModel):
     parser_params_path: str = str(
         importlib_resources.files("zs4procext")
-        / "resources"
+        / "resources/parsing_parameters"
         / "synthesis_parsing_parameters.json"
     )
     time: bool = True
@@ -314,7 +314,7 @@ class ParametersParser(BaseModel):
 class ListParametersParser(BaseModel):
     parser_params_path: str = str(
         importlib_resources.files("zs4procext")
-        / "resources"
+        / "resources/parsing_parameters"
         / "synthesis_parsing_parameters.json"
     )
     quantity_range: int = 100
@@ -582,7 +582,7 @@ class ListParametersParser(BaseModel):
 class ComplexParametersParser(BaseModel):
     parser_params_path: str = str(
         importlib_resources.files("zs4procext")
-        / "resources"
+        / "resources/parsing_parameters"
         / "synthesis_parsing_parameters.json"
     )
     _regex: Optional[re.Pattern[str]] = PrivateAttr(default=None)
