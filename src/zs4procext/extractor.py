@@ -122,7 +122,7 @@ class ActionExtractorFromText(BaseModel):
             if self.action_prompt_schema_path is None:
                 self.action_prompt_schema_path = str(
                     importlib_resources.files("zs4procext")
-                    / "resources"
+                    / "resources/schemas"
                     / "organic_synthesis_actions_schema.json"
                 )
             self._action_dict = PISTACHIO_ACTION_REGISTRY
@@ -132,7 +132,7 @@ class ActionExtractorFromText(BaseModel):
             if self.action_prompt_schema_path is None:
                 self.action_prompt_schema_path = str(
                     importlib_resources.files("zs4procext")
-                    / "resources"
+                    / "resources/schemas"
                     / "organic_synthesis_actions_schema.json"
                 )
             self._action_dict = ORGANIC_ACTION_REGISTRY
@@ -142,7 +142,7 @@ class ActionExtractorFromText(BaseModel):
             if self.action_prompt_schema_path is None:
                 self.action_prompt_schema_path = str(
                     importlib_resources.files("zs4procext")
-                    / "resources"
+                    / "resources/schemas"
                     / "material_synthesis_actions_schema.json"
                 )
             self._action_dict = MATERIAL_ACTION_REGISTRY
@@ -152,7 +152,7 @@ class ActionExtractorFromText(BaseModel):
             if self.action_prompt_schema_path is None:
                 self.action_prompt_schema_path = str(
                     importlib_resources.files("zs4procext")
-                    / "resources"
+                    / "resources/schemas"
                     / "sac_synthesis_actions_schema.json"
                 )
             self._action_dict = SAC_ACTION_REGISTRY
@@ -162,7 +162,7 @@ class ActionExtractorFromText(BaseModel):
             if self.action_prompt_schema_path is None:
                 self.action_prompt_schema_path = str(
                     importlib_resources.files("zs4procext")
-                    / "resources"
+                    / "resources/schemas"
                     / "material_synthesis_actions_schema.json"
                 )
             self._action_dict = ELEMENTARY_ACTION_REGISTRY
@@ -171,7 +171,7 @@ class ActionExtractorFromText(BaseModel):
         if self.chemical_prompt_schema_path is None:
             self.chemical_prompt_schema_path = str(
                 importlib_resources.files("zs4procext")
-                / "resources"
+                / "resources/schemas"
                 / "chemicals_from_actions_schema.json"
             )
         with open(self.chemical_prompt_schema_path, "r") as f:
@@ -201,7 +201,7 @@ class ActionExtractorFromText(BaseModel):
             self._solution_chemical_prompt.model_post_init(self.chemical_prompt_template_path)
         self.transfer_prompt_schema_path = str(
                     importlib_resources.files("zs4procext")
-                    / "resources"
+                    / "resources/schemas"
                     / "transfer_schema.json"
                 )
         with open(self.transfer_prompt_schema_path, "r") as f:
@@ -211,7 +211,7 @@ class ActionExtractorFromText(BaseModel):
         if self.llm_model_parameters_path is None:
             llm_param_path = str(
                 importlib_resources.files("zs4procext")
-                / "resources"
+                / "resources/schemas"
                 / "vllm_default_params.json"
             )
         else:
@@ -796,7 +796,7 @@ class ParagraphClassifier(BaseModel):
         if self.llm_model_parameters_path is None:
             llm_param_path = str(
                 importlib_resources.files("zs4procext")
-                / "resources"
+                / "resources/schemas"
                 / "vllm_default_params.json"
             )
         else:
@@ -830,30 +830,6 @@ class SamplesExtractorFromText(BaseModel):
     _llm_model: Optional[ModelLLM] = PrivateAttr(default=None)
 
     def model_post_init(self, __context: Any) -> None:
-        """if self.prompt_schema_path is None:
-            self.prompt_schema_path = str(
-                importlib_resources.files("zs4procext")
-                / "resources"
-                / "find_samples_procedures_schema.json"
-            )
-        with open(self.prompt_schema_path, "r") as f:
-            prompt_dict = json.load(f)
-        self._prompt = PromptFormatter(**prompt_dict)
-        self._prompt.model_post_init(self.prompt_template_path)
-        if self.llm_model_parameters_path is None:
-            llm_param_path = str(
-                importlib_resources.files("zs4procext")
-                / "resources"
-                / "vllm_default_params.json"
-            )
-        else:
-            llm_param_path = self.llm_model_parameters_path
-        if self.llm_model_name is None:
-            self._llm_model = ModelLLM(model_name="Llama2-70B-chat-hf")
-        else:
-            self._llm_model = ModelLLM(model_name=self.llm_model_name)
-        #self._llm_model.load_model_parameters(llm_param_path)
-        #self._llm_model.vllm_load_model()"""
         atributes = ["name", "preparation", "yield"]
         self._schema_parser = SchemaParser(atributes_list=atributes)
         self._list_parser = ListParametersParser()
@@ -1115,7 +1091,7 @@ class TableExtractor(BaseModel):
         if self.vlm_model_parameters_path is None:
             vlm_param_path = str(
                 importlib_resources.files("zs4procext")
-                / "resources"
+                / "resources/schemas"
                 / "vllm_default_params.json"
                 )
         else:
@@ -1123,7 +1099,7 @@ class TableExtractor(BaseModel):
         if self.prompt_schema_path is None:
             self.prompt_schema_path = str(
                 importlib_resources.files("zs4procext")
-                / "resources"
+                / "resources/schemas"
                 / "table_extraction_schema.json"
             )
         with open(self.prompt_schema_path, "r") as f:
@@ -1158,7 +1134,7 @@ class ImageExtractor(BaseModel):
         if self.vlm_model_parameters_path is None:
             vlm_param_path = str(
                 importlib_resources.files("zs4procext")
-                / "resources"
+                / "resources/schemas"
                 / "vllm_default_params.json"
                 )
         else:
@@ -1166,7 +1142,7 @@ class ImageExtractor(BaseModel):
         if self.prompt_schema_path is None:
             self.prompt_schema_path = str(
                 importlib_resources.files("zs4procext")
-                / "resources"
+                / "resources/schemas"
                 / "image_extraction_schema.json" 
             )
         with open(self.prompt_schema_path, "r") as f:
@@ -1208,7 +1184,7 @@ class ImageExtractorHF_LORA(BaseModel):
         if self._message_schema_path is None:
             self._message_schema_path = str(
                 importlib_resources.files("zs4procext")
-                / "resources"
+                / "resources/schemas"
                 / "qwen_message_HF_schema.json"
             )
         with open(self._message_schema_path, "r") as f:
