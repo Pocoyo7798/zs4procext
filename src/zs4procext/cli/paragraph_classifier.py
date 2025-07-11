@@ -2,24 +2,30 @@ import time
 from typing import List, Optional
 import torch
 import importlib_resources
+import os
 
 import click
 
-from zs4procext.classifier import ParagraphClassifier
+from zs4procext.extractor import ParagraphClassifier
 from zs4procext.prompt import TEMPLATE_REGISTRY
 
 @click.command()
 @click.argument("text_file_path", type=str)
 @click.argument("output_file_path", type=str)
 @click.option(
-    "--prompt_structure_path",
+    "--prompt_template_path",
     default=None,
     help="Path to the file containing the structure of the prompt",
 )
 @click.option(
+    "--prompt_schema_path",
+    default=None,
+    help="Path to the file containing the schema of the action prompt",
+)
+@click.option(
     "--type",
     default="n2_physisorption",
-    help="Path to the file containing the schema of the prompt",
+    help="Type of paragraphs you want to find: Options: n2_physorption, ftir_pyridine, desilication_dealumination",
 )
 @click.option(
     "--llm_model_name",
@@ -34,14 +40,17 @@ from zs4procext.prompt import TEMPLATE_REGISTRY
 def paragraph_classifier(
     text_file_path: str,
     output_file_path: str,
-    prompt_structure_path: Optional[str],
+    prompt_template_path: Optional[str],
+    prompt_schema_path: Optional[str],
     type: str,
     llm_model_name: str,
     llm_model_parameters_path: Optional[str],
 ):
     torch.cuda.empty_cache()
     start_time = time.time()
-    if type == "n2_physisorption":
+    if prompt_schema_path is not None:
+        pass
+    elif type == "n2_physisorption":
         prompt_schema_path = str(
         importlib_resources.files("zs4procext")
         / "resources"
@@ -59,15 +68,23 @@ def paragraph_classifier(
         / "resources"
         / "classify_multi_sample_schema.json"
     )
-    if prompt_structure_path is None:
+    elif type == "desilication_dealumination":
+        prompt_schema_path = str(
+        importlib_resources.files("zs4procext")
+        / "resources"
+        / "classify_desilication_dealumination_schema.json"
+    )
+    else:
+        raise AttributeError("You need to pass a valid --type or a --prompt_schema_path")
+    if prompt_template_path is None:
         try:
             name = llm_model_name.split("/")[-1]
             print(name)
-            prompt_structure_path = TEMPLATE_REGISTRY[name]
+            prompt_template_path = TEMPLATE_REGISTRY[name]
         except KeyError:
             pass
     extractor: ParagraphClassifier = ParagraphClassifier(
-        prompt_structure_path=prompt_structure_path,
+        prompt_template_path=prompt_template_path,
         prompt_schema_path=prompt_schema_path,
         llm_model_name=llm_model_name,
         llm_model_parameters_path=llm_model_parameters_path,
@@ -77,6 +94,8 @@ def paragraph_classifier(
         text_lines: List[str] = f.readlines()
     size = len(text_lines)
     count = 1
+    if os.path.isfile(output_file_path):
+        os.remove(output_file_path)
     for text in text_lines:
         print(f"text processed: {count}/{size}")
         results: str = str(

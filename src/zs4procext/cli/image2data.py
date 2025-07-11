@@ -6,13 +6,14 @@ import json
 import click
 
 from zs4procext.extractor import ImageExtractor
+from zs4procext.extractor import ImageExtractorHF_LORA
 from zs4procext.prompt import TEMPLATE_REGISTRY
 
 @click.command()
 @click.argument("image_folder", type=str)
 @click.argument("output_file_path", type=str)
 @click.option(
-    "--prompt_structure_path",
+    "--prompt_template_path",
     default=None,
     help="Path to the file containing the structure of the prompt",
 )
@@ -24,36 +25,59 @@ from zs4procext.prompt import TEMPLATE_REGISTRY
 @click.option(
     "--vlm_model_name",
     default=None,
-    help="Name of the LLM used to process the tables",
+    help="Name of the VLM used to process the figures",
 )
 @click.option(
     "--vlm_model_parameters_path",
     default=None,
-    help="Parameters of the LLM used to process the tables",
+    help="Parameters of the VLM used to process the figures, (only in case of vllm inference).",
 )
+@click.option(
+    "--scale",
+    default=1.0,
+    type=float,
+    help="Scale factor to reduce image resolution (e.g., 0.5 for 50%)."
+)
+@click.option(
+    "--lora_path",
+    default=None,
+    help="Path to the LoRA adapter. If not provided, LoRA won't be used.",
+)#added
+
 def image2data(
     image_folder: str,
     output_file_path: str,
-    prompt_structure_path: Optional[str],
+    prompt_template_path: Optional[str],
     prompt_schema_path: Optional[str],
     vlm_model_name: str,
     vlm_model_parameters_path: Optional[str],
+    scale: float,
+    lora_path: Optional[str], #added
 ):
     start_time = time.time()
     
-    if prompt_structure_path is None:
+    if prompt_template_path is None:
         try:
             name = vlm_model_name.split("/")[-1]
-            prompt_structure_path = TEMPLATE_REGISTRY[name]
+            prompt_template_path = TEMPLATE_REGISTRY[name]
         except KeyError:
             pass
     
-    extractor: ImageExtractor = ImageExtractor(
-        prompt_structure_path=prompt_structure_path, 
-        prompt_schema_path=prompt_schema_path, 
-        vlm_model_name=vlm_model_name, 
-        vlm_model_parameters_path=vlm_model_parameters_path
-    )
+    if lora_path is not None:
+        print(f"Using HF+LoRA extractor with adapter at {lora_path}")
+        extractor = ImageExtractorHF_LORA(
+            prompt_template_path=prompt_template_path,
+            vlm_model_name=vlm_model_name,
+            lora_path=lora_path,
+        )
+    else:
+        print("Using default VLLM extractor")
+        extractor = ImageExtractor(
+            prompt_template_path=prompt_template_path,
+            prompt_schema_path=prompt_schema_path,
+            vlm_model_name=vlm_model_name,
+            vlm_model_parameters_path=vlm_model_parameters_path,
+        )
     
     file_list = os.listdir(image_folder)
     aggregated_data = {}
