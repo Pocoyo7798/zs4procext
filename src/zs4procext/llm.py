@@ -5,12 +5,10 @@ from langchain_community.llms import VLLM
 from pydantic import BaseModel, PrivateAttr
 from PIL import Image
 import numpy as np
-from vllm.lora.request import LoRARequest
 
 import importlib
 import torch
 import os
-from transformers import AutoProcessor
 
 class ModelLLM(BaseModel):
     model_name: str

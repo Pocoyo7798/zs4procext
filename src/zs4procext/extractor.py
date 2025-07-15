@@ -57,7 +57,7 @@ from zs4procext.actions import (
     WashMaterial,
     WashSAC,
 )
-from zs4procext.llm import ModelLLM, ModelVLM, InferencebyHF
+from zs4procext.llm import ModelLLM, ModelVLM
 from zs4procext.parser import (
     ActionsParser,
     ComplexParametersParser,
@@ -1170,46 +1170,3 @@ class ImageExtractor(BaseModel):
         print (parsed_output)
         return {image_name: parsed_output}
 
-class ImageExtractorHF_LORA(BaseModel):
-    prompt_template_path: Optional[str] = None
-    vlm_model_name: Optional[str] = None
-    lora_path: Optional[str] = None
-
-    _vlm_model: Optional[InferencebyHF] = PrivateAttr(default=None)
-    _message_schema_path: Optional[str] = PrivateAttr(default=None)
-    _message: Optional[PromptFormatter] = PrivateAttr(default=None)
-    _image_parser: Optional[ImageParser2] = PrivateAttr(default=None)
-
-    def model_post_init(self, __context: Any) -> None:
-        if self._message_schema_path is None:
-            self._message_schema_path = str(
-                importlib_resources.files("zs4procext")
-                / "resources/schemas"
-                / "qwen_message_HF_schema.json"
-            )
-        with open(self._message_schema_path, "r") as f:
-            prompt_dict = json.load(f)
-        self._message = PromptFormatter(**prompt_dict)
-        self._message.model_post_init(self.prompt_template_path)
-        if self.vlm_model_name is None:
-            self._vlm_model = InferencebyHF(model_name="Qwen.2.5-VL-7B-Instruct")
-        else:
-            self._vlm_model = InferencebyHF(model_name=self.vlm_model_name, lora_path=self.lora_path)
-        self._image_parser = ImageParser2()
-
-    def extract_image_info(self, image_path: str):
-        image_name = os.path.basename(image_path)
-
-        prompt = self._message.format_prompt("<image>")
-        print(f"[ImageExtractorHF_LORA] Prompt:\n{prompt}")
-        image = Image.open(image_path).convert("RGB")
-        print(f"[ImageExtractorHF_LORA] Image {image_name} loaded.")
-
-        output = self._vlm_model.run_inference_on_image({"role": "user", "content": prompt}, image, image_name)
-        print(f"Raw Model Output for {image_path}:\n{output}")
-
-        self._image_parser.parse(output)
-        parsed_output = self._image_parser.get_data_dict()
-        print(parsed_output)
-        return {image_name: parsed_output}
-        
