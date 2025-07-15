@@ -1,8 +1,0 @@
-
-{
-    "role": "user",
-    "content": [
-        {"type": "image", "image": "<image>"},
-        {"type": "text", "text":"{expertise}{initialization}{definitions}{objective}{context}{answer_schema}{conclusion}"}
-    ]
-}
