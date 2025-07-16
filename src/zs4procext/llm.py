@@ -5,13 +5,10 @@ from langchain_community.llms import VLLM
 from pydantic import BaseModel, PrivateAttr
 from PIL import Image
 import numpy as np
-from vllm.lora.request import LoRARequest
 
 import importlib
 import torch
 import os
-from transformers import AutoProcessor
-from peft import PeftModel
 
 class ModelLLM(BaseModel):
     model_name: str
@@ -165,66 +162,3 @@ class ModelVLM(BaseModel):
             break
         return final_response
 
-from zs4procext.prompt import LORA_MODEL_CONFIGS
-
-class InferencebyHF(BaseModel):
-    model_name:str
-    lora_path: Optional[str] = None
-    
-    processor: Optional[Any]=None
-    process_vision_info: Optional[Any]=None
-    _model: Any = PrivateAttr(default=None)
-
-    def model_post_init(self, __context: Any) -> None:
-        model_name_key = os.path.basename(self.model_name.rstrip("/"))
-
-        config = LORA_MODEL_CONFIGS[model_name_key]
-
-        model_path = config["model_class"]
-        module_name, class_name = model_path.rsplit(".", 1)
-        model_module = importlib.import_module(module_name)
-        model_class = getattr(model_module, class_name)
-
-        base_model=model_class.from_pretrained(self.model_name, 
-            torch_dtype=torch.float16, 
-            device_map="auto")
-
-        if self.lora_path:
-            self._model = PeftModel.from_pretrained(base_model, self.lora_path)
-        else:
-            self._model = base_model
-
-        self.processor = AutoProcessor.from_pretrained(self.model_name)
-
-        utils_module = importlib.import_module(config["utils_module"])
-        self.process_vision_info = getattr(utils_module, "process_vision_info")
-
-    def run_inference_on_image(_message: Dict[str,Any], image: Image.Image, image_name: str)->str:
-        messages = [_message]
-
-        text = self.processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-        image_inputs, video_inputs = self.process_vision_info(messages)
-
-        inputs = self.processor(
-            text=[text],
-            images=image_inputs,
-            videos=video_inputs,
-            padding=True,
-            return_tensors="pt"
-        ).to(self.model.device)
-
-        with torch.no_grad():
-            generated_ids = model.generate(**inputs, max_new_tokens=1582)
-            generated_ids_trimmed = [
-                out_ids[len(in_ids):] for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
-            ]
-            output_text = self.processor.batch_decode(
-                generated_ids_trimmed,
-                skip_special_tokens=True,
-                clean_up_tokenization_spaces=False
-            )
-            print(output_text[0])
-        return output_text[0]
-
-
-    

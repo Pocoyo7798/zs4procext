@@ -472,14 +472,3 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
 
 }
 
-
-
-LORA_MODEL_CONFIGS: Dict[str, Dict[str, Any]] = {
-    "Qwen2.5-VL-7B-Instruct":{
-        "model_class": "transformers.Qwen2_5_VLForConditionalGeneration",
-        "utils_module": "qwen_vl_utils",
-        "message_schema": importlib_resources.files("zs4procext")
-        / "resources/template"
-        / "qwen_message_HF_schema.json"
-    }
-    }

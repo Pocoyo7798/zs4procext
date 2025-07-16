@@ -1245,99 +1245,6 @@ MATERIALS_CHARACTERIZATION_REGISTRY: Dict[str, Any] = {
 EMPTY_VALUES_REGISTRY = set(["-", "-"])
 
 
-class ImageParser(BaseModel):
-    data_dict: dict = Field(default_factory=dict)
-    catalyst_label: str = ""
-    x_axis_label: str = ""
-    y_axis_label: str = ""
-    data_string: str = ""
-
-    def __init__(self, data_string: str = "", **data):
-        super().__init__(data_string=data_string, **data)
-        cleaned_data_string = self._remove_square_brackets(data_string)
-        cleaned_data_string = self._remove_unicode_subscripts_superscripts(cleaned_data_string)
-        self._convert_to_dict(cleaned_data_string)
-
-    def _remove_square_brackets(self, data_string: str) -> str:
-        data_string = data_string.replace('_{', ' ')
-        return re.sub(r'[<>{}\[\]]', '', data_string).replace('_', '')
-
-    def _remove_unicode_subscripts_superscripts(self, data: str) -> str:
-        cleaned_data = re.sub(r'\\u208', '', data)
-        cleaned_data = re.sub(r'\\u00b', '', cleaned_data)
-        cleaned_data = re.sub(r'\^', '', cleaned_data) 
-        return cleaned_data
-
-    def _convert_to_dict(self, data_string: str, delimiter: str = ";"):
-        header_pattern = re.compile(
-            rf'^[^;\n]*[a-zA-Z]+[^;\n]*\s*{delimiter}\s*[^;\n]*[a-zA-Z]+[^;\n]*\s*{delimiter}\s*[^;\n]*[a-zA-Z]+[^;\n]*$',
-            re.MULTILINE,
-        )
-        header_match = header_pattern.search(data_string)
-        if not header_match:
-            print("No valid table header found in the input string.")
-            return
-
-        header_start = header_match.start()
-        header_line = data_string[header_start:].split('\n')[0]
-        header = [h.strip() for h in header_line.split(delimiter)]
-        if len(header) != 3:
-            print("Header does not have the expected format (Serie-name;x-axis label;y-axis label).")
-            return
-
-        self.catalyst_label = header[0]
-        self.x_axis_label = header[1]
-        self.y_axis_label = header[2]
-
-        if self.x_axis_label == self.y_axis_label:
-            print(f"Header labels for x-axis and y-axis are identical ('{self.x_axis_label}'). Temporarily renaming y-axis header.")
-            temp_y_axis_label = self.y_axis_label + "y"
-        else:
-            temp_y_axis_label = self.y_axis_label
-
-        data_lines = data_string.strip().split('\n')
-        for line in data_lines:
-            if not line.strip() or line == header_line:
-                continue
-
-            if not re.match(rf'^[^;]+{delimiter}[^;]+{delimiter}[^;]+$', line):
-                continue
-
-            parts = [p.strip() for p in line.split(delimiter)]
-            if len(parts) != 3:
-                continue
-
-            catalyst = parts[0]
-            try:
-                x_value = float(parts[1])
-                y_value = float(parts[2])
-            except ValueError:
-                continue
-
-            if catalyst not in self.data_dict:
-                self.data_dict[catalyst] = {self.x_axis_label: [], temp_y_axis_label: []}
-
-            self.data_dict[catalyst][self.x_axis_label].append(x_value)
-            self.data_dict[catalyst][temp_y_axis_label].append(y_value)
-
-    def parse(self, data_string: str):
-        self.data_dict = {}
-        self.catalyst_label = ""
-        self.x_axis_label = ""
-        self.y_axis_label = ""
-
-        cleaned_data_string = self._remove_square_brackets(data_string)
-        cleaned_data_string = self._remove_unicode_subscripts_superscripts(cleaned_data_string)
-        self._convert_to_dict(cleaned_data_string)
-        return self.get_data_dict()
-
-    def get_data_dict(self):
-        return self.data_dict
-
-    def to_json(self):
-        return json.dumps(self.data_dict, indent=4)
-
-
 subscript_map = {
     '₀': '0', '₁': '1', '₂': '2', '₃': '3', '₄': '4',
     '₅': '5', '₆': '6', '₇': '7', '₈': '8', '₉': '9',
@@ -1359,7 +1266,7 @@ superscript_map = {
     'ᶻ': 'Z'
 }
 
-class ImageParser2(BaseModel):
+class ImageParser(BaseModel):
     data_dict: Dict[str, Dict[str, list]] = Field(default_factory=dict)
     data_string: str = ""
 
