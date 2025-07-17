@@ -322,7 +322,7 @@ class ActionExtractorFromText(BaseModel):
             action = action_list[i]
             if action["action"] == "Add" and add_new_solution is True:
                 add_new_solution = False
-                action_list.insert(i_new_solution, NewSolution(action_name="NewSolution").zeolite_dict())
+                action_list.insert(i_new_solution, NewSolution(action_name="NewSolution").generate_dict())
                 i = i + 1
             elif action["action"] == "NewSolution":
                 add_new_solution = False
