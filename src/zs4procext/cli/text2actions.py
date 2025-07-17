@@ -18,17 +18,17 @@ from zs4procext.prompt import TEMPLATE_REGISTRY
     help="Type of actions to considered. Options: All or pistachio or materials.",
 )
 @click.option(
-    "--action_prompt_structure_path",
+    "--post_processing",
+    default=True,
+    help="True if you want to process the LLM output, False otherwise",
+)
+@click.option(
+    "--prompt_template_path",
     default=None,
     help="Path to the file containing the structure of the action prompt",
 )
 @click.option(
-    "--chemical_prompt_structure_path",
-    default=None,
-    help="Path to the file containing the structure of the chemical prompt",
-)
-@click.option(
-    "--action_prompt_schema_path",
+    "--prompt_schema_path",
     default=None,
     help="Path to the file containing the schema of the action prompt",
 )
@@ -71,10 +71,10 @@ def text2actions(
     text_file_path: str,
     output_file_path: str,
     actions_type: str,
-    action_prompt_structure_path: Optional[str],
-    chemical_prompt_structure_path: Optional[str],
-    action_prompt_schema_path: Optional[str],
+    post_processing: bool,
+    prompt_template_path: Optional[str],
     chemical_prompt_schema_path: Optional[str],
+    prompt_schema_path: Optional[str],
     wash_chemical_prompt_schema_path: Optional[str],
     add_chemical_prompt_schema_path: Optional[str],
     solution_chemical_prompt_schema_path: Optional[str],
@@ -84,23 +84,18 @@ def text2actions(
 ):
     torch.cuda.empty_cache()
     start_time = time.time()
-    if action_prompt_structure_path is None:
+    if prompt_template_path is None:
         try:
             name = llm_model_name.split("/")[-1]
-            action_prompt_structure_path = TEMPLATE_REGISTRY[name]
-        except KeyError:
-            pass
-    if chemical_prompt_structure_path is None:
-        try:
-            name = llm_model_name.split("/")[-1]
-            chemical_prompt_structure_path = TEMPLATE_REGISTRY[name]
+            prompt_template_path = TEMPLATE_REGISTRY[name]
         except KeyError:
             pass
     extractor: ActionExtractorFromText = ActionExtractorFromText(
         actions_type=actions_type,
-        action_prompt_structure_path=action_prompt_structure_path,
-        chemical_prompt_structure_path=chemical_prompt_structure_path,
-        action_prompt_schema_path=action_prompt_schema_path,
+        post_processing=post_processing,
+        action_prompt_template_path=prompt_template_path,
+        chemical_prompt_template_path=prompt_template_path,
+        action_prompt_schema_path=prompt_schema_path,
         chemical_prompt_schema_path=chemical_prompt_schema_path,
         wash_chemical_prompt_schema_path=wash_chemical_prompt_schema_path,
         add_chemical_prompt_schema_path=add_chemical_prompt_schema_path,

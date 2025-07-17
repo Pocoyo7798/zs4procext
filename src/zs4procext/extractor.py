@@ -6,10 +6,17 @@ import re
 import importlib_resources
 from pydantic import BaseModel, PrivateAttr, validator
 
+import numpy as np
+import torch
+from PIL import Image
+import click
+
+
 from zs4procext.actions import (
     ACTION_REGISTRY,
     AQUEOUS_REGISTRY,
     BANNED_CHEMICALS_REGISTRY,
+    BANNED_TRANSFER_REGISTRY,
     CENTRIFUGATION_REGISTRY,
     ELEMENTARY_ACTION_REGISTRY,
     EVAPORATION_REGISTRY,
@@ -71,8 +78,8 @@ from zs4procext.prompt import PromptFormatter
 
 class ActionExtractorFromText(BaseModel):
     actions_type: str = "All"
-    action_prompt_structure_path: Optional[str] = None
-    chemical_prompt_structure_path: Optional[str] = None
+    action_prompt_template_path: Optional[str] = None
+    chemical_prompt_template_path: Optional[str] = None
     action_prompt_schema_path: Optional[str] = None
     chemical_prompt_schema_path: Optional[str] = None
     wash_chemical_prompt_schema_path: Optional[str] = None
@@ -82,6 +89,7 @@ class ActionExtractorFromText(BaseModel):
     llm_model_name: Optional[str] = None
     llm_model_parameters_path: Optional[str] = None
     elementar_actions: bool = False
+    post_processing: bool = True
     _action_prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
     _chemical_prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
     _wash_chemical_prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
@@ -105,154 +113,123 @@ class ActionExtractorFromText(BaseModel):
     _microwave_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
     _ph_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
     _banned_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
+    _transfer_banned_parser: Optional[KeywordSearching] = PrivateAttr(default=None)
     _molar_ratio_parser: Optional[MolarRatioFinder] = PrivateAttr(default=None)
     _action_dict: Dict[str, Any] = PrivateAttr(default=ACTION_REGISTRY)
 
     def model_post_init(self, __context: Any) -> None:
+        if self.actions_type == "pistachio":
+            if self.action_prompt_schema_path is None:
+                self.action_prompt_schema_path = str(
+                    importlib_resources.files("zs4procext")
+                    / "resources/schemas"
+                    / "organic_synthesis_actions_schema.json"
+                )
+            self._action_dict = PISTACHIO_ACTION_REGISTRY
+            ph_keywords: List[str] = ["&^%#@&#@(*)"]
+            atributes = ["name", "dropwise"]
+        elif self.actions_type == "organic":
+            if self.action_prompt_schema_path is None:
+                self.action_prompt_schema_path = str(
+                    importlib_resources.files("zs4procext")
+                    / "resources/schemas"
+                    / "organic_synthesis_actions_schema.json"
+                )
+            self._action_dict = ORGANIC_ACTION_REGISTRY
+            ph_keywords = ["&^%#@&#@(*)"]
+            atributes = ["name", "dropwise"]
+        elif self.actions_type == "materials":
+            if self.action_prompt_schema_path is None:
+                self.action_prompt_schema_path = str(
+                    importlib_resources.files("zs4procext")
+                    / "resources/schemas"
+                    / "material_synthesis_actions_schema.json"
+                )
+            self._action_dict = MATERIAL_ACTION_REGISTRY
+            ph_keywords = PH_REGISTRY
+            atributes = ["type", "name", "dropwise", "concentration", "amount"]
+        elif self.actions_type == "sac":
+            if self.action_prompt_schema_path is None:
+                self.action_prompt_schema_path = str(
+                    importlib_resources.files("zs4procext")
+                    / "resources/schemas"
+                    / "sac_synthesis_actions_schema.json"
+                )
+            self._action_dict = SAC_ACTION_REGISTRY
+            ph_keywords = PH_REGISTRY
+            atributes = ["type", "name", "dropwise", "concentration", "amount"]
+        elif self.actions_type == "elementary":
+            if self.action_prompt_schema_path is None:
+                self.action_prompt_schema_path = str(
+                    importlib_resources.files("zs4procext")
+                    / "resources/schemas"
+                    / "material_synthesis_actions_schema.json"
+                )
+            self._action_dict = ELEMENTARY_ACTION_REGISTRY
+            ph_keywords = PH_REGISTRY
+            atributes = ["type", "name", "dropwise", "concentration", "amount"]
         if self.chemical_prompt_schema_path is None:
             self.chemical_prompt_schema_path = str(
                 importlib_resources.files("zs4procext")
-                / "resources"
+                / "resources/schemas"
                 / "chemicals_from_actions_schema.json"
             )
         with open(self.chemical_prompt_schema_path, "r") as f:
             chemical_prompt_dict = json.load(f)
         self._chemical_prompt = PromptFormatter(**chemical_prompt_dict)
-        self._chemical_prompt.model_post_init(self.chemical_prompt_structure_path)
+        self._chemical_prompt.model_post_init(self.chemical_prompt_template_path)
         if self.wash_chemical_prompt_schema_path is None:
             self._wash_chemical_prompt = self._chemical_prompt
         else:
             with open(self.wash_chemical_prompt_schema_path, "r") as f:
                 wash_chemical_prompt_dict = json.load(f)
             self._wash_chemical_prompt = PromptFormatter(**wash_chemical_prompt_dict)
-            self._wash_chemical_prompt.model_post_init(self.chemical_prompt_structure_path)
+            self._wash_chemical_prompt.model_post_init(self.chemical_prompt_template_path)
         if self.add_chemical_prompt_schema_path is None:
             self._add_chemical_prompt = self._chemical_prompt
         else:
             with open(self.add_chemical_prompt_schema_path, "r") as f:
                 add_chemical_prompt_dict = json.load(f)
             self._add_chemical_prompt = PromptFormatter(**add_chemical_prompt_dict)
-            self._add_chemical_prompt.model_post_init(self.chemical_prompt_structure_path)
+            self._add_chemical_prompt.model_post_init(self.chemical_prompt_template_path)
         if self.solution_chemical_prompt_schema_path is None:
             self._solution_chemical_prompt = self._chemical_prompt
         else:
             with open(self.solution_chemical_prompt_schema_path, "r") as f:
                 solution_chemical_prompt_dict = json.load(f)
             self._solution_chemical_prompt = PromptFormatter(**solution_chemical_prompt_dict)
-            self._solution_chemical_prompt.model_post_init(self.chemical_prompt_structure_path)
+            self._solution_chemical_prompt.model_post_init(self.chemical_prompt_template_path)
         self.transfer_prompt_schema_path = str(
                     importlib_resources.files("zs4procext")
-                    / "resources"
+                    / "resources/schemas"
                     / "transfer_schema.json"
                 )
         with open(self.transfer_prompt_schema_path, "r") as f:
             transfer_prompt_dict = json.load(f)
         self._transfer_prompt = PromptFormatter(**transfer_prompt_dict)
-        self._transfer_prompt.model_post_init(self.chemical_prompt_structure_path)
+        self._transfer_prompt.model_post_init(self.chemical_prompt_template_path)
         if self.llm_model_parameters_path is None:
             llm_param_path = str(
                 importlib_resources.files("zs4procext")
-                / "resources"
+                / "resources/model_parameters"
                 / "vllm_default_params.json"
             )
         else:
             llm_param_path = self.llm_model_parameters_path
         if self.llm_model_name is None:
-            self._llm_model = ModelLLM(model_name="Llama2-70B-chat-hf")
+            self._llm_model = ModelLLM(model_name="microsoft/Phi-3-medium-4k-instruct")
         else:
             self._llm_model = ModelLLM(model_name=self.llm_model_name)
-        if self.actions_type == "pistachio":
-            if self.action_prompt_schema_path is None:
-                self.action_prompt_schema_path = str(
-                    importlib_resources.files("zs4procext")
-                    / "resources"
-                    / "organic_synthesis_actions_schema.json"
-                )
-            self._action_dict = PISTACHIO_ACTION_REGISTRY
-            self._ph_parser = KeywordSearching(keywords_list=["&^%#@&#@(*)"])
-            self._aqueous_parser = KeywordSearching(keywords_list=AQUEOUS_REGISTRY)
-            self._organic_parser = KeywordSearching(keywords_list=ORGANIC_REGISTRY)
-            self._centri_parser = KeywordSearching(keywords_list=CENTRIFUGATION_REGISTRY)
-            self._filter_parser = KeywordSearching(keywords_list=FILTER_REGISTRY)
-            atributes = ["name", "dropwise"]
-        elif self.actions_type == "organic":
-            if self.action_prompt_schema_path is None:
-                self.action_prompt_schema_path = str(
-                    importlib_resources.files("zs4procext")
-                    / "resources"
-                    / "organic_synthesis_actions_schema.json"
-                )
-            self._action_dict = ORGANIC_ACTION_REGISTRY
-            self._ph_parser = KeywordSearching(keywords_list=["&^%#@&#@(*)"])
-            self._aqueous_parser = KeywordSearching(keywords_list=AQUEOUS_REGISTRY)
-            self._organic_parser = KeywordSearching(keywords_list=ORGANIC_REGISTRY)
-            self._centri_parser = KeywordSearching(keywords_list=CENTRIFUGATION_REGISTRY)
-            self._filter_parser = KeywordSearching(keywords_list=FILTER_REGISTRY)
-            atributes = ["name", "dropwise"]
-        elif self.actions_type == "materials":
-            if self.action_prompt_schema_path is None:
-                self.action_prompt_schema_path = str(
-                    importlib_resources.files("zs4procext")
-                    / "resources"
-                    / "material_synthesis_actions_schema.json"
-                )
-            self._action_dict = MATERIAL_ACTION_REGISTRY
-            self._ph_parser = KeywordSearching(keywords_list=PH_REGISTRY)
-            self._ph_parser.model_post_init(None)
-            self._filter_parser = KeywordSearching(keywords_list=FILTER_REGISTRY)
-            self._filter_parser.model_post_init(None)
-            self._centri_parser = KeywordSearching(keywords_list=CENTRIFUGATION_REGISTRY)
-            self._centri_parser.model_post_init(None)
-            self._evaporation_parser = KeywordSearching(keywords_list=EVAPORATION_REGISTRY)
-            self._evaporation_parser.model_post_init(None)
-            self._complex_parser = ComplexParametersParser()
-            self._complex_parser.model_post_init(None)
-            atributes = ["type", "name", "dropwise", "concentration", "amount"]
-        elif self.actions_type == "sac":
-            if self.action_prompt_schema_path is None:
-                self.action_prompt_schema_path = str(
-                    importlib_resources.files("zs4procext")
-                    / "resources"
-                    / "material_synthesis_actions_schema.json"
-                )
-            self._action_dict = SAC_ACTION_REGISTRY
-            self._ph_parser = KeywordSearching(keywords_list=PH_REGISTRY)
-            self._ph_parser.model_post_init(None)
-            self._filter_parser = KeywordSearching(keywords_list=FILTER_REGISTRY)
-            self._filter_parser.model_post_init(None)
-            self._centri_parser = KeywordSearching(keywords_list=CENTRIFUGATION_REGISTRY)
-            self._centri_parser.model_post_init(None)
-            self._evaporation_parser = KeywordSearching(keywords_list=EVAPORATION_REGISTRY)
-            self._evaporation_parser.model_post_init(None)
-            self._complex_parser = ComplexParametersParser()
-            self._complex_parser.model_post_init(None)
-            atributes = ["type", "name", "dropwise", "concentration", "amount"]
-        elif self.actions_type == "elementary":
-            if self.action_prompt_schema_path is None:
-                self.action_prompt_schema_path = str(
-                    importlib_resources.files("zs4procext")
-                    / "resources"
-                    / "material_synthesis_actions_schema.json"
-                )
-            self._action_dict = ELEMENTARY_ACTION_REGISTRY
-            self._ph_parser = KeywordSearching(keywords_list=PH_REGISTRY)
-            self._ph_parser.model_post_init(None)
-            self._filter_parser = KeywordSearching(keywords_list=FILTER_REGISTRY)
-            self._filter_parser.model_post_init(None)
-            self._centri_parser = KeywordSearching(keywords_list=CENTRIFUGATION_REGISTRY)
-            self._centri_parser.model_post_init(None)
-            self._evaporation_parser = KeywordSearching(keywords_list=EVAPORATION_REGISTRY)
-            self._evaporation_parser.model_post_init(None)
-            self._complex_parser = ComplexParametersParser()
-            self._complex_parser.model_post_init(None)
-            atributes = ["type", "name", "dropwise", "concentration", "amount"]
+        print(self.action_prompt_schema_path)
         with open(self.action_prompt_schema_path, "r") as f:
                 action_prompt_dict = json.load(f)
+        print(action_prompt_dict)
         self._action_prompt = PromptFormatter(**action_prompt_dict)
-        self._action_prompt.model_post_init(self.action_prompt_structure_path)
+        self._action_prompt.model_post_init(self.action_prompt_template_path)
+        print(self._action_prompt)
         self._llm_model.load_model_parameters(llm_param_path)
         self._llm_model.vllm_load_model()
-        self._action_parser = ActionsParser(type=self.actions_type, separators=self._action_prompt._action_separators)
+        self._action_parser = ActionsParser(type=self.actions_type, separators=self._action_prompt._definition_separators)
         self._condition_parser = ParametersParser(convert_units=False, amount=False)
         self._quantity_parser = ParametersParser(
             convert_units=False,
@@ -263,8 +240,16 @@ class ActionExtractorFromText(BaseModel):
             size=False
         )
         transfer_atributes = ["type", "volume"]
+        self._ph_parser = KeywordSearching(keywords_list=ph_keywords)
+        self._complex_parser = ComplexParametersParser()
+        self._evaporation_parser = KeywordSearching(keywords_list=EVAPORATION_REGISTRY)
+        self._aqueous_parser = KeywordSearching(keywords_list=AQUEOUS_REGISTRY)
+        self._organic_parser = KeywordSearching(keywords_list=ORGANIC_REGISTRY)
+        self._centri_parser = KeywordSearching(keywords_list=CENTRIFUGATION_REGISTRY)
+        self._filter_parser = KeywordSearching(keywords_list=FILTER_REGISTRY)
         self._transfer_schema_parser = SchemaParser(atributes_list=transfer_atributes)
         self._schema_parser = SchemaParser(atributes_list=atributes)
+        self._transfer_banned_parser = KeywordSearching(keywords_list=BANNED_TRANSFER_REGISTRY)
         self._filtrate_parser = KeywordSearching(keywords_list=FILTRATE_REGISTRY)
         self._banned_parser = KeywordSearching(keywords_list=BANNED_CHEMICALS_REGISTRY)
         self._precipitate_parser = KeywordSearching(keywords_list=PRECIPITATE_REGISTRY)
@@ -337,7 +322,7 @@ class ActionExtractorFromText(BaseModel):
             action = action_list[i]
             if action["action"] == "Add" and add_new_solution is True:
                 add_new_solution = False
-                action_list.insert(i_new_solution, NewSolution(action_name="NewSolution").zeolite_dict())
+                action_list.insert(i_new_solution, NewSolution(action_name="NewSolution").generate_dict())
                 i = i + 1
             elif action["action"] == "NewSolution":
                 add_new_solution = False
@@ -722,7 +707,7 @@ class ActionExtractorFromText(BaseModel):
                 print(transfer_response)
                 schemas = self._transfer_schema_parser.parse_schema(transfer_response)
                 new_action = action.generate_action(
-                    context, schemas, self._transfer_schema_parser
+                    context, schemas, self._transfer_schema_parser, self._transfer_banned_parser
                 )
                 action_list.extend(new_action)
             elif action is Separate:
@@ -777,7 +762,9 @@ class ActionExtractorFromText(BaseModel):
                 new_action = action.generate_action(context)
                 action_list.extend(new_action)
             i = i + 1
-        if self.actions_type == "pistachio":
+        if self.post_processing is False:
+            final_actions_list = action_list
+        elif self.actions_type == "pistachio":
             print(action_list)
             final_actions_list: List[Any] = ActionExtractorFromText.correct_pistachio_action_list(action_list)
             print(final_actions_list)
@@ -793,8 +780,47 @@ class ActionExtractorFromText(BaseModel):
             final_actions_list = ActionExtractorFromText.transform_elementary(final_actions_list)
         return final_actions_list
 
+class ParagraphClassifier(BaseModel):
+    llm_model_name: str = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+    prompt_template_path: Optional[str] = None
+    prompt_schema_path: Optional[str] = None
+    llm_model_parameters_path: Optional[str] = None
+    _prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
+    _llm_model: Optional[ModelLLM] = PrivateAttr(default=None)
+
+    def model_post_init(self, __context: Any) -> None:
+        with open(self.prompt_schema_path, "r") as f:
+            prompt_dict = json.load(f)
+        self._prompt = PromptFormatter(**prompt_dict)
+        self._prompt.model_post_init(self.prompt_template_path)
+        if self.llm_model_parameters_path is None:
+            llm_param_path = str(
+                importlib_resources.files("zs4procext")
+                / "resources/model_parameters"
+                / "vllm_default_params.json"
+            )
+        else:
+            llm_param_path = self.llm_model_parameters_path
+        self._llm_model = ModelLLM(model_name=self.llm_model_name)
+        self._llm_model.load_model_parameters(llm_param_path)
+        self._llm_model.vllm_load_model()
+
+    def classify_paragraph(self, text) -> bool:
+        prompt: str = self._prompt.format_prompt(text)
+        print(prompt)
+        response: str = self._llm_model.run_single_prompt(prompt).strip()
+        print(response)
+        answer_amount: List[str] = re.findall(r"\b(yes|Yes|no|No)\b", response)
+        if len(answer_amount) == 0:
+            result: bool = True
+        elif answer_amount[0].lower() == "yes":
+            result = True
+        else:
+            result = False
+        return result
+
 class SamplesExtractorFromText(BaseModel):
-    prompt_structure_path: Optional[str] = None
+    prompt_template_path: Optional[str] = None
     prompt_schema_path: Optional[str] = None
     llm_model_name: Optional[str] = None
     llm_model_parameters_path: Optional[str] = None
@@ -804,30 +830,6 @@ class SamplesExtractorFromText(BaseModel):
     _llm_model: Optional[ModelLLM] = PrivateAttr(default=None)
 
     def model_post_init(self, __context: Any) -> None:
-        """if self.prompt_schema_path is None:
-            self.prompt_schema_path = str(
-                importlib_resources.files("zs4procext")
-                / "resources"
-                / "find_samples_procedures_schema.json"
-            )
-        with open(self.prompt_schema_path, "r") as f:
-            prompt_dict = json.load(f)
-        self._prompt = PromptFormatter(**prompt_dict)
-        self._prompt.model_post_init(self.prompt_structure_path)
-        if self.llm_model_parameters_path is None:
-            llm_param_path = str(
-                importlib_resources.files("zs4procext")
-                / "resources"
-                / "vllm_default_params.json"
-            )
-        else:
-            llm_param_path = self.llm_model_parameters_path
-        if self.llm_model_name is None:
-            self._llm_model = ModelLLM(model_name="Llama2-70B-chat-hf")
-        else:
-            self._llm_model = ModelLLM(model_name=self.llm_model_name)
-        #self._llm_model.load_model_parameters(llm_param_path)
-        #self._llm_model.vllm_load_model()"""
         atributes = ["name", "preparation", "yield"]
         self._schema_parser = SchemaParser(atributes_list=atributes)
         self._list_parser = ListParametersParser()
@@ -1077,7 +1079,7 @@ class MolarRatioExtractorFromText(BaseModel):
 
 class TableExtractor(BaseModel):
     table_type: str = "All"
-    prompt_structure_path: Optional[str] = None
+    prompt_template_path: Optional[str] = None
     prompt_schema_path: Optional[str] = None
     vlm_model_name: Optional[str] = None
     vlm_model_parameters_path: Optional[str] = None
@@ -1089,7 +1091,7 @@ class TableExtractor(BaseModel):
         if self.vlm_model_parameters_path is None:
             vlm_param_path = str(
                 importlib_resources.files("zs4procext")
-                / "resources"
+                / "resources/model_parameters"
                 / "vllm_default_params.json"
                 )
         else:
@@ -1097,41 +1099,42 @@ class TableExtractor(BaseModel):
         if self.prompt_schema_path is None:
             self.prompt_schema_path = str(
                 importlib_resources.files("zs4procext")
-                / "resources"
+                / "resources/schemas"
                 / "table_extraction_schema.json"
             )
         with open(self.prompt_schema_path, "r") as f:
                 prompt_dict = json.load(f)
         self._prompt = PromptFormatter(**prompt_dict)
-        self._prompt.model_post_init(self.prompt_structure_path)
+        self._prompt.model_post_init(self.prompt_template_path)
         if self.vlm_model_name is None:
-            self._vlm_model = ModelVLM(model_name="Llama2-70B-chat-hf")
+            self._vlm_model = ModelVLM(model_name="microsoft/Phi-3-medium-4k-instruct")
         else:
             self._vlm_model = ModelVLM(model_name=self.vlm_model_name)
         self._vlm_model.load_model_parameters(vlm_param_path)
         self._vlm_model.vllm_load_model()
 
-    def extract_table_info(self, image_path: str):
+    def extract_table_info(self, image_path: str, scale: float = 1.0):
+        image_name = os.path.basename(image_path)
         prompt = self._prompt.format_prompt("<image>")
         print(prompt)
-        output = self._vlm_model.run_image_single_prompt(prompt, image_path)
+        output = self._vlm_model.run_image_single_prompt_rescale(prompt, image_path, scale = scale)
         print(output)
 
 
 class ImageExtractor(BaseModel):
-    prompt_structure_path: Optional[str] = None 
+    prompt_template_path: Optional[str] = None 
     prompt_schema_path: Optional[str] = None
     vlm_model_name: Optional[str] = None
     vlm_model_parameters_path: Optional[str] = None
     _prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
     _vlm_model: Optional[ModelVLM] = PrivateAttr(default=None)
-    _image_parser: Optional[ImageParser] = PrivateAttr(default=None)  
+    _image_parser: Optional[ImageParser] = PrivateAttr(default=None) 
 
     def model_post_init(self, __context: Any) -> None:
         if self.vlm_model_parameters_path is None:
             vlm_param_path = str(
                 importlib_resources.files("zs4procext")
-                / "resources"
+                / "resources/model_parameters"
                 / "vllm_default_params.json"
                 )
         else:
@@ -1139,13 +1142,13 @@ class ImageExtractor(BaseModel):
         if self.prompt_schema_path is None:
             self.prompt_schema_path = str(
                 importlib_resources.files("zs4procext")
-                / "resources"
+                / "resources/schemas"
                 / "image_extraction_schema.json" 
             )
         with open(self.prompt_schema_path, "r") as f:
                 prompt_dict = json.load(f)
         self._prompt = PromptFormatter(**prompt_dict)
-        self._prompt.model_post_init(self.prompt_structure_path)
+        self._prompt.model_post_init(self.prompt_template_path)
         if self.vlm_model_name is None:
             self._vlm_model = ModelVLM(model_name="Llama2-70B-chat-hf")
         else:
@@ -1154,15 +1157,16 @@ class ImageExtractor(BaseModel):
         self._vlm_model.vllm_load_model()
         self._image_parser = ImageParser()
 
-    def extract_image_info(self, image_path: str):
+    def extract_image_info(self, image_path: str, scale: float = 1.0):
         image_name = os.path.basename(image_path)
 
         prompt = self._prompt.format_prompt("<image>")
 
-        output = self._vlm_model.run_image_single_prompt(prompt, image_path)
+        output = self._vlm_model.run_image_single_prompt_rescale(prompt, image_path,scale = scale)
         print(f"Raw Model Output for {image_path}:\n{output}")
         
         self._image_parser.parse(output)
         parsed_output = self._image_parser.get_data_dict()
         print (parsed_output)
         return {image_name: parsed_output}
+
