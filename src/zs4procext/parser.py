@@ -1301,11 +1301,14 @@ class ImageParser(BaseModel):
 
                 parsed_data = json.loads(input_data)
 
+                outer_key = None
                 if isinstance(parsed_data, dict) and len(parsed_data) == 1:
                     only_key = next(iter(parsed_data))
                     if isinstance(parsed_data[only_key], dict):
+                        outer_key = only_key
                         parsed_data = parsed_data[only_key]
 
+                parsed_data = self._restructure_if_needed(parsed_data, outer_key=outer_key)
                 parsed_data = self._convert_na_to_null(parsed_data)
                 parsed_data = self._clean_keys(parsed_data)
                 self.data_dict = self._filter_na_points(parsed_data)
@@ -1313,6 +1316,32 @@ class ImageParser(BaseModel):
             except json.JSONDecodeError as e:
                 print(f"JSON parsing failed: {e}\nInput was:\n{input_data}")
                 self.data_dict = {}
+
+    
+    def _restructure_if_needed(self, data: dict, outer_key: str = None) -> dict:
+        if not isinstance(data, dict):
+            return data
+
+        inner_data = data
+        x_key = next((k for k, v in inner_data.items() if isinstance(v, list)), None)
+        if x_key is None:
+            return data
+
+        x_values = inner_data[x_key]
+        
+        restructured = {}
+        for k, v in inner_data.items():
+            if k == x_key:
+                continue
+            if isinstance(v, list) and len(v) == len(x_values):
+                # always use the same y_key = outer_key if present
+                y_key = outer_key if outer_key else k
+                restructured[k] = {
+                    x_key: x_values,
+                    y_key: v
+                }
+        
+        return restructured if restructured else data
 
     def _convert_na_to_null(self, data: Dict) -> Dict:
         def convert_list(vals):
