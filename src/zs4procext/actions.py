@@ -129,7 +129,7 @@ class Actions(BaseModel):
             )
         return {"action": action_name, "content": action_dict}
     
-    def zeolite_dict(self) -> Dict[str, Any]:
+    def generate_dict(self) -> Dict[str, Any]:
         action_name: str = self.action_name
         if type(self) in set([ChangeTemperature, Cool, CoolSAC]):
             action_dict = self.model_dump(
@@ -394,28 +394,28 @@ class Treatment(ActionsWithChemicalAndConditions):
         else:
             action.solutions = chemicals_info.chemical_list
             action.repetitions = chemicals_info.repetitions
-        concentration = re.findall(r'\d+', str(action.suspension_concentration))
+        concentration: List[str] = re.findall(r'\d+', str(action.suspension_concentration))
         list_of_actions: List[Any] = []
+        print(action.solutions)
         if len(action.solutions) > 0:
-            list_of_actions.append(NewSolution(action_name="NewSolution").zeolite_dict())
+            list_of_actions.append(NewSolution(action_name="NewSolution").generate_dict())
             for solution in action.solutions:
-                banned_names: List[str] = banned_parser.find_keywords(solution["name"].lower())
-                if len(banned_names) == 0:
+                banned_names: List[str] = banned_parser.find_keywords(solution.name.lower())
+                if len(banned_names) > 0:
                     pass
                 else:
-                    if len(concentration) > 0 and len(solution["quantity"]) == 0:
-                        solution["quantity"].append(str(float(concentration[0]) / len(action.solutions)) + "mL")
                     new_action: Actions = AddMaterials(action_name="Add", material=solution)
-                    list_of_actions.append(new_action.zeolite_dict())
+                    list_of_actions.append(new_action.generate_dict())
         if action.temperature is not None:
             new_action = ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature)
-            list_of_actions.append(new_action.zeolite_dict())
+            list_of_actions.append(new_action.generate_dict())
         if len(concentration) > 0:
             new_sample: Dict[str, Any] = {'action': 'Add', 'content': {'material': {'name': 'sample', 'quantity': ['1 g'], 'concentration': []}}, 'dropwise': False, 'duration': None, 'ph': None}
             list_of_actions.append(new_sample)
         if action.duration is not None:
             new_action = StirMaterial(action_name="Stir", duration=action.duration)
-            list_of_actions.append(new_action.zeolite_dict())
+            list_of_actions.append(new_action.generate_dict())
+        list_of_actions.extend(Repeat.generate_action(context))
         return list_of_actions
 
 ### Actions for Organic Synthesis
@@ -1184,8 +1184,8 @@ class MakeSolutionSAC(ActionsWithChemicalAndConditions):
                     break
         list_of_actions: List[Dict[str, Any]] = []
         if action.temperature is not None:
-            list_of_actions.append(ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature).zeolite_dict())
-        list_of_actions.append(action.zeolite_dict())
+            list_of_actions.append(ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature).generate_dict())
+        list_of_actions.append(action.generate_dict())
         return list_of_actions
 
 class AddSAC(ActionsWithChemicalAndConditions):
@@ -1226,7 +1226,7 @@ class AddSAC(ActionsWithChemicalAndConditions):
                 )
         list_of_actions: List[Dict[str, Any]] = []
         if action.temperature is not None:
-            list_of_actions.append(ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature).zeolite_dict())
+            list_of_actions.append(ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature).generate_dict())
         if len(chemicals_info.chemical_list) == 0:
             pass
         elif len(chemicals_info.chemical_list[0].name.lower()) < 2:
@@ -1238,7 +1238,7 @@ class AddSAC(ActionsWithChemicalAndConditions):
                     chemicals_info.chemical_list[0].name = "water"
                 action.material = chemicals_info.chemical_list[0]
                 action.dropwise = chemicals_info.dropwise[0]
-                list_of_actions.append(action.zeolite_dict())
+                list_of_actions.append(action.generate_dict())
         else:
             i = 0
             for chemical in chemicals_info.chemical_list:
@@ -1246,7 +1246,7 @@ class AddSAC(ActionsWithChemicalAndConditions):
                 if len(banned_names) == 0:
                     action.material = chemical
                     action.dropwise = chemicals_info.dropwise[i]
-                    list_of_actions.append(action.zeolite_dict())
+                    list_of_actions.append(action.generate_dict())
                 i += 1
         return list_of_actions
 
@@ -1288,9 +1288,9 @@ class AddMaterials(ActionsWithChemicalAndConditions):
                 )
         list_of_actions: List[Dict[str, Any]] = []
         if action.temperature is not None:
-            list_of_actions.append(ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature).zeolite_dict())
+            list_of_actions.append(ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature).generate_dict())
         if action.atmosphere != []:
-            list_of_actions.append(SetAtmosphere(action_name="SetAtmosphere", atmosphere= action.atmosphere).zeolite_dict())
+            list_of_actions.append(SetAtmosphere(action_name="SetAtmosphere", atmosphere= action.atmosphere).generate_dict())
         if len(chemicals_info.chemical_list) == 0:
             pass
         elif len(chemicals_info.chemical_list[0].name.lower()) < 2:
@@ -1302,7 +1302,7 @@ class AddMaterials(ActionsWithChemicalAndConditions):
                     chemicals_info.chemical_list[0].name = "water"
                 action.material = chemicals_info.chemical_list[0]
                 action.dropwise = chemicals_info.dropwise[0]
-                list_of_actions.append(action.zeolite_dict())
+                list_of_actions.append(action.generate_dict())
         else:
             i = 0
             for chemical in chemicals_info.chemical_list:
@@ -1310,7 +1310,7 @@ class AddMaterials(ActionsWithChemicalAndConditions):
                 if len(banned_names) == 0:
                     action.material = chemical
                     action.dropwise = chemicals_info.dropwise[i]
-                    list_of_actions.append(action.zeolite_dict())
+                    list_of_actions.append(action.generate_dict())
                 i += 1
         return list_of_actions
 
@@ -1339,7 +1339,7 @@ class NewSolution(ActionsWithChemicalAndConditions):
             if len(banned_words) == 0:
                 action.solution = chemicals_info.final_solution
         list_of_actions: List[Dict[str, Any]] = []
-        list_of_actions.append(action.zeolite_dict())
+        list_of_actions.append(action.generate_dict())
         add_actions = AddMaterials.generate_action(
                 context, schemas, schema_parser, amount_parser, conditions_parser, ph_parser, banned_parser
             )
@@ -1362,7 +1362,7 @@ class Crystallization(ActionsWithConditons):
         keywords_list = microwave_parser.find_keywords(context)
         if len(keywords_list) > 0:
             action.microwave = True
-        return [action.zeolite_dict()]
+        return [action.generate_dict()]
 
 class Separate(ActionsWithConditons):
     temperature: Optional[str] = None
@@ -1397,7 +1397,7 @@ class Separate(ActionsWithConditons):
             action.method = "centrifugation"
         elif len(evaporation_results) > 0:
             action = DryMaterial(action_name = "Dry", temperature=action.temperature)
-        return [action.zeolite_dict()]
+        return [action.generate_dict()]
         
 
 class WashMaterial(ActionsWithchemicals):
@@ -1433,15 +1433,18 @@ class WashMaterial(ActionsWithchemicals):
             banned_names: List[str] = banned_parser.find_keywords(chemicals_info.chemical_list[0].name)
             if len(banned_names) == 0:
                 action.material = chemicals_info.chemical_list[0]
-                list_of_actions.append(action.zeolite_dict())
+                list_of_actions.append(action.generate_dict())
         else:
             for material in chemicals_info.chemical_list:
                 banned_names: List[str] = banned_parser.find_keywords(material.name)
                 if len(banned_names) == 0:
                     action.material = material
-                    list_of_actions.append(action.zeolite_dict())
+                    list_of_actions.append(action.generate_dict())
+        list_of_actions.append(action.generate_dict())
         if chemicals_info.repetitions > 1:
-            list_of_actions.append(Repeat(action_name="Repeat", amount=chemicals_info.repetitions).zeolite_dict())
+            list_of_actions.append(Repeat(action_name="Repeat", amount=chemicals_info.repetitions).generate_dict())
+        else:
+            list_of_actions.extend(Repeat.generate_action(context))
         return list_of_actions
     
 class WashSAC(ActionsWithChemicalAndConditions):
@@ -1475,7 +1478,7 @@ class WashSAC(ActionsWithChemicalAndConditions):
         action.repetitions = chemicals_info.repetitions
         list_of_actions: List[Any] = []
         if action.temperature is not None:
-            list_of_actions.append(ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature).zeolite_dict())
+            list_of_actions.append(ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature).generate_dict())
         if len(filter_results) > 0:
             action.method = "filtration"
         elif len(centrifuge_results) > 0:
@@ -1486,13 +1489,13 @@ class WashSAC(ActionsWithChemicalAndConditions):
             banned_names: List[str] = banned_parser.find_keywords(chemicals_info.chemical_list[0].name)
             if len(banned_names) == 0:
                 action.material = chemicals_info.chemical_list[0]
-                list_of_actions.append(action.zeolite_dict())
+                list_of_actions.append(action.generate_dict())
         else:
             for material in chemicals_info.chemical_list:
                 banned_names: List[str] = banned_parser.find_keywords(material.name)
                 if len(banned_names) == 0:
                     action.material = material
-                    list_of_actions.append(action.zeolite_dict())
+                    list_of_actions.append(action.generate_dict())
         return list_of_actions
 
 class WaitMaterial(ActionsWithConditons):
@@ -1507,9 +1510,9 @@ class WaitMaterial(ActionsWithConditons):
         action.validate_conditions(conditions_parser)
         list_of_actions: List[Any] = []
         if action.temperature is not None:
-            list_of_actions.append(ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature).zeolite_dict())
+            list_of_actions.append(ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature).generate_dict())
         if action.duration is not None:
-            list_of_actions.append(action.zeolite_dict())
+            list_of_actions.append(action.generate_dict())
         return list_of_actions
 
 class DryMaterial(ActionsWithConditons):
@@ -1523,7 +1526,7 @@ class DryMaterial(ActionsWithConditons):
     ) -> List[Dict[str, Any]]:
         action: DryMaterial = cls(action_name="Dry", action_context=context)
         action.validate_conditions(conditions_parser)
-        return [action.zeolite_dict()]
+        return [action.generate_dict()]
 
 class ThermalTreatment(ActionsWithConditons):
     temperature: Optional[str] = None
@@ -1537,7 +1540,7 @@ class ThermalTreatment(ActionsWithConditons):
     ) -> List[Dict[str, Any]]:
         action: ThermalTreatment = cls(action_name="ThermalTreatment", action_context=context)
         action.validate_conditions(conditions_parser, complex_conditions_parser=complex_conditions_parser)
-        return [action.zeolite_dict()]
+        return [action.generate_dict()]
 
 class StirMaterial(ActionsWithConditons):
     duration: Optional[str] = None
@@ -1552,9 +1555,9 @@ class StirMaterial(ActionsWithConditons):
         action.validate_conditions(conditions_parser, complex_conditions_parser=complex_conditions_parser)
         list_of_actions: List[Any] = []
         if action.temperature is not None:
-            list_of_actions.append(ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature).zeolite_dict())
+            list_of_actions.append(ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature).generate_dict())
         if action.duration is not None:
-            list_of_actions.append(action.zeolite_dict())
+            list_of_actions.append(action.generate_dict())
         return list_of_actions
     
 class SonicateMaterial(ActionsWithConditons):
@@ -1570,10 +1573,10 @@ class SonicateMaterial(ActionsWithConditons):
         action.validate_conditions(conditions_parser, complex_conditions_parser=complex_conditions_parser)
         list_of_actions: List[Any] = []
         if action.temperature is not None:
-            list_of_actions.append(ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature).zeolite_dict())
+            list_of_actions.append(ChangeTemperature(action_name="ChangeTemperature", temperature=action.temperature).generate_dict())
         if action.duration is not None:
             action.stirring_speed = "sonicate"
-            list_of_actions.append(action.zeolite_dict())
+            list_of_actions.append(action.generate_dict())
         return list_of_actions
 
 class IonExchange(Treatment):
@@ -1586,8 +1589,9 @@ class IonExchange(Treatment):
         schema_parser: SchemaParser,
         amount_parser: ParametersParser,
         conditions_parser: ParametersParser,
+        banned_parser: KeywordSearching
     ) -> List[Dict[str, Any]]:
-        return Treatment.generate_treatment("IonExchange", context, schemas, schema_parser, amount_parser, conditions_parser)
+        return Treatment.generate_treatment("IonExchange", context, schemas, schema_parser, amount_parser, conditions_parser, banned_parser)
     
 class AlkalineTreatment(Treatment):
     
@@ -1599,8 +1603,9 @@ class AlkalineTreatment(Treatment):
         schema_parser: SchemaParser,
         amount_parser: ParametersParser,
         conditions_parser: ParametersParser,
+        banned_parser: KeywordSearching
     ) -> List[Dict[str, Any]]:
-        return Treatment.generate_treatment("AlkalineTreatment", context, schemas, schema_parser, amount_parser, conditions_parser)
+        return Treatment.generate_treatment("AlkalineTreatment", context, schemas, schema_parser, amount_parser, conditions_parser, banned_parser)
     
 class AcidTreatment(Treatment):
 
@@ -1612,8 +1617,9 @@ class AcidTreatment(Treatment):
         schema_parser: SchemaParser,
         amount_parser: ParametersParser,
         conditions_parser: ParametersParser,
+        banned_parser: KeywordSearching
     ) -> List[Dict[str, Any]]:
-        return Treatment.generate_treatment("AcidTreatment", context, schemas, schema_parser, amount_parser, conditions_parser)
+        return Treatment.generate_treatment("AcidTreatment", context, schemas, schema_parser, amount_parser, conditions_parser, banned_parser)
 
 class Repeat(Actions):
     amount: str = 1
@@ -1634,7 +1640,7 @@ class Repeat(Actions):
                 )
         list_of_actions: List[Any] = []
         if 6 > action.amount > 1:
-            list_of_actions.append(action.zeolite_dict())
+            list_of_actions.append(action.generate_dict())
         print(list_of_actions)
         return list_of_actions
     
@@ -1642,23 +1648,43 @@ class Transfer(Actions):
     recipient: str = ""
     
     @classmethod
-    def generate_action(cls, context: str, schemas: List[str], schemas_parser: SchemaParser):
+    def generate_action(cls, context: str, schemas: List[str], schemas_parser: SchemaParser, banned_transfer_parser: KeywordSearching):
         print(context)
         action: Transfer = cls(action_name="Transfer", action_context=context)
         if len(schemas) == 0:
             pass
         elif len(schemas) == 1:
-            name: str = schemas_parser.get_atribute_value(schemas[0], "type")
-            size = schemas_parser.get_atribute_value(schemas[0], "volume")
-            action.recipient = f"{size[0]} {name[0]}".strip()
+            name: List[str] = schemas_parser.get_atribute_value(schemas[0], "type")
+            banned_keywords_name: List[str] = banned_transfer_parser.find_keywords(name[0].lower())
+            if len(banned_keywords_name) > 0:
+                final_name = ""
+            else:
+                final_name = name[0]
+            size: List[str]= schemas_parser.get_atribute_value(schemas[0], "volume")
+            banned_keywords_size: List[str] = banned_transfer_parser.find_keywords(size[0].lower())
+            if len(banned_keywords_size) > 0:
+                final_size = size[0]
+            else:
+                final_size = size[0] + " "
+            action.recipient = f"{final_size}{final_name}".strip()
         else:
             name: str = schemas_parser.get_atribute_value(schemas[0], "type")
+            banned_keywords_name = banned_transfer_parser.find_keywords(name[0].lower())
+            if len(banned_keywords_name) > 0:
+                final_name = ""
+            else:
+                final_name = name[0]
             size = schemas_parser.get_atribute_value(schemas[0], "volume")
-            action.recipient = f"{size[0]} {name[0]}".strip()
+            banned_keywords_size: List[str] = banned_transfer_parser.find_keywords(size[0].lower())
+            if len(banned_keywords_size) > 0:
+                final_size = size[0]
+            else:
+                final_size = size[0] + " "
+            action.recipient = f"{final_size}{final_name}".strip()
             print(
                 "Warning: More than one recipient was found, only the first one was considered"
                 )
-        return [action.zeolite_dict()]
+        return [action.generate_dict()]
 
 class PhaseSeparationSAC(Actions):
     @classmethod
@@ -1752,9 +1778,9 @@ class ChangeTemperature(ActionsWithConditons):
             action.microwave = True
         if action.duration is not None:
             new_action = Crystallization(action_name="Crystallization", temperature=action.temperature, duration=action.duration, pressure=action.pressure, stirring_speed=action.stirring_speed, microwave=action.microwave)
-            return [new_action.zeolite_dict()]
+            return [new_action.generate_dict()]
         else:
-            return [action.zeolite_dict()]
+            return [action.generate_dict()]
         
 class ChangeTemperatureSAC(ActionsWithConditons):
     temperature: Optional[str] = None
@@ -1779,15 +1805,15 @@ class ChangeTemperatureSAC(ActionsWithConditons):
             pass
         elif action.atmosphere is not None:
             new_action = ThermalTreatment(action_name="ThermalTreatment", temperature=action.temperature, duration=action.duration, heat_ramp=action.heat_ramp, atmosphere=action.atmosphere)
-            list_of_actions.append(new_action.zeolite_dict())
+            list_of_actions.append(new_action.generate_dict())
         elif action.stirring_speed is not None:
             new_action = StirMaterial(action_name="Stir", duration=action.duration, stirring_speed=action.stirring_speed)
-            list_of_actions.append(action.zeolite_dict())
-            list_of_actions.append(new_action.zeolite_dict())
+            list_of_actions.append(action.generate_dict())
+            list_of_actions.append(new_action.generate_dict())
         elif action.duration is not None:
             new_action = WaitMaterial(action_name="Wait", duration=action.duration)
-            list_of_actions.append(action.zeolite_dict())
-            list_of_actions.append(new_action.zeolite_dict())
+            list_of_actions.append(action.generate_dict())
+            list_of_actions.append(new_action.generate_dict())
         return list_of_actions
 
 class Cool(ActionsWithConditons):
@@ -1809,11 +1835,11 @@ class Cool(ActionsWithConditons):
             action.microwave = True
         if action.duration is not None:
             new_action = Crystallization(action_name="Crystallization", temperature=action.temperature, duration=action.duration, pressure=action.pressure, stirring_speed=action.stirring_speed, microwave=action.microwave)
-            return [new_action.zeolite_dict()]
+            return [new_action.generate_dict()]
         else:
             if action.temperature is None:
                 action.temperature = "Cool"
-            return [action.zeolite_dict()]
+            return [action.generate_dict()]
         
 class CoolSAC(ActionsWithConditons):
     temperature: Optional[str] = None
@@ -1835,13 +1861,13 @@ class CoolSAC(ActionsWithConditons):
         if action.temperature is None:
             action.temperature = "Cool"
         list_of_actions: List[Any] = []
-        list_of_actions.append(action.zeolite_dict())
+        list_of_actions.append(action.generate_dict())
         if action.stirring_speed is not None:
             new_action = StirMaterial(action_name="Stir", duration=action.duration, stirring_speed=action.stirring_speed)
-            list_of_actions.append(new_action.zeolite_dict())
+            list_of_actions.append(new_action.generate_dict())
         elif action.duration is not None:
             new_action = WaitMaterial(action_name="Wait", duration=action.duration)
-            list_of_actions.append(new_action.zeolite_dict())
+            list_of_actions.append(new_action.generate_dict())
         return list_of_actions
 
 class SetAtmosphere(Actions):
@@ -1859,9 +1885,9 @@ class Grind(ActionsWithConditons):
     def generate_action(cls, context: str, conditions_parser: ParametersParser):
         action: Grind = cls(action_name="Grind", action_context=context)
         action.validate_conditions(conditions_parser, add_others=True)
-        list_of_actions: List[Dict[str, Any]] = [action.zeolite_dict()]
+        list_of_actions: List[Dict[str, Any]] = [action.generate_dict()]
         if action.size is not None:
-            list_of_actions.append(Sieve(action_name="Sieve", size=action.size).zeolite_dict())
+            list_of_actions.append(Sieve(action_name="Sieve", size=action.size).generate_dict())
         return list_of_actions
 
 class Sieve(ActionsWithConditons):
@@ -1870,9 +1896,13 @@ class Sieve(ActionsWithConditons):
     def generate_action(cls, context: str, conditions_parser: ParametersParser):
         action: Sieve = cls(action_name="Sieve", action_context=context)
         action.validate_conditions(conditions_parser, add_others=True)
-        return [action.zeolite_dict()]
+        return [action.generate_dict()]
+
+BANNED_TRANSFER_REGISTRY: List[str] = ["N/A"]
 
 BANNED_CHEMICALS_REGISTRY: List[str] = [
+    "reaction",
+    "title",
     "newsolution",
     "extract",
     "heated",
@@ -2030,6 +2060,8 @@ MATERIAL_ACTION_REGISTRY: Dict[str, Any] = {
     "calcination": ThermalTreatment,
     "stir": StirMaterial,
     "ionexchange": IonExchange,
+    "ion-exchange": IonExchange,
+    "ion exchange": IonExchange,
     "alkalinetreatment": AlkalineTreatment,
     "acidtreatment": AcidTreatment,
     "repeat": Repeat,
@@ -2041,6 +2073,7 @@ MATERIAL_ACTION_REGISTRY: Dict[str, Any] = {
     "extract": WashMaterial,
     "quench": WashMaterial,
     "thermaltreatment": ThermalTreatment,
+    "posttreatment": ThermalTreatment, 
     "drysolid": DryMaterial,
     "drysolution": DryMaterial,
     "dry": DryMaterial,
@@ -2051,6 +2084,7 @@ MATERIAL_ACTION_REGISTRY: Dict[str, Any] = {
     "reflux": ChangeTemperature,
     "phaseseparation": Separate,
     "purify": WashMaterial,
+    "transfer": None,
     "degas": None,
     "invalidaction": None,
     "recrystallize": None,

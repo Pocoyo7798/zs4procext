@@ -472,6 +472,9 @@ class Evaluator(BaseModel):
             if test == reference_dataset[i]:
                 true_positive += 1
             elif test == "True\n":
+                print("##########")
+                print(test)
+                print(i + 1)
                 false_positive += 1
             else:
                 false_negative += 1

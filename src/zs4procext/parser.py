@@ -1,14 +1,16 @@
 import json
 import re
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Union
+from typing import Any, ClassVar, Dict, Iterator, List, Optional, Union
 
 import importlib_resources
 from pint import UnitRegistry
-from pydantic import BaseModel, PrivateAttr, validator
+from pydantic import BaseModel, Field, PrivateAttr, validator
 from quantulum3 import parser
 from trieregex import TrieRegEx as TRE
 
+import pandas as pd
+import os 
 
 class Amount(BaseModel):
     value: List[str] = []
@@ -51,7 +53,7 @@ class Parameters(BaseModel):
 class ParametersParser(BaseModel):
     parser_params_path: str = str(
         importlib_resources.files("zs4procext")
-        / "resources"
+        / "resources/parsing_parameters"
         / "synthesis_parsing_parameters.json"
     )
     time: bool = True
@@ -312,7 +314,7 @@ class ParametersParser(BaseModel):
 class ListParametersParser(BaseModel):
     parser_params_path: str = str(
         importlib_resources.files("zs4procext")
-        / "resources"
+        / "resources/parsing_parameters"
         / "synthesis_parsing_parameters.json"
     )
     quantity_range: int = 100
@@ -580,7 +582,7 @@ class ListParametersParser(BaseModel):
 class ComplexParametersParser(BaseModel):
     parser_params_path: str = str(
         importlib_resources.files("zs4procext")
-        / "resources"
+        / "resources/parsing_parameters"
         / "synthesis_parsing_parameters.json"
     )
     _regex: Optional[re.Pattern[str]] = PrivateAttr(default=None)
@@ -770,7 +772,7 @@ class SchemaParser(BaseModel):
         for atribute in self.atributes_list:
             self._atributes_regex[atribute] = re.compile(
                 #rf"[\"']*{atribute}[\"']*\s*[:=-]\s*[\"']*([^\"'{self.limiters['initial']}{self.limiters['final']}]*)[\"']*,*",
-                rf"[\"']*{atribute}[\"']*\s*[:=-]\s*[\"',]*([^\"',]*)[\"']*",
+                rf"[\"']*{atribute}[\"']*\s*[:=-]\s*[\"']*([^\"']*)[\"']*",
                 re.IGNORECASE | re.MULTILINE,
             )
 
@@ -819,8 +821,15 @@ class SchemaParser(BaseModel):
                 f"The give atribute is not valid, the valid atributes are {self.atributes_list}"
             )
         regex: re.Pattern[str] = self._atributes_regex[atribute]
-        result: List[Any] = regex.findall(text)
-        return result
+        results: List[Any] = regex.findall(text)
+        i = 0
+        for result in results:
+            while result[-1] in set([",", " "]):
+                result = result[:-1]
+                print(result)
+            results[i] = result
+            i += 1
+        return results
 
 
 class DimensionlessParser:
@@ -1234,3 +1243,212 @@ MATERIALS_CHARACTERIZATION_REGISTRY: Dict[str, Any] = {
 }
 
 EMPTY_VALUES_REGISTRY = set(["-", "-"])
+
+
+subscript_map = {
+    '₀': '0', '₁': '1', '₂': '2', '₃': '3', '₄': '4',
+    '₅': '5', '₆': '6', '₇': '7', '₈': '8', '₉': '9',
+    'ₐ': 'A', 'ₑ': 'E', 'ₕ': 'H', 'ᵢ': 'I', 'ⱼ': 'J',
+    'ₖ': 'K', 'ₗ': 'L', 'ₘ': 'M', 'ₙ': 'N', 'ₒ': 'O',
+    'ₚ': 'P', 'ᵣ': 'R', 'ₛ': 'S', 'ₜ': 'T', 'ᵤ': 'U',
+    'ᵥ': 'V', 'ₓ': 'X'
+}
+
+superscript_map = {
+    '⁰': '0', '¹': '1', '²': '2', '³': '3', '⁴': '4',
+    '⁵': '5', '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9',
+    '⁺': '+', '⁻': '-', '⁼': '=', '⁽': '(', '⁾': ')',
+    'ⁿ': 'N', 'ᵃ': 'A', 'ᵇ': 'B', 'ᶜ': 'C', 'ᵈ': 'D',
+    'ᵉ': 'E', 'ᶠ': 'F', 'ᵍ': 'G', 'ʰ': 'H', 'ᶦ': 'I',
+    'ʲ': 'J', 'ᵏ': 'K', 'ˡ': 'L', 'ᵐ': 'M', 'ⁱ': 'I',
+    'ᵒ': 'O', 'ᵖ': 'P', 'ʳ': 'R', 'ˢ': 'S', 'ᵗ': 'T',
+    'ᵘ': 'U', 'ᵛ': 'V', 'ʷ': 'W', 'ˣ': 'X', 'ʸ': 'Y',
+    'ᶻ': 'Z'
+}
+
+class ImageParser(BaseModel):
+    data_dict: Dict[str, Dict[str, list]] = Field(default_factory=dict)
+    data_string: str = ""
+
+    def __init__(self, data_string: Union[str, dict] = "", **data):
+        super().__init__(data_string=data_string, **data)
+        self._parse_input(data_string)
+
+    def _parse_input(self, input_data: Union[str, dict]):
+        if isinstance(input_data, dict):
+            input_data = self._convert_na_to_null(input_data)
+            input_data = self._clean_keys(input_data)
+            self.data_dict = self._filter_na_points(input_data)
+        else:
+            try:
+                input_data = input_data.strip()
+
+                # Extract content inside triple backticks
+                matches = re.findall(r"```(?:json)?(.*?)```", input_data, re.DOTALL)
+                if matches:
+                    input_data = matches[0].strip()
+
+                input_data = re.sub(r'"\{\}"', '""', input_data)
+                input_data = re.sub(r'\\u208', '', input_data)
+                input_data = re.sub(r'\\u00b', '', input_data)
+
+                input_data = re.sub(
+                    r'(?<=[:\[,])\s*(?:"N/A"|N/A|NA|NaN|nan|na)\s*(?=[,\]\}])',
+                    ' null',
+                    input_data,
+                    flags=re.IGNORECASE
+                )
+
+                parsed_data = json.loads(input_data)
+
+                outer_key = None
+                if isinstance(parsed_data, dict) and len(parsed_data) == 1:
+                    only_key = next(iter(parsed_data))
+                    if isinstance(parsed_data[only_key], dict):
+                        outer_key = only_key
+                        parsed_data = parsed_data[only_key]
+
+                parsed_data = self._restructure_if_needed(parsed_data, outer_key=outer_key)
+                parsed_data = self._convert_na_to_null(parsed_data)
+                parsed_data = self._clean_keys(parsed_data)
+                self.data_dict = self._filter_na_points(parsed_data)
+
+            except json.JSONDecodeError as e:
+                print(f"JSON parsing failed: {e}\nInput was:\n{input_data}")
+                self.data_dict = {}
+
+    
+    def _restructure_if_needed(self, data: dict, outer_key: str = None) -> dict:
+        if not isinstance(data, dict):
+            return data
+
+        inner_data = data
+        x_key = next((k for k, v in inner_data.items() if isinstance(v, list)), None)
+        if x_key is None:
+            return data
+
+        x_values = inner_data[x_key]
+        
+        restructured = {}
+        for k, v in inner_data.items():
+            if k == x_key:
+                continue
+            if isinstance(v, list) and len(v) == len(x_values):
+                # always use the same y_key = outer_key if present
+                y_key = outer_key if outer_key else k
+                restructured[k] = {
+                    x_key: x_values,
+                    y_key: v
+                }
+        
+        return restructured if restructured else data
+
+    def _convert_na_to_null(self, data: Dict) -> Dict:
+        def convert_list(vals):
+            cleaned = []
+            for v in vals:
+                if isinstance(v, (int, float)):
+                    cleaned.append(v)
+                elif isinstance(v, str):
+                    stripped = v.strip().lower()
+                    if stripped in {"", "na", "n/a", "nan"}:
+                        cleaned.append(None)
+                    else:
+                        try:
+                            # Convert numeric strings to float
+                            num = float(v)
+                            cleaned.append(num)
+                        except ValueError:
+                            # Remove any non-numeric strings
+                            cleaned.append(None)
+                elif v is None:
+                    cleaned.append(None)
+                else:
+                    cleaned.append(None)  # Catch anything unexpected
+            return cleaned
+
+        converted = {}
+        for key, subdict in data.items():
+            if isinstance(subdict, dict):
+                converted_sub = {
+                    k: convert_list(vals) if isinstance(vals, list) else vals
+                    for k, vals in subdict.items()
+                }
+                converted[key] = converted_sub
+            else:
+                converted[key] = subdict
+        return converted
+
+
+    def _normalize_sub_super_scripts(self, text: str) -> str:
+        return ''.join(
+            subscript_map.get(char, superscript_map.get(char, char)) for char in text
+        )
+
+    def _clean_keys(self, data: Dict) -> Dict:
+        def clean_key(k: str) -> str:
+
+            k = re.sub(r'\{_?([^{}]+)\}', r'\1', k)
+
+            k = self._normalize_sub_super_scripts(k)
+
+            k = k.replace("_", "").strip()
+
+            return k
+
+        cleaned = {}
+        for key, value in data.items():
+            new_key = clean_key(key)
+            if isinstance(value, dict):
+                cleaned[new_key] = self._clean_keys(value)
+            else:
+                cleaned[new_key] = value
+        return cleaned
+
+    def _filter_na_points(self, data: Dict[str, Dict[str, list]]) -> Dict[str, Dict[str, list]]:
+        filtered = {}
+        for series_name, axes in data.items():
+            keys = list(axes.keys())
+            if len(keys) < 2:
+                continue
+
+            x_key, y_key = keys[0], keys[1]
+            x_vals = axes[x_key]
+            y_vals = axes[y_key]
+
+            if len(x_vals) != len(y_vals):
+                continue
+
+            x_filtered, y_filtered = [], []
+            for x, y in zip(x_vals, y_vals):
+                if x is not None and y is not None:
+                    x_filtered.append(x)
+                    y_filtered.append(y)
+
+            filtered[series_name] = {
+                x_key: x_filtered,
+                y_key: y_filtered
+            }
+
+        return filtered
+
+    def parse(self, data_string: Union[str, dict]):
+        self._parse_input(data_string)
+        return self.get_data_dict()
+
+    def get_data_dict(self):
+        return self.data_dict
+
+    def to_json(self):
+        return json.dumps(self.data_dict, indent=4)
+
+    def get_axis_labels(self):
+        axis_labels = {}
+        for series, axes in self.data_dict.items():
+            keys = list(axes.keys())
+            if len(keys) >= 2:
+                axis_labels[series] = {
+                    "x_axis": keys[0],
+                    "y_axis": keys[1]
+                }
+        return axis_labels
