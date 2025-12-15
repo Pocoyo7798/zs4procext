@@ -2,7 +2,7 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import Any, ClassVar, Dict, Iterator, List, Optional, Union
+from typing import Any, ClassVar, Dict, Iterator, List, Optional, Tuple, Union
 
 import importlib_resources
 import pandas as pd
