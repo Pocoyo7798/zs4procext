@@ -1302,7 +1302,7 @@ class TableParser(BaseModel):
             index (int): column to be extracted index
 
         Returns:
-            List[Dict[str, Any]]: results contqning the updqted entries
+            List[Dict[str, Any]]: results containing the updated entries
         """
         if len(units) > 0:
             unit: str = f" {units[0]}"
@@ -1437,7 +1437,7 @@ class LaTeXTableParser(BaseModel):
         tables: List[List[List[str]]] = []
 
         for env in self.table_environments:
-            pattern = rf'\begin{{{env}}}.*?\end{{{env}}}'
+            pattern = rf'\\begin{{{env}}}.*?\\end{{{env}}}'
             matches = re.finditer(pattern, latex_content, re.DOTALL)
 
             for match in matches:
@@ -1498,7 +1498,7 @@ class LaTeXTableParser(BaseModel):
                 for key in keys_to_delete:
                     del multirow_tracker[key]
 
-        return parsed_rows or None
+        return parsed_rows if parsed_rows else None
 
     def _parse_row(
         self,
@@ -1568,6 +1568,7 @@ class LaTeXTableParser(BaseModel):
         cell = cell.replace('<<<AMPERSAND_ESC>>>', '&')
         cell = cell.replace('<<<UNDERSCORE_ESC>>>', '_')
         cell = cell.replace('<<<HASH_ESC>>>', '#')
+        cell = re.sub(r'[_$^]', '', cell)
 
         return cell.strip()
 
