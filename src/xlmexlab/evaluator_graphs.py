@@ -99,6 +99,51 @@ class Evaluator_Graphs(BaseModel):
     def euclidean_distance(point1: Tuple[float, float], point2: Tuple[float, float]) -> float:
         return ((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2) ** 0.5
 
+
+    def overall_point_matching(self, ref_data: Dict[str, Any], test_data: Dict[str, Any]) -> Tuple[int, int, int]:
+        ref_points = []
+        test_points = []
+
+        # Collect all points from all series
+        for plot_data in ref_data.values():
+            for series_data in plot_data.values():
+                x_vals, y_vals = list(series_data.values())
+                ref_points.extend(list(zip(x_vals, y_vals)))
+
+        for plot_data in test_data.values():
+            for series_data in plot_data.values():
+                x_vals, y_vals = list(series_data.values())
+                test_points.extend(list(zip(x_vals, y_vals)))
+
+        if not ref_points and not test_points:
+            return 0, 0, 0
+
+        # Normalize based on global scale
+        all_x = [p[0] for p in ref_points + test_points]
+        all_y = [p[1] for p in ref_points + test_points]
+        max_x = abs(max(all_x, key=abs, default=1.0)) or 1.0
+        max_y = abs(max(all_y, key=abs, default=1.0)) or 1.0
+        ref_points = [(x / max_x, y / max_y) for x, y in ref_points]
+        test_points = [(x / max_x, y / max_y) for x, y in test_points]
+
+        TP, FP, FN = 0, 0, len(ref_points)
+        test_points_used = set()
+
+        for i, ref_pt in enumerate(ref_points):
+            for j, test_pt in enumerate(test_points):
+                if j in test_points_used:
+                    continue
+                dist = self.euclidean_distance(ref_pt, test_pt)
+                if dist <= self.distance_threshold:
+                    TP += 1
+                    FN -= 1
+                    test_points_used.add(j)
+                    break
+
+        FP = len(test_points) - len(test_points_used)
+        return TP, FP, FN
+
+
     def point_matching_accuracy(
         self,
         ref_data: Dict[str, Any],

@@ -65,21 +65,36 @@ def table2data(
         vlm_model_name=llm_model_name,
         vlm_model_parameters_path=llm_model_parameters_path,
     )
-    file_list = os.listdir(image_folder)
-    if os.path.isfile(output_file_path):
-        os.remove(output_file_path)
+    
+    os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
+
+    all_results = []
+
+    file_list = sorted(os.listdir(image_folder))
+
     for file in file_list:
-        extension = file.split(".")[-1]
-        print(extension)
-        if extension in {"png", "jpeg", "tiff"}:
-            print("cheguei")
-            file_path = f"{image_folder}/{file}"
-            extractor.extract_table_info(file_path)
-    print(f"{(time.time() - start_time) / 60} minutes")
+        extension = file.split(".")[-1].lower()
 
+        if extension in {"png", "jpg", "jpeg", "tif", "tiff"}:
+            file_path = os.path.join(image_folder, file)
+            print(f"[INFO] Processing {file}")
 
-def main():
-    table2data()
+            try:
+                result = extractor.extract_table_info(file_path)
+                all_results.append(result)
+            except Exception as e:
+                print(f"[ERROR] Failed on {file}: {e}")
+                all_results.append({
+                    "image": file,
+                    "tables": [],
+                    "error": str(e),
+                })
+
+    # Write JSON output
+    with open(output_file_path, "w", encoding="utf-8") as f:
+        json.dump(all_results, f, indent=2, ensure_ascii=False)
+
+    print(f"[DONE] Total time: {(time.time() - start_time) / 60:.2f} minutes")
 
 
 if __name__ == "__main__":

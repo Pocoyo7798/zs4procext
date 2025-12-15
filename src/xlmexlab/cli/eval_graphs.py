@@ -1,6 +1,6 @@
 import json
 from typing import Any, Dict
-from zs4procext.parser import KeywordSearching
+from xlmexlab.parser import KeywordSearching
 
 import click
 import pandas as pd
@@ -8,7 +8,7 @@ import pandas as pd
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill, Font
 
-from zs4procext.evaluator_graphs import Evaluator_Graphs
+from xlmexlab.evaluator_graphs import Evaluator_Graphs
 import os
 
 
@@ -110,7 +110,7 @@ def eval_graphs(
         json.dump(results["Per_Image_Results"], f, indent=4)
     print(f"Per-image point results saved to {json_output_file}")
 
-    """"
+    """
     # Save matched label and series names with similarity
     match_file = output_file.replace('.xlsx', '_matches.xlsx')
 
@@ -160,7 +160,7 @@ def eval_graphs(
     match_df.to_excel(match_file, index=False)
     print(f"\nMatch info (matched + unmatched) saved to: {match_file}")
 
-    """
+
         # ---- PER-IMAGE METRICS ----
     per_image_rows = []
 
@@ -248,6 +248,63 @@ def eval_graphs(
 
     print(f"\nCombined accuracy summary saved to: {summary_file}")
 
+    """
+
+    # ---- NEW: Per-image JSON with structured metrics ----
+    image_metrics = {}
+
+    for plot_name in reference_data.keys():
+        test_plot = test_data.get(plot_name)
+        if not test_plot:
+            continue
+
+        # Compute per-image metrics
+        ref_plot = reference_data[plot_name]
+
+        # ---- SERIES ----
+        ref_series = evaluator.extract_series({plot_name: ref_plot})
+        test_series = evaluator.extract_series({plot_name: test_plot})
+        series_TP, series_FP, series_FN, _, _, _ = evaluator.match_references_tests(ref_series, test_series)
+        series_metrics = evaluator.evaluate(series_TP, series_FP, series_FN)
+
+        # ---- AXIS ---- (reusing label logic)
+        ref_labels = evaluator.extract_labels({plot_name: ref_plot})
+        test_labels = evaluator.extract_labels({plot_name: test_plot})
+        axis_TP, axis_FP, axis_FN, _, _, _ = evaluator.match_references_tests(ref_labels, test_labels)
+        axis_metrics = evaluator.evaluate(axis_TP, axis_FP, axis_FN)
+
+        # ---- POINTS ----
+        series_TP, series_FP, series_FN, series_matches, matched_ref_series, matched_test_series = evaluator.match_references_tests(ref_series, test_series)
+
+        point_TP, point_FP, point_FN, _ = evaluator.point_matching_accuracy(
+            {plot_name: ref_plot},
+            {plot_name: test_plot},
+            series_matches,
+            matched_ref_series,
+            matched_test_series
+        )
+
+        point_metrics = evaluator.evaluate(point_TP, point_FP, point_FN)
+
+        # ---- OVERALL POINTS ----
+        overall_TP, overall_FP, overall_FN = evaluator.overall_point_matching(
+            {plot_name: ref_plot},
+            {plot_name: test_plot}
+        )
+        overall_metrics = evaluator.evaluate(overall_TP, overall_FP, overall_FN)
+
+        # Save to JSON
+        image_metrics[plot_name] = {
+            "series": series_metrics,
+            "axis": axis_metrics,
+            "points": point_metrics,
+            "overall_points": overall_metrics
+        }
+
+    metrics_json_file = output_file.replace(".xlsx", "_per_image_metrics.json")
+    with open(metrics_json_file, "w") as jf:
+        json.dump(image_metrics, jf, indent=4)
+    print(f"\nPer-image structured metrics saved to: {metrics_json_file}")
 
 
 
