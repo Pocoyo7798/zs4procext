@@ -96,6 +96,9 @@ def table2data(
 
     print(f"[DONE] Total time: {(time.time() - start_time) / 60:.2f} minutes")
 
+def main():
+    table2data()   
+
 
 if __name__ == "__main__":
     main()
