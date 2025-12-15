@@ -1417,6 +1417,182 @@ class TableParser(BaseModel):
         results = self.extract_columns(new_table_entries, row_indexes)
         return results
 
+class LaTeXTableParser(BaseModel):
+    """
+    A versatile parser for LaTeX tables that converts them to lists of lists.
+    Supports: tabular, tabularx, longtable, array environments.
+    Handles: multicolumn, multirow, hline, cline, and various formatting.
+    """
+
+    table_environments: List[str] = Field(default_factory=lambda: ['tabular', 'tabularx', 'longtable', 'array'])
+
+    def parse(self, latex_content: str) -> List[List[List[str]]]:
+        """
+        Parse all tables from LaTeX content.
+        Prints the raw content before parsing and the parsed result after.
+        """
+        print("[LaTeXTableParser] Raw LaTeX content BEFORE parsing:")
+        print(latex_content)
+        
+        tables: List[List[List[str]]] = []
+
+        for env in self.table_environments:
+            pattern = rf'\begin{{{env}}}.*?\end{{{env}}}'
+            matches = re.finditer(pattern, latex_content, re.DOTALL)
+
+            for match in matches:
+                table_content = match.group(0)
+                parsed_table = self._parse_single_table(table_content, env)
+                if parsed_table:
+                    tables.append(parsed_table)
+
+        print("[LaTeXTableParser] Parsed tables AFTER parsing:")
+        print(tables)
+
+        return tables
+
+    def _parse_single_table(self, table_content: str, env: str) -> Optional[List[List[str]]]:
+        pattern = rf'\\begin{{{env}}}(?:\[[^\]]*\])?(?:\{{[^}}]*\}})*(.*)\\end{{{env}}}'
+        match = re.search(pattern, table_content, re.DOTALL)
+
+        if not match:
+            return None
+
+        content = match.group(1)
+
+        # Protect escaped special characters
+        content = content.replace(r'\%', '<<<PERCENT_ESC>>>')
+        content = content.replace(r'\$', '<<<DOLLAR_ESC>>>')
+        content = content.replace(r'\&', '<<<AMPERSAND_ESC>>>')
+        content = content.replace(r'\_', '<<<UNDERSCORE_ESC>>>')
+        content = content.replace(r'\#', '<<<HASH_ESC>>>')
+
+        # Remove comments
+        content = re.sub(r'%.*?$', '', content, flags=re.MULTILINE)
+
+        # Remove rules
+        content = re.sub(r'\\(?:hline|toprule|midrule|bottomrule|cline\{[^}]+\})', '', content)
+
+        rows = re.split(r'\\\\', content)
+
+        parsed_rows: List[List[str]] = []
+        multirow_tracker: Dict[int, Tuple[int, str]] = {}
+
+        for row in rows:
+            row = row.strip()
+            if not row:
+                continue
+
+            parsed_row = self._parse_row(row, multirow_tracker)
+            if parsed_row:
+                parsed_rows.append(parsed_row)
+
+                keys_to_delete = []
+                for col_idx, (remaining, content_val) in multirow_tracker.items():
+                    remaining -= 1
+                    if remaining <= 0:
+                        keys_to_delete.append(col_idx)
+                    else:
+                        multirow_tracker[col_idx] = (remaining, content_val)
+
+                for key in keys_to_delete:
+                    del multirow_tracker[key]
+
+        return parsed_rows or None
+
+    def _parse_row(
+        self,
+        row: str,
+        multirow_tracker: Dict[int, Tuple[int, str]]
+    ) -> Optional[List[str]]:
+
+        raw_cells = row.split('&')
+
+        expanded_cells: List[str] = []
+        for raw_cell in raw_cells:
+            raw_cell = raw_cell.strip()
+
+            mc_pattern = r'\\multicolumn\{(\d+)\}\{[^}]*\}\{(.*)\}'
+            mc_match = re.match(mc_pattern, raw_cell)
+
+            if mc_match:
+                num_cols = int(mc_match.group(1))
+                content = self._clean_cell_content(mc_match.group(2))
+                expanded_cells.extend([content] * num_cols)
+            else:
+                expanded_cells.append(raw_cell)
+
+        final_cells: List[str] = []
+        for cell_idx, cell in enumerate(expanded_cells):
+            mr_pattern = r'\\multirow\{(\d+)\}\{[^}]*\}\{(.*)\}'
+            mr_match = re.search(mr_pattern, cell)
+
+            if mr_match:
+                num_rows = int(mr_match.group(1))
+                content = self._clean_cell_content(mr_match.group(2))
+                multirow_tracker[cell_idx] = (num_rows, content)
+                final_cells.append(content)
+            elif cell.strip() == '':
+                if cell_idx in multirow_tracker:
+                    final_cells.append(multirow_tracker[cell_idx][1])
+                else:
+                    final_cells.append('')
+            else:
+                cleaned = self._clean_cell_content(cell)
+                if cleaned == '' and cell_idx in multirow_tracker:
+                    final_cells.append(multirow_tracker[cell_idx][1])
+                else:
+                    final_cells.append(cleaned)
+
+        return final_cells or None
+
+    def _clean_cell_content(self, cell: str) -> str:
+        max_iterations = 10
+        for _ in range(max_iterations):
+            old_cell = cell
+
+            cell = re.sub(r'\\textbf\{([^}]*)\}', r'\1', cell)
+            cell = re.sub(r'\\textit\{([^}]*)\}', r'\1', cell)
+            cell = re.sub(r'\\emph\{([^}]*)\}', r'\1', cell)
+            cell = re.sub(r'\\text\{([^}]*)\}', r'\1', cell)
+            cell = re.sub(r'\\\w+\{([^}]*)\}', r'\1', cell)
+
+            if cell == old_cell:
+                break
+
+        cell = re.sub(r'\\\\', '', cell)
+        cell = re.sub(r'[{}]', '', cell)
+
+        cell = cell.replace('<<<DOLLAR_ESC>>>', '$')
+        cell = cell.replace('<<<PERCENT_ESC>>>', '%')
+        cell = cell.replace('<<<AMPERSAND_ESC>>>', '&')
+        cell = cell.replace('<<<UNDERSCORE_ESC>>>', '_')
+        cell = cell.replace('<<<HASH_ESC>>>', '#')
+
+        return cell.strip()
+
+    def parse_to_dict(self, latex_content: str, has_header: bool = True) -> List[Dict[str, str]]:
+        tables = self.parse(latex_content)
+        result: List[Dict[str, str]] = []
+
+        for table in tables:
+            if not table:
+                continue
+
+            if has_header and len(table) > 1:
+                headers = table[0]
+                for row in table[1:]:
+                    row_dict = {
+                        headers[i]: row[i] if i < len(row) else ''
+                        for i in range(len(headers))
+                    }
+                    result.append(row_dict)
+            else:
+                for row in table:
+                    result.append({f'col_{i}': val for i, val in enumerate(row)})
+
+        return result
+
 
 PISTACHIO_SEPARATORS_REGISTRY: List[str] = [
     "Initialization",
