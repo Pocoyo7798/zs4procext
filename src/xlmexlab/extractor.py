@@ -1931,9 +1931,11 @@ class TableExtractor(BaseModel):
         )
         #parsed_output = self._condition_parser.parse(output)
         #HTML
+        print(f"output is: {output}")
         extractor = Extractor(output)
         extractor.parse()
         parsed_output = extractor.return_list()
+        print(f'parsed output is: {parsed_output}')
         return {image_path: parsed_output}
 
 
