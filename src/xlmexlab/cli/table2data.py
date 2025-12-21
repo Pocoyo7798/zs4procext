@@ -85,7 +85,7 @@ def table2data(
                 
                 table = Table(
                     page=0,  # 0 = unknown
-                    name=image_file
+                    name=image_file,
                     block=list_of_lists
                 )
                 
