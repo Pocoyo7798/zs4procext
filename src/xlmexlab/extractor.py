@@ -1936,7 +1936,148 @@ class TableExtractor(BaseModel):
         extractor.parse()
         parsed_output = extractor.return_list()
         print(f'parsed output is: {parsed_output}')
-        return {image_path: parsed_output}
+        return image_path,  parsed_output
+
+class Table2Blocks(BaseModel): #from pdf2data
+    page: int
+    name: str
+    block: List[List[str]]
+    type: str = "Table"
+    collumn_headers: List[int] = []
+    row_indexes: List[int] = []
+    number: int = 0
+    legend: str = ""
+    box: List[float] = []
+    letter_ratio: float = 3
+
+    def find_collumn_headers(self) -> None:
+        """find the collumn headers as rows that do not have numbers"""
+        if len(self.block) == 0:
+            pass
+        elif len(self.block[0]) == 0:
+            pass
+        else:
+            collumn_headers: List[int] = []
+            find_number: bool = True
+            for row_number in range(len(self.block)):
+                if find_number is False:
+                    collumn_headers.append(row_number - 1)
+                find_number = False
+                for entry in self.block[row_number]:
+                    if entry == "":
+                        digits: int = 0
+                        letters: int = 0
+                    else:
+                        digits = len(re.findall("[1-9]", entry))
+                        letters = len(re.findall("[a-zA-Z]", entry))
+                    # Verify if the entry as any letter
+                    if digits > self.letter_ratio * letters:
+                        find_number = True
+                        break
+            self.collumn_headers = collumn_headers
+
+    def find_row_indexes(self, max_rows: int = 2) -> None:
+        """find the row indexes by finding collumns without entries with three times more digits then letters
+
+        Parameters
+        ----------
+        max_rows : int, optional
+            maximum rows to be considered, by default 2
+        """
+        row_indexes: List[int] = []
+        find_number: bool = True
+        if len(self.block) == 0:
+            pass
+        elif len(self.block) == 0:
+            pass
+        else:
+            max_rows: int = min(len(self.block[0]), max_rows)
+            for collumn_number in range(max_rows):
+                find_number = False
+                for row in self.block:
+                    if row[collumn_number] == "":
+                        digits: int = 0
+                        letters: int = 0
+                    else:
+                        # test = re.search('[a-zA-Z]', row[collumn_number])
+                        digits = len(re.findall("[1-9]", row[collumn_number]))
+                        letters = len(re.findall("[a-zA-Z]", row[collumn_number]))
+                        # print(f'{row[collumn_number]} presents {digits} digits and {letters} letters')
+                    # Verify if the entry as any letter
+                    # if test is None:
+                    if digits > self.letter_ratio * letters:
+                        find_number = True
+                        break
+                if find_number is False:
+                    row_indexes.append(collumn_number)
+            self.row_indexes = row_indexes
+
+    def create_dict(
+        self,
+        page: Any,
+        page_size: List[float],
+        layout_boxes: List[List[float]],
+        layout_types: List[str],
+        index: int,
+    ) -> Dict[str, Any]:
+        """generates a dictionary describing the table object
+
+        Parameters
+        ----------
+        page : Any
+            pdf page to be considered
+        page_size : List[float]
+            size of the page
+        boxes : List[List[float]]
+            list of boxes of the page layout
+        types : List[str]
+            list of the types of the page layout
+        index : int
+            position of the table or figure in the layout list
+
+        Returns
+        -------
+        Dict[str, Any]
+            a dictionary with the page number, table entries, type, collumn headers, row indexes, table number, legend and table coordinates
+        """
+        i_vertical: int = 1
+        # Go through all entries in the table
+        self.find_collumn_headers()
+        self.find_row_indexes()
+        self.legend = find_legend(
+            page, page_size, layout_boxes, layout_types, index, type=self.type
+        )
+        for i_horizontal in range(len(self.block)):
+            j_horizontal: int = 0
+            for j_vertical in range(len(self.block[i_horizontal])):
+                if i_vertical < len(self.block):
+                    # Verify if the entry is empty
+                    if self.block[i_vertical][j_vertical] == "":
+                        # New entry is the one above
+                        new_entry_vert: str = self.block[i_vertical - 1][j_vertical]
+                        if (
+                            re.search("[a-zA-Z]", new_entry_vert) is not None
+                            or j_vertical == 0
+                        ):
+                            self.block[i_vertical][j_vertical] = new_entry_vert
+                if j_horizontal < len(self.block[i_horizontal]) and j_horizontal > 0:
+                    if self.block[i_horizontal][j_horizontal] == "":
+                        # New entry is the one on the left
+                        new_entry_horiz = self.block[i_horizontal][j_horizontal - 1]
+                        self.block[i_horizontal][j_horizontal] = new_entry_horiz
+                j_horizontal = j_horizontal + 1
+            i_vertical = i_vertical + 1
+        image_rect: fitz.Rect = fitz.Rect(
+            self.box[0], self.box[1], self.box[2], self.box[3]
+        )
+        mat: fitz.Matrix = fitz.Matrix(3, 3)
+        # Get Image from the Rectangle
+        image: Any = page.get_pixmap(matrix=mat, clip=image_rect)
+        # Save as Tiff
+        image.pil_save(self.name, format="TIFF")
+        result = self.__dict__
+        del result["letter_ratio"]
+        return result
 
 
 class ImageExtractor(BaseModel):

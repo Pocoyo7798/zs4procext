@@ -4,7 +4,7 @@ from typing import List, Optional
 
 import click
 
-from xlmexlab.extractor import TableExtractor
+from xlmexlab.extractor import TableExtractor, Table2Blocks
 from xlmexlab.prompt import TEMPLATE_REGISTRY
 
 
@@ -80,8 +80,36 @@ def table2data(
             print(f"[INFO] Processing {file}")
 
             try:
-                result = extractor.extract_table_info(file_path)
+                # extractor returns (image_file, list_of_lists)
+                image_file, list_of_lists = extractor.extract_table_info(file_path)
+                
+                table = Table(
+                    page=0,  # 0 = unknown
+                    name=image_file
+                    block=list_of_lists
+                )
+                
+                # Find headers and indexes
+                table.find_collumn_headers()
+                table.find_row_indexes()
+                
+                # Create result dict
+                result = {
+                    'image': image_file,
+                    'page': table.page,
+                    'name': table.name,
+                    'block': table.block,
+                    'type': table.type,
+                    'collumn_headers': table.collumn_headers,
+                    'row_indexes': table.row_indexes,
+                    'number': table.number,
+                    'legend': table.legend,
+                    'box':table.box
+                }
+                
                 all_results.append(result)
+                print(f"[SUCCESS] Processed {file} - Found {len(list_of_lists)} rows")
+                
             except Exception as e:
                 print(f"[ERROR] Failed on {file}: {e}")
                 all_results.append({
@@ -89,12 +117,14 @@ def table2data(
                     "tables": [],
                     "error": str(e),
                 })
-
-    # Write JSON output
-    with open(output_file_path, "w", encoding="utf-8") as f:
+    
+    # Save all results as JSON
+    with open(output_file_path, 'w', encoding='utf-8') as f:
         json.dump(all_results, f, indent=2, ensure_ascii=False)
-
-    print(f"[DONE] Total time: {(time.time() - start_time) / 60:.2f} minutes")
+    
+    elapsed_time = time.time() - start_time
+    print(f"\n[INFO] Processed {len(file_list)} files in {elapsed_time:.2f} seconds")
+    print(f"[INFO] Results saved to: {output_file_path}")
 
 def main():
     table2data()   
