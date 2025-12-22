@@ -83,7 +83,7 @@ def table2data(
                 # extractor returns (image_file, list_of_lists)
                 image_file, list_of_lists = extractor.extract_table_info(file_path)
                 
-                table = Table(
+                table = Table2Blocks(
                     page=0,  # 0 = unknown
                     name=image_file,
                     block=list_of_lists
@@ -120,7 +120,7 @@ def table2data(
     
     # Save all results as JSON
     with open(output_file_path, 'w', encoding='utf-8') as f:
-        json.dump(all_results, f, indent=2, ensure_ascii=False)
+        json.dump(all_results, f, indent=4, ensure_ascii=False)
     
     elapsed_time = time.time() - start_time
     print(f"\n[INFO] Processed {len(file_list)} files in {elapsed_time:.2f} seconds")
