@@ -1,7 +1,7 @@
 import os
 import time
 from typing import List, Optional
-
+import json
 import click
 
 from xlmexlab.extractor import TableExtractor, Table2Blocks
