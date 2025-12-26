@@ -422,6 +422,11 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         / "resources/template"
         / "phi3_default_instruct_template.json"
     ),
+    "Qwen-VL": str(
+        importlib_resources.files("xlmexlab")
+        / "resources/template"
+        / "qwen_vl_template.json"
+    ),
     "Qwen2.5-VL-7B-Instruct": str(
         importlib_resources.files("xlmexlab")
         / "resources/template"
@@ -496,5 +501,10 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         importlib_resources.files("xlmexlab")
         / "resources/template"
         / "llava-onevision-qwen_default_instruct_template.json"
+    ),
+    "NVIDIA-Nemotron-Nano-12B-v2-VL-BF16": str(
+        importlib_resources.files("xlmexlab")
+        / "resources/template"
+        / "nvidia-nemotron-nano_template.json"
     ),
 }
