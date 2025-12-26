@@ -1891,7 +1891,7 @@ class TableExtractor(BaseModel):
     vlm_model_parameters_path: Optional[str] = None
     _prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
     _vlm_model: Optional[ModelVLM] = PrivateAttr(default=None)
-    #_condition_parser: Optional[LaTeXTableParser] = PrivateAttr(default=None)
+    _condition_parser: Optional[LaTeXTableParser] = PrivateAttr(default=None)
 
     def model_post_init(self, __context: Any) -> None:
         if self.vlm_model_parameters_path is None:
@@ -1918,7 +1918,7 @@ class TableExtractor(BaseModel):
             self._vlm_model = ModelVLM(model_name=self.vlm_model_name)
         self._vlm_model.load_model_parameters(vlm_param_path)
         self._vlm_model.vllm_load_model()
-        #self._condition_parser = LaTeXTableParser()
+        self._condition_parser = LaTeXTableParser()
 
     def extract_table_info(self, image_path: str, scale: float = 1.0) -> None:
         image_name = os.path.basename(image_path) #adicionado
@@ -1929,12 +1929,13 @@ class TableExtractor(BaseModel):
         output = self._vlm_model.run_image_single_prompt_rescale(
             prompt, image_path, scale=scale
         )
-        #parsed_output = self._condition_parser.parse(output)
+        #Latex
+        parsed_output = self._condition_parser.parse(output)
         #HTML
-        print(f"output is: {output}")
-        extractor = Extractor(output)
-        extractor.parse()
-        parsed_output = extractor.return_list()
+        #print(f"output is: {output}")
+        #extractor = Extractor(output)
+        #extractor.parse()
+        #parsed_output = extractor.return_list()
         print(f'parsed output is: {parsed_output}')
         return image_path,  parsed_output
 
