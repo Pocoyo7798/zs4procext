@@ -1933,10 +1933,12 @@ class TableExtractor(BaseModel):
         parsed_output = self._condition_parser.parse(output)
         #HTML
         #print(f"output is: {output}")
-        #extractor = Extractor(output)
+        #output = output.replace('\\', '')
+        #pattern = r'_\{text\{([^}]+)\}\}'
+        #cleaned_html = re.sub(pattern, r'\1', output)
+        #extractor = Extractor(cleaned_html)
         #extractor.parse()
         #parsed_output = extractor.return_list()
-        print(f'parsed output is: {parsed_output}')
         return image_path,  parsed_output
 
 class Table2Blocks(BaseModel): #from pdf2data
