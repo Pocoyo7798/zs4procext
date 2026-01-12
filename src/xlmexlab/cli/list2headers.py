@@ -36,7 +36,7 @@ def list2headers(
         all_image_data = json.load(f)
 
     # Initialize List2Headets extractor
-    extractor = List2Headets(
+    extractor = List2Headers(
         table_type=table_type,
         prompt_template_path=prompt_template_path,
         prompt_schema_path=prompt_schema_path,

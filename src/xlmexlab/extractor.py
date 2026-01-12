@@ -2094,7 +2094,6 @@ class List2Headers(BaseModel):
     _vlm_model: Optional[ModelVLM] = PrivateAttr(default=None)
     _condition_parser: Optional[Any] = PrivateAttr(default=None)
 
-    # ---------------- Post-init ----------------
     def model_post_init(self, __context: Any = None) -> None:
         if self.vlm_model_parameters_path is None:
             vlm_param_path = str(
@@ -2128,7 +2127,7 @@ class List2Headers(BaseModel):
 
         self._condition_parser = None  # LaTeXTableParser()
 
-    # ---------------- Helper to update schema ----------------
+
     @staticmethod
     def update_schema_with_extracted_data(base_json_path: str, extracted_data: list):
         with open(base_json_path, "r", encoding="utf-8") as f:
@@ -2144,7 +2143,7 @@ class List2Headers(BaseModel):
 
         return schema_copy
 
-    # ---------------- Helper to get 'block' ----------------
+
     @staticmethod
     def get_block_from_json(image_json_list: list, image_path: str):
         """
@@ -2155,7 +2154,6 @@ class List2Headers(BaseModel):
                 return obj.get("block", [])
         return []
 
-    # ---------------- Main extraction ----------------
     def extract_table_info(
         self,
         image_path: str,
@@ -2176,7 +2174,7 @@ class List2Headers(BaseModel):
         self._prompt.update_schema(image_schema)
         prompt = self._prompt.format_prompt(image_schema)
 
-        print(f"[DEBUG] Prompt for {image_name}: {prompt}")
+        print(f"Prompt for {image_name}: {prompt}")
 
         output = self._vlm_model.run_image_single_prompt_rescale(prompt, image_path, scale=scale)
 
