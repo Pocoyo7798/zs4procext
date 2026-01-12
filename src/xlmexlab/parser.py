@@ -1433,6 +1433,7 @@ class LaTeXTableParser(BaseModel):
         Returns:
             A list of rows, where each row is a list of cells
         """
+        print(f'The LatEX content is:{latex_content}')
         for env in self.table_environments:
             pattern = rf'\\begin{{{env}}}.*?\\end{{{env}}}'
             matches = re.finditer(pattern, latex_content, re.DOTALL)
@@ -1447,7 +1448,7 @@ class LaTeXTableParser(BaseModel):
         return []  # Return empty list if no tables found
 
     def _parse_single_table(self, table_content: str, env: str) -> Optional[List[List[str]]]:
-        pattern = rf'\\begin{{{env}}}(?:\[[^\]]*\])?(?:\{{[^}}]*\}})*(.*)\\end{{{env}}}'
+        pattern = rf'\\begin{{{env}}}(?:\[[^\]]*\])?(?:\{{[^}}]*\}})*\s*(.*)\\end{{{env}}}'
         match = re.search(pattern, table_content, re.DOTALL)
 
         if not match:
@@ -1466,7 +1467,8 @@ class LaTeXTableParser(BaseModel):
         content = re.sub(r'%.*?$', '', content, flags=re.MULTILINE)
 
         # Remove rules
-        content = re.sub(r'\\(?:hline|toprule|midrule|bottomrule|cline\{[^}]+\})', '', content)
+        # Remove \hline, \cline, \toprule, \midrule, \bottomrule, \cmidrule
+        content = re.sub(r'\\(?:hline|toprule|midrule|bottomrule|cline\{[^}]+\}|cmidrule(?:\([^)]*\))?\{[^}]+\})', '', content)
 
         rows = re.split(r'\\\\', content)
 
@@ -1542,6 +1544,7 @@ class LaTeXTableParser(BaseModel):
         return final_cells or None
 
     def _clean_cell_content(self, cell: str) -> str:
+        cell = cell.replace(r'\times', '×')
         max_iterations = 10
         for _ in range(max_iterations):
             old_cell = cell
@@ -1555,6 +1558,7 @@ class LaTeXTableParser(BaseModel):
             if cell == old_cell:
                 break
 
+        cell = re.sub(r'\\\w+', '', cell)
         cell = re.sub(r'\\\\', '', cell)
         cell = re.sub(r'[{}]', '', cell)
 
@@ -1563,6 +1567,7 @@ class LaTeXTableParser(BaseModel):
         cell = cell.replace('<<<AMPERSAND_ESC>>>', '&')
         cell = cell.replace('<<<UNDERSCORE_ESC>>>', '_')
         cell = cell.replace('<<<HASH_ESC>>>', '#')
+        cell = cell.replace('\\circ', '°')
         cell = re.sub(r'[_$^]', '', cell)
 
         return cell.strip()
