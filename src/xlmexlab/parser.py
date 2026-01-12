@@ -1426,30 +1426,25 @@ class LaTeXTableParser(BaseModel):
 
     table_environments: List[str] = Field(default_factory=lambda: ['tabular', 'tabularx', 'longtable', 'array'])
 
-    def parse(self, latex_content: str) -> List[List[List[str]]]:
+    def parse(self, latex_content: str) -> List[List[str]]:
         """
-        Parse all tables from LaTeX content.
-        Prints the raw content before parsing and the parsed result after.
-        """
-        print("[LaTeXTableParser] Raw LaTeX content BEFORE parsing:")
-        print(latex_content)
+        Parse the first table from LaTeX content.
         
-        tables: List[List[List[str]]] = []
-
+        Returns:
+            A list of rows, where each row is a list of cells
+        """
         for env in self.table_environments:
             pattern = rf'\\begin{{{env}}}.*?\\end{{{env}}}'
             matches = re.finditer(pattern, latex_content, re.DOTALL)
-
+            
             for match in matches:
                 table_content = match.group(0)
                 parsed_table = self._parse_single_table(table_content, env)
                 if parsed_table:
-                    tables.append(parsed_table)
-
-        print("[LaTeXTableParser] Parsed tables AFTER parsing:")
-        print(tables)
-
-        return tables
+                    print(f'The result after parsing is: {parsed_table}')
+                    return parsed_table  # Return first valid table
+        
+        return []  # Return empty list if no tables found
 
     def _parse_single_table(self, table_content: str, env: str) -> Optional[List[List[str]]]:
         pattern = rf'\\begin{{{env}}}(?:\[[^\]]*\])?(?:\{{[^}}]*\}})*(.*)\\end{{{env}}}'
