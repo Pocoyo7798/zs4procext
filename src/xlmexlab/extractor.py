@@ -2083,6 +2083,106 @@ class Table2Blocks(BaseModel): #from pdf2data
         return result
 
 
+class List2Headers(BaseModel):
+    table_type: str = "All"
+    prompt_template_path: Optional[str] = None
+    prompt_schema_path: Optional[str] = None
+    vlm_model_name: Optional[str] = None
+    vlm_model_parameters_path: Optional[str] = None
+
+    _prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
+    _vlm_model: Optional[ModelVLM] = PrivateAttr(default=None)
+    _condition_parser: Optional[Any] = PrivateAttr(default=None)
+
+    # ---------------- Post-init ----------------
+    def model_post_init(self, __context: Any = None) -> None:
+        if self.vlm_model_parameters_path is None:
+            vlm_param_path = str(
+                importlib_resources.files("xlmexlab")
+                / "resources/model_parameters"
+                / "vllm_default_params.json"
+            )
+        else:
+            vlm_param_path = self.vlm_model_parameters_path
+
+        if self.prompt_schema_path is None:
+            self.prompt_schema_path = str(
+                importlib_resources.files("xlmexlab")
+                / "resources/schemas"
+                / "table_extraction_schema.json"
+            )
+
+        with open(self.prompt_schema_path, "r", encoding="utf-8") as f:
+            prompt_dict = json.load(f)
+
+        self._prompt = PromptFormatter(**prompt_dict)
+        self._prompt.model_post_init(self.prompt_template_path)
+
+        if self.vlm_model_name is None:
+            self._vlm_model = ModelVLM(model_name="microsoft/Phi-3-medium-4k-instruct")
+        else:
+            self._vlm_model = ModelVLM(model_name=self.vlm_model_name)
+
+        self._vlm_model.load_model_parameters(vlm_param_path)
+        self._vlm_model.vllm_load_model()
+
+        self._condition_parser = None  # LaTeXTableParser()
+
+    # ---------------- Helper to update schema ----------------
+    @staticmethod
+    def update_schema_with_extracted_data(base_json_path: str, extracted_data: list):
+        with open(base_json_path, "r", encoding="utf-8") as f:
+            base_json = json.load(f)
+
+        schema_copy = copy.deepcopy(base_json)
+        context_str = json.dumps(extracted_data, ensure_ascii=False)
+
+        if "objective" in schema_copy:
+            schema_copy["objective"] = schema_copy["objective"].replace(
+                "{fille here for each image}", context_str
+            )
+
+        return schema_copy
+
+    # ---------------- Helper to get 'block' ----------------
+    @staticmethod
+    def get_block_from_json(image_json_list: list, image_path: str):
+        """
+        Returns only the 'block' for the given image path.
+        """
+        for obj in image_json_list:
+            if obj.get("image") == image_path or obj.get("name") == image_path:
+                return obj.get("block", [])
+        return []
+
+    # ---------------- Main extraction ----------------
+    def extract_table_info(
+        self,
+        image_path: str,
+        extracted_data: Optional[list] = None,
+        scale: float = 1.0
+    ):
+        image_name = os.path.basename(image_path)
+
+        # Update schema with extracted_data
+        if extracted_data is not None:
+            image_schema = self.update_schema_with_extracted_data(
+                self.prompt_schema_path, extracted_data
+            )
+        else:
+            with open(self.prompt_schema_path, "r", encoding="utf-8") as f:
+                image_schema = json.load(f)
+
+        self._prompt.update_schema(image_schema)
+        prompt = self._prompt.format_prompt(image_schema)
+
+        print(f"[DEBUG] Prompt for {image_name}: {prompt}")
+
+        output = self._vlm_model.run_image_single_prompt_rescale(prompt, image_path, scale=scale)
+
+        return image_path, output
+
+
 class ImageExtractor(BaseModel):
     prompt_template_path: Optional[str] = None
     prompt_schema_path: Optional[str] = None
