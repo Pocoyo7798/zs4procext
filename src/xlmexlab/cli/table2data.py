@@ -59,8 +59,8 @@ def parse_header_rows_from_response(response: str, convert_to_index: bool = True
 @click.option("--table_type", default="All", help="Type of table to process")
 @click.option("--prompt_template_path", default=None, help="Path to prompt template for stage 1")
 @click.option("--prompt_schema_path", default=None, help="Path to prompt schema for stage 1")
-@click.option("--vlm_model_name", default=None, help="Name of VLM model")
-@click.option("--vlm_model_parameters_path", default=None, help="Path to VLM model parameters")
+@click.option("--llm_model_name", default=None, help="Name of VLM model")
+@click.option("--llm_model_parameters_path", default=None, help="Path to VLM model parameters")
 @click.option("--enable_header_refinement", is_flag=True, default=False, 
               help="Enable stage 2: use VLM to refine header detection")
 @click.option("--header_prompt_template_path", default=None, 
@@ -226,7 +226,7 @@ def extract_tables_chain(
         json.dump(final_results, f, indent=4, ensure_ascii=False)
     
     elapsed_time = time.time() - start_time
-    
+
     print(f"[COMPLETE] Processed {len(file_list)} images in {elapsed_time:.2f} seconds")
     print(f"[COMPLETE] Final results saved to: {output_file_path}")
 
