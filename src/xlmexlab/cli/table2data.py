@@ -181,24 +181,19 @@ def extract_tables_chain(
         # IMPORTANT: Reuse the VLM model from Stage 1 to save GPU memory
         print("[INFO] Reusing VLM model from Stage 1 to save GPU memory...")
         
-        header_extractor = List2Headers(
-            table_type=table_type,
-            prompt_template_path=header_prompt_template_path,
-            prompt_schema_path=header_prompt_schema_path,
-            vlm_model_name=vlm_model_name,
-            vlm_model_parameters_path=vlm_model_parameters_path
-        )
+        # Create List2Headers WITHOUT triggering model_post_init
+        header_extractor = List2Headers.__new__(List2Headers)
         
-        # Manually initialize without loading the model again
-        if vlm_model_parameters_path is None:
-            vlm_param_path = str(
-                importlib_resources.files("xlmexlab")
-                / "resources/model_parameters"
-                / "vllm_default_params.json"
-            )
-        else:
-            vlm_param_path = vlm_model_parameters_path
-
+        # Manually set attributes
+        header_extractor.table_type = table_type
+        header_extractor.prompt_template_path = header_prompt_template_path
+        header_extractor.prompt_schema_path = header_prompt_schema_path
+        header_extractor.vlm_model_name = vlm_model_name
+        header_extractor.vlm_model_parameters_path = vlm_model_parameters_path
+        
+        # Initialize prompt manually
+        from importlib import resources as importlib_resources
+        
         if header_prompt_schema_path is None:
             schema_path = str(
                 importlib_resources.files("xlmexlab")
@@ -215,7 +210,7 @@ def extract_tables_chain(
         header_extractor._prompt = PromptFormatter(**prompt_dict)
         header_extractor._prompt.model_post_init(header_prompt_template_path)
         
-        # REUSE the already loaded model from Stage 1
+        # ✅ REUSE the already loaded model from Stage 1 (NO NEW MODEL LOADING!)
         header_extractor._vlm_model = extractor._vlm_model
         header_extractor._condition_parser = None
         
