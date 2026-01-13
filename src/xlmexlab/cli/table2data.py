@@ -3,6 +3,7 @@ import json
 import time
 import click
 from typing import Optional, List, Dict, Any
+from importlib import resources as importlib_resources
 from xlmexlab.extractor import TableExtractor, List2Headers, Table2Blocks
 from xlmexlab.prompt import TEMPLATE_REGISTRY
 
@@ -87,7 +88,11 @@ def extract_tables_chain(
     """
     start_time = time.time()
     
+    # ========== STAGE 1: Extract Tables ==========
+    print("\n" + "="*60)
     print("STAGE 1: Extracting tables from images")
+    print("="*60 + "\n")
+    
     if prompt_template_path is None and vlm_model_name:
         try:
             name = vlm_model_name.split("/")[-1]
@@ -164,21 +169,57 @@ def extract_tables_chain(
     
     print(f"\n[STAGE 1] Complete! Results saved to: {stage1_output}")
     
-    # STAGE 2: Refine Headers (Optional) 
+    # ========== STAGE 2: Refine Headers (Optional) ==========
     if not enable_header_refinement:
         print("\n[INFO] Header refinement disabled. Skipping Stage 2.")
         final_results = stage1_results
     else:
+        print("\n" + "="*60)
         print("STAGE 2: Refining header detection with VLM")
+        print("="*60 + "\n")
+        
+        # IMPORTANT: Reuse the VLM model from Stage 1 to save GPU memory
+        print("[INFO] Reusing VLM model from Stage 1 to save GPU memory...")
         
         header_extractor = List2Headers(
             table_type=table_type,
-            prompt_template_path=prompt_template_path,
-            prompt_schema_path=prompt_schema_path,
+            prompt_template_path=header_prompt_template_path,
+            prompt_schema_path=header_prompt_schema_path,
             vlm_model_name=vlm_model_name,
             vlm_model_parameters_path=vlm_model_parameters_path
         )
-        header_extractor.model_post_init()
+        
+        # Manually initialize without loading the model again
+        if vlm_model_parameters_path is None:
+            vlm_param_path = str(
+                importlib_resources.files("xlmexlab")
+                / "resources/model_parameters"
+                / "vllm_default_params.json"
+            )
+        else:
+            vlm_param_path = vlm_model_parameters_path
+
+        if header_prompt_schema_path is None:
+            schema_path = str(
+                importlib_resources.files("xlmexlab")
+                / "resources/schemas"
+                / "table_extraction_schema.json"
+            )
+        else:
+            schema_path = header_prompt_schema_path
+
+        with open(schema_path, "r", encoding="utf-8") as f:
+            prompt_dict = json.load(f)
+
+        from xlmexlab.prompt import PromptFormatter
+        header_extractor._prompt = PromptFormatter(**prompt_dict)
+        header_extractor._prompt.model_post_init(header_prompt_template_path)
+        
+        # REUSE the already loaded model from Stage 1
+        header_extractor._vlm_model = extractor._vlm_model
+        header_extractor._condition_parser = None
+        
+        print("[INFO] Model reused successfully - no additional GPU memory needed")
         
         final_results = []
         
@@ -226,9 +267,10 @@ def extract_tables_chain(
         json.dump(final_results, f, indent=4, ensure_ascii=False)
     
     elapsed_time = time.time() - start_time
-
+    print("\n" + "="*60)
     print(f"[COMPLETE] Processed {len(file_list)} images in {elapsed_time:.2f} seconds")
     print(f"[COMPLETE] Final results saved to: {output_file_path}")
+    print("="*60)
 
 
 def main():
