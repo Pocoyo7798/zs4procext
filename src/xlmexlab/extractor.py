@@ -2,7 +2,7 @@ import json
 import os
 import re
 from typing import Any, Dict, Iterator, List, Optional, Tuple
-
+import copy
 import click
 import importlib_resources
 import numpy as np
