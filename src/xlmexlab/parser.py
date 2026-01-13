@@ -1455,7 +1455,8 @@ class LaTeXTableParser(BaseModel):
             return None
 
         content = match.group(1)
-
+        content = content.replace('@', '')
+        content = re.sub(r'^\s*[lcrp|{}\d\s]+(?=&|\\)', '', content)
         # Protect escaped special characters
         content = content.replace(r'\%', '<<<PERCENT_ESC>>>')
         content = content.replace(r'\$', '<<<DOLLAR_ESC>>>')
@@ -1545,6 +1546,11 @@ class LaTeXTableParser(BaseModel):
 
     def _clean_cell_content(self, cell: str) -> str:
         cell = cell.replace(r'\times', '×')
+        cell = cell.replace(r'\mu', 'µ')
+        cell = cell.replace(r'\textmu', 'µ')
+        cell = cell.replace(r'\circ', '°')
+        cell = cell.replace(r'\(', '')
+        cell = cell.replace(r'\)', '')
         max_iterations = 10
         for _ in range(max_iterations):
             old_cell = cell
@@ -1559,9 +1565,10 @@ class LaTeXTableParser(BaseModel):
                 break
 
         cell = re.sub(r'\\\w+', '', cell)
+        cell = re.sub(r'\\textit\{([^}]*)\}', r'\1', cell)
         cell = re.sub(r'\\\\', '', cell)
         cell = re.sub(r'\\', '', cell)
-
+        cell = re.sub(r'\n', '', cell)
         cell = re.sub(r'[{}]', '', cell)
 
         cell = cell.replace('<<<DOLLAR_ESC>>>', '$')
@@ -1569,7 +1576,6 @@ class LaTeXTableParser(BaseModel):
         cell = cell.replace('<<<AMPERSAND_ESC>>>', '&')
         cell = cell.replace('<<<UNDERSCORE_ESC>>>', '_')
         cell = cell.replace('<<<HASH_ESC>>>', '#')
-        cell = cell.replace('\\circ', '°')
         cell = re.sub(r'[_$^]', '', cell)
 
         return cell.strip()
