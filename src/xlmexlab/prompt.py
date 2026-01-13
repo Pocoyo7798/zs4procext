@@ -462,6 +462,16 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         / "resources/template"
         / "internvl_default_instruct_template.json"
     ),
+    "InternVL2_5-4B": str(
+        importlib_resources.files("xlmexlab")
+        / "resources/template"
+        / "internvl_default_instruct_template.json"
+    ),
+    "InternVL2_5-8B": str(
+        importlib_resources.files("xlmexlab")
+        / "resources/template"
+        / "internvl_default_instruct_template.json"
+    ),
     "MiniCPM-o-2_6": str(
         importlib_resources.files("xlmexlab")
         / "resources/template"
