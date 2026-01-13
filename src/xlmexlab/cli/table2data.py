@@ -20,9 +20,6 @@ def parse_header_rows_from_response(response: str, convert_to_index: bool = True
     - "rows 1, 2, 3" → [0, 1, 2]
     - "The headers are in rows 1 and 2" → [0, 1]
     - '{"header_rows": [1, 2]}' → [0, 1]
-    
-    Examples (with convert_to_index=False):
-    - "rows 1, 2, 3" → [1, 2, 3]
     """
     import re
     
@@ -81,18 +78,22 @@ def extract_tables_chain(
     header_prompt_schema_path: Optional[str],
 ):
     """
-    Two-stage table extraction pipeline:
+    Two-stage table extraction pipeline (per image):
     
-    Stage 1: Extract table data from images
-    Stage 2 (optional): Refine header detection using VLM
+    For each image:
+      Stage 1: Extract table data
+      Stage 2 (optional): Refine header detection using VLM
     """
     start_time = time.time()
     
-    # ========== STAGE 1: Extract Tables ==========
     print("\n" + "="*60)
-    print("STAGE 1: Extracting tables from images")
+    if enable_header_refinement:
+        print("MODE: Two-stage extraction (Table + Header refinement)")
+    else:
+        print("MODE: Single-stage extraction (Table only)")
     print("="*60 + "\n")
     
+    # Initialize the table extractor
     if prompt_template_path is None and vlm_model_name:
         try:
             name = vlm_model_name.split("/")[-1]
@@ -108,11 +109,58 @@ def extract_tables_chain(
         vlm_model_parameters_path=vlm_model_parameters_path,
     )
     
+    # If header refinement is enabled, prepare the header extractor with SHARED model
+    header_extractor = None
+    if enable_header_refinement:
+        print("[INFO] Header refinement enabled - preparing header detector...")
+        
+        # Create List2Headers that will reuse the same VLM model
+        # Temporarily disable model_post_init to prevent loading model twice
+        original_post_init = List2Headers.model_post_init
+        List2Headers.model_post_init = lambda self, context: None
+        
+        try:
+            header_extractor = List2Headers(
+                table_type=table_type,
+                prompt_template_path=header_prompt_template_path,
+                prompt_schema_path=header_prompt_schema_path,
+                vlm_model_name=vlm_model_name,
+                vlm_model_parameters_path=vlm_model_parameters_path
+            )
+            
+            # Manually initialize the prompt
+            if header_prompt_schema_path is None:
+                schema_path = str(
+                    importlib_resources.files("xlmexlab")
+                    / "resources/schemas"
+                    / "table_extraction_schema.json"
+                )
+            else:
+                schema_path = header_prompt_schema_path
+
+            with open(schema_path, "r", encoding="utf-8") as f:
+                prompt_dict = json.load(f)
+
+            from xlmexlab.prompt import PromptFormatter
+            header_extractor._prompt = PromptFormatter(**prompt_dict)
+            header_extractor._prompt.model_post_init(header_prompt_template_path)
+            
+            # Share the VLM model from the table extractor
+            header_extractor._vlm_model = extractor._vlm_model
+            header_extractor._condition_parser = None
+            
+            print("[INFO] Header detector ready (sharing VLM model - no extra memory)")
+            
+        finally:
+            # Restore original model_post_init
+            List2Headers.model_post_init = original_post_init
+    
     os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
     
-    stage1_results = []
+    all_results = []
     file_list = sorted(os.listdir(image_folder))
     
+    # Process each image
     for file in file_list:
         extension = file.split(".")[-1].lower()
         
@@ -120,9 +168,13 @@ def extract_tables_chain(
             continue
             
         file_path = os.path.join(image_folder, file)
-        print(f"[STAGE 1] Processing {file}")
+        print(f"\n{'='*60}")
+        print(f"Processing: {file}")
+        print(f"{'='*60}")
         
         try:
+            # ===== STAGE 1: Extract table =====
+            print(f"[Stage 1] Extracting table structure...")
             image_file, list_of_lists = extractor.extract_table_info(file_path)
             
             table = Table2Blocks(
@@ -131,7 +183,7 @@ def extract_tables_chain(
                 block=list_of_lists
             )
             
-            # Initial header/index detection
+            # Initial header/index detection (heuristic)
             table.find_collumn_headers()
             table.find_row_indexes()
             
@@ -148,13 +200,41 @@ def extract_tables_chain(
                 'box': table.box
             }
             
-            stage1_results.append(result)
-            print(f"[SUCCESS] Extracted {len(list_of_lists)} rows, "
-                  f"headers: {table.collumn_headers}")
+            print(f"[Stage 1] ✓ Extracted {len(list_of_lists)} rows")
+            print(f"[Stage 1]   Heuristic headers: {table.collumn_headers}")
+            
+            # ===== STAGE 2: Refine headers (if enabled) =====
+            if enable_header_refinement and header_extractor and list_of_lists:
+                print(f"[Stage 2] Refining header detection with VLM...")
+                
+                try:
+                    _, vlm_response = header_extractor.extract_table_info(
+                        file_path,
+                        extracted_data=list_of_lists
+                    )
+                    
+                    print(f"[Stage 2]   VLM response: {vlm_response}")
+                    
+                    # Parse and convert row numbers to indices
+                    refined_headers = parse_header_rows_from_response(vlm_response)
+                    
+                    # Update the result with refined headers
+                    result['collumn_headers'] = refined_headers
+                    result['vlm_header_response'] = vlm_response
+                    result['heuristic_headers'] = table.collumn_headers
+                    
+                    print(f"[Stage 2] ✓ Refined headers: {refined_headers}")
+                    
+                except Exception as e:
+                    print(f"[Stage 2] ✗ Header refinement failed: {e}")
+                    result['header_refinement_error'] = str(e)
+            
+            all_results.append(result)
+            print(f"✓ Success: {file}")
             
         except Exception as e:
-            print(f"[ERROR] Failed on {file}: {e}")
-            stage1_results.append({
+            print(f"✗ Error processing {file}: {e}")
+            all_results.append({
                 "image": file,
                 "error": str(e),
                 "block": [],
@@ -162,109 +242,14 @@ def extract_tables_chain(
                 "row_indexes": []
             })
     
-    # Save Stage 1 results
-    stage1_output = output_file_path.replace('.json', '_stage1.json')
-    with open(stage1_output, 'w', encoding='utf-8') as f:
-        json.dump(stage1_results, f, indent=4, ensure_ascii=False)
-    
-    print(f"\n[STAGE 1] Complete! Results saved to: {stage1_output}")
-    
-    # ========== STAGE 2: Refine Headers (Optional) ==========
-    if not enable_header_refinement:
-        print("\n[INFO] Header refinement disabled. Skipping Stage 2.")
-        final_results = stage1_results
-    else:
-        print("\n" + "="*60)
-        print("STAGE 2: Refining header detection with VLM")
-        print("="*60 + "\n")
-        
-        # IMPORTANT: Reuse the VLM model from Stage 1 to save GPU memory
-        print("[INFO] Reusing VLM model from Stage 1 to save GPU memory...")
-        
-        # Create List2Headers WITHOUT triggering model_post_init
-        header_extractor = List2Headers.__new__(List2Headers)
-        
-        # Manually set attributes
-        header_extractor.table_type = table_type
-        header_extractor.prompt_template_path = header_prompt_template_path
-        header_extractor.prompt_schema_path = header_prompt_schema_path
-        header_extractor.vlm_model_name = vlm_model_name
-        header_extractor.vlm_model_parameters_path = vlm_model_parameters_path
-        
-        # Initialize prompt manually
-        from importlib import resources as importlib_resources
-        
-        if header_prompt_schema_path is None:
-            schema_path = str(
-                importlib_resources.files("xlmexlab")
-                / "resources/schemas"
-                / "table_extraction_schema.json"
-            )
-        else:
-            schema_path = header_prompt_schema_path
-
-        with open(schema_path, "r", encoding="utf-8") as f:
-            prompt_dict = json.load(f)
-
-        from xlmexlab.prompt import PromptFormatter
-        header_extractor._prompt = PromptFormatter(**prompt_dict)
-        header_extractor._prompt.model_post_init(header_prompt_template_path)
-        
-        # ✅ REUSE the already loaded model from Stage 1 (NO NEW MODEL LOADING!)
-        header_extractor._vlm_model = extractor._vlm_model
-        header_extractor._condition_parser = None
-        
-        print("[INFO] Model reused successfully - no additional GPU memory needed")
-        
-        final_results = []
-        
-        for result in stage1_results:
-            if 'error' in result:
-                final_results.append(result)
-                continue
-            
-            image_path = result['image']
-            block = result['block']
-            
-            if not block:
-                print(f"[STAGE 2] Skipping {os.path.basename(image_path)} - empty block")
-                final_results.append(result)
-                continue
-            
-            print(f"[STAGE 2] Refining headers for {os.path.basename(image_path)}")
-            
-            try:
-                # Pass the block to the VLM for header detection
-                _, vlm_response = header_extractor.extract_table_info(
-                    image_path,
-                    extracted_data=block
-                )
-                
-                print(f"[VLM Response] {vlm_response}")
-                
-                # Parse the response to get header row numbers
-                header_rows = parse_header_rows_from_response(vlm_response)
-                
-                # Update the result
-                result['collumn_headers'] = header_rows
-                result['vlm_header_response'] = vlm_response
-                
-                print(f"[SUCCESS] Updated headers to: {header_rows}")
-                
-            except Exception as e:
-                print(f"[ERROR] Header refinement failed for {image_path}: {e}")
-                result['header_refinement_error'] = str(e)
-            
-            final_results.append(result)
-    
-    # Save final results
+    # Save results
     with open(output_file_path, 'w', encoding='utf-8') as f:
-        json.dump(final_results, f, indent=4, ensure_ascii=False)
+        json.dump(all_results, f, indent=4, ensure_ascii=False)
     
     elapsed_time = time.time() - start_time
     print("\n" + "="*60)
-    print(f"[COMPLETE] Processed {len(file_list)} images in {elapsed_time:.2f} seconds")
-    print(f"[COMPLETE] Final results saved to: {output_file_path}")
+    print(f"COMPLETE: Processed {len([f for f in file_list if f.split('.')[-1].lower() in {'png', 'jpg', 'jpeg', 'tif', 'tiff'}])} images in {elapsed_time:.2f} seconds")
+    print(f"Results saved to: {output_file_path}")
     print("="*60)
 
 
