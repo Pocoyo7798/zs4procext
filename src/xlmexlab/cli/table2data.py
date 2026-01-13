@@ -175,12 +175,13 @@ def extract_tables_chain(
         try:
             # ===== STAGE 1: Extract table =====
             print(f"[Stage 1] Extracting table structure...")
-            image_file, list_of_lists = extractor.extract_table_info(file_path)
+            image_file, parsed_output = extractor.extract_table_info(file_path)
             
+            # parsed_output is the result from LaTeXTableParser (list of lists)
             table = Table2Blocks(
                 page=0,
                 name=image_file,
-                block=list_of_lists
+                block=parsed_output
             )
             
             # Initial header/index detection (heuristic)
@@ -200,17 +201,18 @@ def extract_tables_chain(
                 'box': table.box
             }
             
-            print(f"[Stage 1] ✓ Extracted {len(list_of_lists)} rows")
+            print(f"[Stage 1] ✓ Extracted {len(parsed_output)} rows")
             print(f"[Stage 1]   Heuristic headers: {table.collumn_headers}")
             
             # ===== STAGE 2: Refine headers (if enabled) =====
-            if enable_header_refinement and header_extractor and list_of_lists:
+            if enable_header_refinement and header_extractor and parsed_output:
                 print(f"[Stage 2] Refining header detection with VLM...")
                 
                 try:
+                    # Pass the PARSED output from Stage 1 (LaTeX parsed table)
                     _, vlm_response = header_extractor.extract_table_info(
                         file_path,
-                        extracted_data=list_of_lists
+                        extracted_data=parsed_output
                     )
                     
                     print(f"[Stage 2]   VLM response: {vlm_response}")
