@@ -1471,7 +1471,7 @@ class LaTeXTableParser(BaseModel):
         content = re.sub(r'\\(?:hline|toprule|midrule|bottomrule|cline\{[^}]+\}|cmidrule(?:\([^)]*\))?\{[^}]+\})', '', content)
 
         rows = re.split(r'\\\\', content)
-        rows = re.split(r'\\', content)
+
         parsed_rows: List[List[str]] = []
         multirow_tracker: Dict[int, Tuple[int, str]] = {}
 
@@ -1560,6 +1560,8 @@ class LaTeXTableParser(BaseModel):
 
         cell = re.sub(r'\\\w+', '', cell)
         cell = re.sub(r'\\\\', '', cell)
+        cell = re.sub(r'\\', '', cell)
+
         cell = re.sub(r'[{}]', '', cell)
 
         cell = cell.replace('<<<DOLLAR_ESC>>>', '$')
