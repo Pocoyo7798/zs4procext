@@ -1931,15 +1931,14 @@ class TableExtractor(BaseModel):
             prompt, image_path, scale=scale
         )
         #Latex
-        parsed_output = self._condition_parser.parse(output)
+        #parsed_output = self._condition_parser.parse(output)
         #HTML
-        #print(f"output is: {output}")
-        #output = output.replace('\\', '')
-        #pattern = r'_\{text\{([^}]+)\}\}'
-        #cleaned_html = re.sub(pattern, r'\1', output)
-        #extractor = Extractor(cleaned_html)
-        #extractor.parse()
-        #parsed_output = extractor.return_list()
+        print(f"output is: {output}")
+        extractor = Extractor(cleaned_html)
+        extractor.parse()
+        pattern = r'_\{\text\{([^}]+)\}\}'
+        cleaned_table = [[re.sub(pattern, r'\1', cell).replace(' \\)', '').replace('\\( ', '') for cell in row] for row in table]
+        parsed_output = extractor.return_list()
         return image_path,  parsed_output
 
 class Table2Blocks(BaseModel): #from pdf2data
