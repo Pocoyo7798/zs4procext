@@ -18,11 +18,7 @@ class PromptFormatter(BaseModel):
     _definition_separators: Optional[List[str]] = PrivateAttr(default=None)
     _answer_schema: Optional[str] = PrivateAttr(default=None)
     _definition_list: Optional[str] = PrivateAttr(default=[None])
-<<<<<<< HEAD
     _examples_list: Optional[str] = PrivateAttr(default=[None])
-=======
-    _examples_list: Optional[str] = PrivateAttr(default=None)
->>>>>>> 99e40750905ad587e53a493f78368ab473e45d85
 
     def definitions_to_string(
         self, definition_intialization_key: str = "Initialization"
@@ -111,11 +107,7 @@ class PromptFormatter(BaseModel):
             with open(self.examples_path, "r") as f:
                 examples_dict: Dict[str, Any] = json.load(f)
             for example in examples_dict["examples"]:
-<<<<<<< HEAD
-                self._examples_list += f"Input: {example['text']}\nExpected Output: {example['actions']}\n"
-=======
                 self._examples_list += f"Input: {example['text']}\nExpected Output: {example['output']}\n"
->>>>>>> da620a00014689c8671b1896c222a0693d267aed
         if self.expertise != "":
             self.expertise = self.expertise + "\n"
         if self.initialization != "":
