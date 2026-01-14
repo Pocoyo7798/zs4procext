@@ -228,7 +228,7 @@ def extract_tables_chain(
                     print(f"[Stage 2] ✗ Header refinement failed: {e}")
                     result['header_refinement_error'] = str(e)
 
-        all_results.append(result)
+            all_results.append(result)
 
         except Exception as e:
             print(f"[Stage 2] ✗ Header refinement failed: {e}")
