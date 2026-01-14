@@ -122,7 +122,7 @@ def extract_tables_chain(
         try:
             header_extractor = List2Headers(
                 table_type=table_type,
-                prompt_template_path=header_prompt_template_path,
+                prompt_template_path=prompt_template_path,
                 prompt_schema_path=header_prompt_schema_path,
                 vlm_model_name=vlm_model_name,
                 vlm_model_parameters_path=vlm_model_parameters_path
@@ -204,30 +204,35 @@ def extract_tables_chain(
             print(f"[Stage 1] ✓ Extracted {len(parsed_output)} rows")
             print(f"[Stage 1]   Heuristic headers: {table.collumn_headers}")
             
-            # ===== STAGE 2: Refine headers (if enabled) =====
+            # STAGE 2: Refine headers (if enabled)
             if enable_header_refinement and header_extractor and parsed_output:
                 print(f"[Stage 2] Refining header detection with VLM...")
 
-                vlm_response = header_extractor.extract_headers(
-                    file_path,
-                    parsed_output
-                )
+                try:
+                    _, vlm_response = header_extractor.extract_table_info(
+                        file_path,
+                        extracted_data=parsed_output
+                    )
 
-                print(f"[Stage 2]   VLM response: {vlm_response}")
+                    print(f"[Stage 2]   VLM response: {vlm_response}")
 
-                refined_headers = parse_header_rows_from_response(vlm_response)
+                    refined_headers = parse_header_rows_from_response(vlm_response)
 
-                result['collumn_headers'] = refined_headers
-                result['vlm_header_response'] = vlm_response
-                result['heuristic_headers'] = table.collumn_headers
+                    result['collumn_headers'] = refined_headers
+                    result['vlm_header_response'] = vlm_response
+                    result['heuristic_headers'] = table.collumn_headers
 
-                print(f"[Stage 2] ✓ Refined headers: {refined_headers}")
-            
+                    print(f"[Stage 2] ✓ Refined headers: {refined_headers}")
+                
+                except Exception as e:
+                    print(f"[Stage 2] ✗ Header refinement failed: {e}")
+                    result['header_refinement_error'] = str(e)
+
             all_results.append(result)
-            print(f"✓ Success: {file}")
-            
+
         except Exception as e:
-            print(f"✗ Error processing {file}: {e}")
+            print(f"[Stage 2] ✗ Header refinement failed: {e}")
+                    
             all_results.append({
                 "image": file,
                 "error": str(e),
