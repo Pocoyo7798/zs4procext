@@ -84,6 +84,7 @@ class ActionExtractorFromText(BaseModel):
     llm_model_name: Optional[str] = None
     llm_model_parameters_path: Optional[str] = None
     elementar_actions: bool = False
+    examples_path:  Optional[str] = None
     post_processing: bool = True
     banned_chemicals: bool = True
     _action_prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
@@ -242,7 +243,7 @@ class ActionExtractorFromText(BaseModel):
         with open(self.action_prompt_schema_path, "r") as f:
             action_prompt_dict: Dict[str, Any] = json.load(f)
         print(action_prompt_dict)
-        self._action_prompt = PromptFormatter(**action_prompt_dict)
+        self._action_prompt = PromptFormatter(**action_prompt_dict, examples_path = self.examples_path)
         self._action_prompt.model_post_init(self.action_prompt_template_path)
         print(self._action_prompt)
         self._llm_model.load_model_parameters(llm_param_path)
@@ -2093,7 +2094,6 @@ class List2Headers(BaseModel):
     _vlm_model: Optional[ModelVLM] = PrivateAttr(default=None)
 
     def model_post_init(self, __context: Any = None) -> None:
-        #Este init só deve ser usado se NÃO estiveres a partilhar o modelo
         if self.vlm_model_name is None:
             self._vlm_model = ModelVLM(model_name="microsoft/Phi-3-medium-4k-instruct")
         else:
@@ -2134,7 +2134,6 @@ class List2Headers(BaseModel):
     ):
         image_name = os.path.basename(image_path)
 
-        # Criar schema atualizado
         if extracted_data is not None:
             image_schema = self.update_schema_with_extracted_data(
                 self.prompt_schema_path, extracted_data
@@ -2143,23 +2142,18 @@ class List2Headers(BaseModel):
             with open(self.prompt_schema_path, "r", encoding="utf-8") as f:
                 image_schema = json.load(f)
 
-        # Criar NOVO PromptFormatter com este schema
         from xlmexlab.prompt import PromptFormatter
         prompt_formatter = PromptFormatter(**image_schema)
         prompt_formatter.model_post_init(self.prompt_template_path)
-
-        #Gerar prompt final
         prompt = prompt_formatter.format_prompt(image_schema)
 
         print(f"\n[HEADER PROMPT] {image_name}\n{prompt}\n")
 
-        #Chamar VLM
         output = self._vlm_model.run_image_single_prompt_rescale(
             prompt, image_path, scale=scale
         )
 
         return image_path, output
-
 
 
 
