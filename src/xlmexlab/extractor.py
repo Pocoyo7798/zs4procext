@@ -2084,12 +2084,16 @@ class Table2Blocks(BaseModel): #from pdf2data
 
 
 class List2Headers(BaseModel):
+    table_type: str = "All"
+    prompt_template_path: Optional[str] = None
+    prompt_schema_path: Optional[str] = None
     vlm_model_name: Optional[str] = None
     vlm_model_parameters_path: Optional[str] = None
 
     _vlm_model: Optional[ModelVLM] = PrivateAttr(default=None)
 
     def model_post_init(self, __context: Any = None) -> None:
+        #Este init só deve ser usado se NÃO estiveres a partilhar o modelo
         if self.vlm_model_name is None:
             self._vlm_model = ModelVLM(model_name="microsoft/Phi-3-medium-4k-instruct")
         else:
@@ -2107,37 +2111,55 @@ class List2Headers(BaseModel):
         self._vlm_model.load_model_parameters(vlm_param_path)
         self._vlm_model.vllm_load_model()
 
-    def build_prompt(self, table_block: list) -> str:
-        return f"""
-You are given an image of a table and the table parsed as a matrix.
+    @staticmethod
+    def update_schema_with_extracted_data(base_json_path: str, extracted_data: list):
+        with open(base_json_path, "r", encoding="utf-8") as f:
+            base_json = json.load(f)
 
-Parsed table:
-{json.dumps(table_block, indent=2, ensure_ascii=False)}
+        schema_copy = copy.deepcopy(base_json)
+        context_str = json.dumps(extracted_data, ensure_ascii=False)
 
-Task:
-Identify which rows correspond to column headers.
+        if "objective" in schema_copy and "{fille here for each image}" in schema_copy["objective"]:
+            schema_copy["objective"] = schema_copy["objective"].replace(
+                "{fille here for each image}", context_str
+            )
 
-Rules:
-- Return ONLY row numbers.
-- Rows start at 1.
-- If multiple header rows exist, return a list.
+        return schema_copy
 
-Valid outputs:
-[1]
-[1,2]
-{{"header_rows":[1,2]}}
-"""
+    def extract_table_info(
+        self,
+        image_path: str,
+        extracted_data: Optional[list] = None,
+        scale: float = 1.0
+    ):
+        image_name = os.path.basename(image_path)
 
-    def extract_headers(self, image_path: str, parsed_table: list, scale: float = 1.0):
-        prompt = self.build_prompt(parsed_table)
-        print(f'the prompt is: {prompt}')
-        print("HEADER PROMPT:\n", prompt)
+        # Criar schema atualizado
+        if extracted_data is not None:
+            image_schema = self.update_schema_with_extracted_data(
+                self.prompt_schema_path, extracted_data
+            )
+        else:
+            with open(self.prompt_schema_path, "r", encoding="utf-8") as f:
+                image_schema = json.load(f)
 
+        # Criar NOVO PromptFormatter com este schema
+        from xlmexlab.prompt import PromptFormatter
+        prompt_formatter = PromptFormatter(**image_schema)
+        prompt_formatter.model_post_init(self.prompt_template_path)
+
+        #Gerar prompt final
+        prompt = prompt_formatter.format_prompt(image_schema)
+
+        print(f"\n[HEADER PROMPT] {image_name}\n{prompt}\n")
+
+        #Chamar VLM
         output = self._vlm_model.run_image_single_prompt_rescale(
             prompt, image_path, scale=scale
         )
 
-        return output
+        return image_path, output
+
 
 
 
