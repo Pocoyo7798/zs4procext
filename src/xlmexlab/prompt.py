@@ -12,10 +12,12 @@ class PromptFormatter(BaseModel):
     definitions: Dict[str, str] = {}
     answer_schema: Dict[str, str] = {}
     conclusion: str = ""
+    examples_path: Optional[str] = None
     _loaded_prompt: Optional[BasePromptTemplate] = PrivateAttr(default=None)
     _definition_separators: Optional[List[str]] = PrivateAttr(default=None)
     _answer_schema: Optional[str] = PrivateAttr(default=None)
     _definition_list: Optional[str] = PrivateAttr(default=[None])
+    _examples_list: Optional[str] = PrivateAttr(default=None)
 
     def definitions_to_string(
         self, definition_intialization_key: str = "Initialization"
