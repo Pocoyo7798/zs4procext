@@ -223,10 +223,16 @@ def extract_tables_chain(
                     result['heuristic_headers'] = table.collumn_headers
 
                     print(f"[Stage 2] ✓ Refined headers: {refined_headers}")
-
+                
                 except Exception as e:
-                    print(f"[Stage 2] ✗ Header refinement failed: {e}")
-                    result['header_refinement_error'] = str(e)
+                print(f"[Stage 2] ✗ Header refinement failed: {e}")
+                result['header_refinement_error'] = str(e)
+
+        all_results.append(result)
+
+        except Exception as e:
+            print(f"[Stage 2] ✗ Header refinement failed: {e}")
+                    
             all_results.append({
                 "image": file,
                 "error": str(e),
