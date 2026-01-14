@@ -122,7 +122,7 @@ def extract_tables_chain(
         try:
             header_extractor = List2Headers(
                 table_type=table_type,
-                prompt_template_path=header_prompt_template_path,
+                prompt_template_path=prompt_template_path,
                 prompt_schema_path=header_prompt_schema_path,
                 vlm_model_name=vlm_model_name,
                 vlm_model_parameters_path=vlm_model_parameters_path
