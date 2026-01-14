@@ -10,7 +10,7 @@ import torch
 from PIL import Image
 from pydantic import BaseModel, PrivateAttr, validator
 
-#from html_table_extractor.extractor import Extractor
+from html_table_extractor.extractor import Extractor
 
 from xlmexlab.actions import (
     ACTION_REGISTRY,
