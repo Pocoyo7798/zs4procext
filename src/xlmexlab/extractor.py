@@ -1208,6 +1208,7 @@ class ActionExtractorFromText(BaseModel):
         paragraph = self._molar_ratio_parser.substitute(paragraph)
         print(paragraph)
         action_prompt: str = self._action_prompt.format_prompt(f"'{paragraph}'")
+        print(action_prompt)
         action_prompt = action_prompt.replace("\x03C", "°C")
         action_prompt = action_prompt.replace("oC", "°C")
         action_prompt = action_prompt.replace("8C", "°C")
