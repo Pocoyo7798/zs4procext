@@ -107,7 +107,7 @@ class PromptFormatter(BaseModel):
             with open(self.examples_path, "r") as f:
                 examples_dict: Dict[str, Any] = json.load(f)
             for example in examples_dict["examples"]:
-                self._examples_list += f"Input: {example['text']}\nExpected Output: {example['actions']}\n"
+                self._examples_list += f"Input: {example['text']}\nExpected Output: {example['output']}\n"
         if self.expertise != "":
             self.expertise = self.expertise + "\n"
         if self.initialization != "":
