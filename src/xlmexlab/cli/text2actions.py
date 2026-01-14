@@ -73,6 +73,11 @@ from xlmexlab.randomization import seed_everything
     default=False,
     help="True to transform all actions into combinations of elementar actions, False otherwise",
 )
+@click.option(
+    "--examples_path",
+    default=None,
+    help="Example file for in-context learning",
+)
 def text2actions(
     text_file_path: str,
     output_file_path: str,
@@ -88,6 +93,7 @@ def text2actions(
     llm_model_name: str,
     llm_model_parameters_path: Optional[str],
     elementar_actions: bool,
+    examples_path: Optional[str],
 ):
     torch.cuda.empty_cache()
     start_time = time.time()
@@ -112,6 +118,7 @@ def text2actions(
         llm_model_name=llm_model_name,
         llm_model_parameters_path=llm_model_parameters_path,
         elementar_actions=elementar_actions,
+        examples_path = examples_path
     )
     # extractor.model_post_init(None)
     with open(text_file_path, "r") as f:

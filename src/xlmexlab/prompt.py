@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional
 import importlib_resources
 from langchain.prompts import BasePromptTemplate, load_prompt
 from pydantic import BaseModel, PrivateAttr
+import json
 
 
 class PromptFormatter(BaseModel):
@@ -12,10 +13,12 @@ class PromptFormatter(BaseModel):
     definitions: Dict[str, str] = {}
     answer_schema: Dict[str, str] = {}
     conclusion: str = ""
+    examples_path: Optional[str] = None
     _loaded_prompt: Optional[BasePromptTemplate] = PrivateAttr(default=None)
     _definition_separators: Optional[List[str]] = PrivateAttr(default=None)
     _answer_schema: Optional[str] = PrivateAttr(default=None)
     _definition_list: Optional[str] = PrivateAttr(default=[None])
+    _examples_list: Optional[str] = PrivateAttr(default=[None])
 
     def definitions_to_string(
         self, definition_intialization_key: str = "Initialization"
@@ -99,6 +102,12 @@ class PromptFormatter(BaseModel):
         self._definition_list = definition_list
         answer_schema: str = self.answer_schema_to_string()
         self._answer_schema = answer_schema
+        if self.examples_path is not None:
+            self._examples_list = ""
+            with open(self.examples_path, "r") as f:
+                examples_dict: Dict[str, Any] = json.load(f)
+            for example in examples_dict["examples"]:
+                self._examples_list += f"Input: {example['text']}\nExpected Output: {example['actions']}\n"
         if self.expertise != "":
             self.expertise = self.expertise + "\n"
         if self.initialization != "":
@@ -132,6 +141,11 @@ class PromptFormatter(BaseModel):
             answer_schema=self._answer_schema,
             conclusion=self.conclusion,
         )
+        if self._examples_list is not None:
+            formatted_prompt = ( formatted_prompt +
+                f"\n Here are some examples to help you understand the task:\n{self._examples_list}\n"
+
+            )
 
         return formatted_prompt
 
