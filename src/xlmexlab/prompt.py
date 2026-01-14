@@ -18,7 +18,11 @@ class PromptFormatter(BaseModel):
     _definition_separators: Optional[List[str]] = PrivateAttr(default=None)
     _answer_schema: Optional[str] = PrivateAttr(default=None)
     _definition_list: Optional[str] = PrivateAttr(default=[None])
+<<<<<<< HEAD
     _examples_list: Optional[str] = PrivateAttr(default=[None])
+=======
+    _examples_list: Optional[str] = PrivateAttr(default=None)
+>>>>>>> 99e40750905ad587e53a493f78368ab473e45d85
 
     def definitions_to_string(
         self, definition_intialization_key: str = "Initialization"
