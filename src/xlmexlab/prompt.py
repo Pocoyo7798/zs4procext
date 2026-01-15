@@ -256,6 +256,11 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         / "resources/template"
         / "llama3_default_instruct_template.json"
     ),
+    "Llama-3.3-70B-Instruct-4bit": str(
+        importlib_resources.files("xlmexlab")
+        / "resources/template"
+        / "llama31_default_instruct_template.json"
+    ),
     "Phi-3-medium-128k-instruct": str(
         importlib_resources.files("xlmexlab")
         / "resources/template"
