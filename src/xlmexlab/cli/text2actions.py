@@ -104,6 +104,7 @@ def text2actions(
             prompt_template_path = TEMPLATE_REGISTRY[name]
         except KeyError:
             pass
+    print(f"Using prompt template path: {prompt_template_path}")
     extractor: ActionExtractorFromText = ActionExtractorFromText(
         actions_type=actions_type,
         post_processing=post_processing,
