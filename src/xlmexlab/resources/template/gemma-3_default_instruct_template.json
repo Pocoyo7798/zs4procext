@@ -6,7 +6,8 @@
         "context",
         "definitions",
         "answer_schema",
-        "conclusion"
+        "conclusion",
+        "examples"
     ],
     "input_types": {},
     "output_parser": null,
