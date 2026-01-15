@@ -1893,7 +1893,7 @@ class TableExtractor(BaseModel):
     vlm_model_parameters_path: Optional[str] = None
     _prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
     _vlm_model: Optional[ModelVLM] = PrivateAttr(default=None)
-    _condition_parser: Optional[LaTeXTableParser] = PrivateAttr(default=None)
+    #_condition_parser: Optional[LaTeXTableParser] = PrivateAttr(default=None)
 
     def model_post_init(self, __context: Any) -> None:
         if self.vlm_model_parameters_path is None:
@@ -1920,7 +1920,7 @@ class TableExtractor(BaseModel):
             self._vlm_model = ModelVLM(model_name=self.vlm_model_name)
         self._vlm_model.load_model_parameters(vlm_param_path)
         self._vlm_model.vllm_load_model()
-        self._condition_parser = LaTeXTableParser()
+        #self._condition_parser = LaTeXTableParser()
 
     def extract_table_info(self, image_path: str, scale: float = 1.0) -> None:
         image_name = os.path.basename(image_path) #adicionado
@@ -1938,9 +1938,10 @@ class TableExtractor(BaseModel):
         extractor = Extractor(output)
         extractor.parse()
         table = extractor.return_list()
+        print(table)
         pattern = r'_\{\text\{([^}]+)\}\}'
         parsed_output = [[re.sub(pattern, r'\1', cell).replace(' \\)', '').replace('\\( ', '') for cell in row] for row in table]
-        
+        print(parsed_output)
         return image_path,  parsed_output
 
 class Table2Blocks(BaseModel): #from pdf2data
