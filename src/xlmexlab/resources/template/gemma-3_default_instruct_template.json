@@ -11,7 +11,7 @@
     "input_types": {},
     "output_parser": null,
     "partial_variables": {},
-    "template": "<start_of_image>{expertise}{initialization}{definitions}{objective}{context}{answer_schema}{conclusion}<end_of_turn>\n",
+    "template": "<start_of_image>{expertise}{initialization}{definitions}{objective}{context}{answer_schema}{conclusion}{examples}<end_of_turn>\n",
     "template_format": "f-string",
     "validate_template": true,
     "_type": "prompt"
