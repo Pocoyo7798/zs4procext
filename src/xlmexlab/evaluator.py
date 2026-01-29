@@ -338,9 +338,9 @@ class Evaluator(BaseModel):
             action_list_transformed: List[Dict[str, Any]] = ast.literal_eval(
                 action_list
             )
-            ref_action_sequence = [action["action"] for action in ref_action_list]
+            ref_action_sequence = [ACTION_DICT_CONVERTER[action["action"].lower()] for action in ref_action_list]
             action_sequence: List[str] = [
-                action["action"] for action in action_list_transformed
+                ACTION_DICT_CONVERTER[action["action"].lower()] for action in action_list_transformed
             ]
             amount_of_actions += len(action_sequence)
             ref_action_sequence2 = "".join(ref_action_sequence)
@@ -764,4 +764,31 @@ CHEMICALS_REGISTRY = {"solution": "",
                       "iso-propoxide": "o-ch(ch3)2",
                       "germanium": "ge",
                       "gold": "au"
+}
+
+ACTION_DICT_CONVERTER = {
+    "add": "a",
+    "stir": "s",
+    "separate": "x",
+    "settemperature": "z",
+    "newsolution": "n",
+    "drysolution": "d",
+    "drysolid": "y",
+    "wash": "w",
+    "dry": "u",
+    "filter": "f",
+    "sieve": "l",
+    "grind": "g",
+    "repeat": "r",
+    "crystallization": "c",
+    "thermaltreatment": "t",
+    "extract": "e",
+    "quench": "q",
+    "degas": "j",
+    "triturate": "m",
+    "partition": "p",
+    "purify": "v",
+    "sonicate": "o",
+    "phaseseparation": "h",
+    "recrystallize": "i",
 }
