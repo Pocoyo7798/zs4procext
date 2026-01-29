@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional
 import importlib_resources
 from langchain.prompts import BasePromptTemplate, load_prompt
 from pydantic import BaseModel, PrivateAttr
+import json
 
 
 class PromptFormatter(BaseModel):
@@ -12,10 +13,12 @@ class PromptFormatter(BaseModel):
     definitions: Dict[str, str] = {}
     answer_schema: Dict[str, str] = {}
     conclusion: str = ""
+    examples_path: Optional[str] = None
     _loaded_prompt: Optional[BasePromptTemplate] = PrivateAttr(default=None)
     _definition_separators: Optional[List[str]] = PrivateAttr(default=None)
     _answer_schema: Optional[str] = PrivateAttr(default=None)
     _definition_list: Optional[str] = PrivateAttr(default=[None])
+    _examples_list: Optional[str] = PrivateAttr(default="")
 
     def definitions_to_string(
         self, definition_intialization_key: str = "Initialization"
@@ -99,6 +102,12 @@ class PromptFormatter(BaseModel):
         self._definition_list = definition_list
         answer_schema: str = self.answer_schema_to_string()
         self._answer_schema = answer_schema
+        if self.examples_path is not None:
+            self._examples_list = "\n Here are some examples to help you understand the task:\n"
+            with open(self.examples_path, "r") as f:
+                examples_dict: Dict[str, Any] = json.load(f)
+            for example in examples_dict["examples"]:
+                self._examples_list += f"Input: {example['text']}\nExpected Output: {example['output']}\n"
         if self.expertise != "":
             self.expertise = self.expertise + "\n"
         if self.initialization != "":
@@ -131,9 +140,10 @@ class PromptFormatter(BaseModel):
             definitions=self._definition_list,
             answer_schema=self._answer_schema,
             conclusion=self.conclusion,
+            examples=self._examples_list,
         )
-        
         return formatted_prompt
+
 
 TEMPLATE_REGISTRY: Dict[str, str] = {
     "Llama-2-7b-chat-hf": str(
@@ -216,17 +226,17 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         / "resources/template"
         / "mistral_default_template.json"
     ),
-    "openchat_3.5" : str(
+    "openchat_3.5": str(
         importlib_resources.files("xlmexlab")
         / "resources/template"
         / "open_chat_default_template.json"
     ),
-    "openchat-3.5-0106" : str(
+    "openchat-3.5-0106": str(
         importlib_resources.files("xlmexlab")
         / "resources/template"
         / "open_chat_default_template.json"
     ),
-    "openchat-3.6-8b-20240522" : str(
+    "openchat-3.6-8b-20240522": str(
         importlib_resources.files("xlmexlab")
         / "resources/template"
         / "open_chat_3.6_default_template.json"
@@ -245,6 +255,16 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         importlib_resources.files("xlmexlab")
         / "resources/template"
         / "llama3_default_instruct_template.json"
+    ),
+    "Llama-3.3-70B-Instruct-4bit": str(
+        importlib_resources.files("xlmexlab")
+        / "resources/template"
+        / "llama31_default_instruct_template.json"
+    ),
+    "Llama-3.3-70B-Instruct-NVFP4": str(
+        importlib_resources.files("xlmexlab")
+        / "resources/template"
+        / "llama31_default_instruct_template.json"
     ),
     "Phi-3-medium-128k-instruct": str(
         importlib_resources.files("xlmexlab")
@@ -370,8 +390,7 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         importlib_resources.files("xlmexlab")
         / "resources/template"
         / "llama31_default_instruct_template.json"
-    )
-    ,
+    ),
     "SOLAR-10.7B-Instruct-v1.0": str(
         importlib_resources.files("xlmexlab")
         / "resources/template"
@@ -417,82 +436,96 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         / "resources/template"
         / "ovis_chat_default_instruct_template.json"
     ),
-
     "Phi-3-vision-128k-instruct": str(
         importlib_resources.files("xlmexlab")
         / "resources/template"
         / "phi3_default_instruct_template.json"
+    ),
+    "Phi-3.5-vision-instruct": str(
+        importlib_resources.files("xlmexlab")
+        / "resources/template"
+        / "phi3_default_instruct_template.json"
+    ),
+    "Qwen-VL": str(
+        importlib_resources.files("xlmexlab")
+        / "resources/template"
+        / "qwen_vl_template.json"
     ),
     "Qwen2.5-VL-7B-Instruct": str(
         importlib_resources.files("xlmexlab")
         / "resources/template"
         / "qwen_default_instruct_template.json"
     ),
-    
+    "Qwen2.5-VL-3B-Instruct": str(
+        importlib_resources.files("xlmexlab")
+        / "resources/template"
+        / "qwen_default_instruct_template.json"
+    ),
     "POINTS-Qwen-2-5-7B-Chat": str(
         importlib_resources.files("xlmexlab")
         / "resources/template"
         / "qwen_default_instruct_template.json"
     ),
-
     "pixtral-12b": str(
         importlib_resources.files("xlmexlab")
         / "resources/template"
         / "pixtral-12b_default_instruct_template.json"
     ),
-
     "InternVL2-8B": str(
         importlib_resources.files("xlmexlab")
         / "resources/template"
         / "internvl_default_instruct_template.json"
     ),
-
     "InternVL3-8B": str(
         importlib_resources.files("xlmexlab")
         / "resources/template"
         / "internvl_default_instruct_template.json"
     ),
-
+    "InternVL2_5-4B": str(
+        importlib_resources.files("xlmexlab")
+        / "resources/template"
+        / "internvl_default_instruct_template.json"
+    ),
+    "InternVL2_5-8B": str(
+        importlib_resources.files("xlmexlab")
+        / "resources/template"
+        / "internvl_default_instruct_template.json"
+    ),
     "MiniCPM-o-2_6": str(
         importlib_resources.files("xlmexlab")
         / "resources/template"
         / "minicpm_default_instruct_template.json"
     ),
-        
     "SmolVLM2-2.2B-Instruct": str(
         importlib_resources.files("xlmexlab")
         / "resources/template"
         / "smolvlm2_default_instruct_template.json"
     ),
-
     "gemma-3-4b-it": str(
         importlib_resources.files("xlmexlab")
         / "resources/template"
         / "gemma-3_default_instruct_template.json"
     ),
-
     "glm-4v-9b": str(
         importlib_resources.files("xlmexlab")
         / "resources/template"
         / "glm_default_instruct_template.json"
     ),
-
     "Idefics3-8B-Llama3": str(
         importlib_resources.files("xlmexlab")
         / "resources/template"
         / "idefics3_llama_default_instruct_template.json"
     ),
-
     "Molmo-7B-D-0924": str(
         importlib_resources.files("xlmexlab")
         / "resources/template"
         / "molmo_default_instruct_template.json"
     ),
     "Phi-4-mini-instruct": str(
-            importlib_resources.files("xlmexlab")
-            / "resources/template"
-            / "phi4_text_default_instruct_template.json"
-        ),
+        importlib_resources.files("xlmexlab")
+        / "resources/template"
+        / "phi4_text_default_instruct_template.json"
+    ),
     "Phi-4-multimodal-instruct": str(
         importlib_resources.files("xlmexlab")
         / "resources/template"
@@ -502,12 +535,5 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         importlib_resources.files("xlmexlab")
         / "resources/template"
         / "llava-onevision-qwen_default_instruct_template.json"
-    ),
-    "phi-4": str(
-        importlib_resources.files("xlmexlab")
-        / "resources/template"
-        / "llava-onevision-qwen_default_instruct_template.json"
     )
-
 }
-

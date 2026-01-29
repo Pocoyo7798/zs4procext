@@ -1,10 +1,9 @@
 from typing import Any, Dict, Iterator, List, Optional
 
-from pydantic import BaseModel, PrivateAttr, validator
-
 import numpy as np
 import torch
 from PIL import Image, ImageFile
+from pydantic import BaseModel, PrivateAttr, validator
 from transformers import AutoProcessor, Qwen2_5_VLForConditionalGeneration
 
 
@@ -21,7 +20,7 @@ class EmbeddingExtractor(BaseModel):
         self._model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
             model_id,
             attn_implementation="eager",
-            torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
+            torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
         )
         self._model.to(self._device)
         self._model.eval()
@@ -45,7 +44,9 @@ class EmbeddingExtractor(BaseModel):
         with torch.no_grad():
             vision_outputs: Any = self._model.visual(pixel_values, grid_thw)
             visual_embeds: Any = vision_outputs.squeeze(0).cpu()
-            pooled: Any = visual_embeds.mean(dim=0)
+            pooled = visual_embeds[0]
+            #pooled = torch.cat([visual_embeds.mean(dim=0), visual_embeds.max(dim=0).values])
+            #pooled = visual_embeds.mean(dim=0)
             #pooled,_ = visual_embeds.max(dim=0)
-            normalized: Any = pooled / pooled.norm(p=2)
-        return pooled.numpy()
+            normalized = pooled / pooled.norm(p=2)
+        return normalized.numpy()
