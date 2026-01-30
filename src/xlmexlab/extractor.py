@@ -49,7 +49,7 @@ from xlmexlab.actions import (
     Transfer,
     Wash,
 )
-from xlmexlab.llm import ModelLLM, ModelVLM
+from xlmexlab.llm import ModelLLM, ModelVLM, AIeduLLM
 from xlmexlab.parser import (
     MOLAR_RATIO_REGISTRY,
     ActionsParser,
@@ -246,6 +246,8 @@ class ActionExtractorFromText(BaseModel):
         self._action_prompt = PromptFormatter(**action_prompt_dict, examples_path = self.examples_path)
         self._action_prompt.model_post_init(self.action_prompt_template_path)
         print(self._action_prompt)
+        if self.llm_model_name == "gpt_4o_aiedu":
+            self._llm_model = AIeduLLM()
         self._llm_model.load_model_parameters(llm_param_path)
         self._llm_model.vllm_load_model()
         self._action_parser = ActionsParser(

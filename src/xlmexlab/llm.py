@@ -1,5 +1,7 @@
 import json
 from typing import Any, Dict, Optional, Tuple
+import requests
+import uuid
 
 from langchain_community.llms import VLLM
 from PIL import Image, ImageFile
@@ -9,6 +11,59 @@ from vllm.sampling_params import BeamSearchParams
 
 from xlmexlab.randomization import seed_everything
 
+class AIeduLLM(BaseModel):
+    model_name: str = "gpt_4o_aiedu"
+    endpoint_url: Optional[str] = None
+    api_key: Optional[str] = None
+    channel_id: Optional[str] = None
+
+    def model_post_init(self, context):
+        self.endpoint_url = input("Enter the endpoint URL: ")
+        self.api_key = input("Enter the API key: ")
+        self.channel_id = input("Enter the channel ID: ")
+
+    def extract_dicts_with_type_message(self, response_text: str) -> str:
+        s = response_text       
+        results = {}
+        depth = 0
+        start = None
+
+        for i, ch in enumerate(s):
+            if ch == "{":
+                if depth == 0:
+                    start = i
+                depth += 1
+
+            elif ch == "}":
+                depth -= 1
+                if depth == 0 and start is not None:
+                    block = s[start:i + 1]
+                    if '"type": "message"' in block:
+                        results = block
+                    start = None
+        result_json = json.loads(results)
+        return result_json["content"]["content"]
+    
+    def run_single_prompt(self, prompt: str) -> str:
+        """Run a single prompt on the loaded model
+
+        Args:
+            prompt (str): prompt to the loaded model
+
+        Returns:
+            str: a string containing the model response
+        """
+        if self.endpoint_url is None or self.api_key is None or self.channel_id is None:
+            raise ValueError("Endpoint URL, API key, and Channel ID must be set")
+
+        payload = {'channel_id': self.channel_id,
+                    'thread_id': str(uuid.uuid4()),
+                    'message': prompt,
+                    'user_info': '{}'}
+        headers = {"x-api-key": self.api_key}
+        response = requests.post(self.endpoint_url, data=payload, headers=headers)
+
+        return self.extract_dicts_with_type_message(response.text)
 
 class ModelLLM(BaseModel):
     model_name: str
