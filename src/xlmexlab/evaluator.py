@@ -924,4 +924,9 @@ ACTION_DICT_CONVERTER = {
     "sonicate": "o",
     "phaseseparation": "h",
     "recrystallize": "i",
+    "wait": "k",
+    "setatmosphere": "b",
+    "concentrate": "1",
+    "reflux": "2",
+    "followotherprocedure": "",
 }
