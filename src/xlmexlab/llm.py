@@ -2,6 +2,7 @@ import json
 from typing import Any, Dict, Optional, Tuple
 import requests
 import uuid
+import os
 
 from langchain_community.llms import VLLM
 from PIL import Image, ImageFile
@@ -18,9 +19,24 @@ class AIeduLLM(BaseModel):
     channel_id: Optional[str] = None
 
     def model_post_init(self, context):
-        self.endpoint_url = input("Enter the endpoint URL: ")
-        self.api_key = input("Enter the API key: ")
-        self.channel_id = input("Enter the channel ID: ")
+        if os.path.exists("aiedu_config.json"):
+            with open("aiedu_config.json", "r") as f:
+                config = json.load(f)
+                self.endpoint_url = config.get("endpoint_url")
+                self.api_key = config.get("api_key")
+                self.channel_id = config.get("channel_id")
+        else:
+            self.endpoint_url = input("Enter the endpoint URL: ")
+            self.api_key = input("Enter the API key: ")
+            self.channel_id = input("Enter the channel ID: ")
+            config_dict = {
+                "endpoint_url": self.endpoint_url,
+                "api_key": self.api_key,
+                "channel_id": self.channel_id,
+            }
+            config_json = json.dumps(config_dict, indent=4)
+            with open("aiedu_config.json", "w") as f:
+                f.write(config_json)
 
     def extract_dicts_with_type_message(self, response_text: str) -> str:
         s = response_text       

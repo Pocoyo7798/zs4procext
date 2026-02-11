@@ -1437,6 +1437,94 @@ class Wait(ActionsWithConditons):
             action_list.append(action.generate_dict())
         return action_list
 
+class Leach(ActionsWithChemicalAndConditions):
+    solvent: Optional[Chemical] = None
+    repetitions: int = 1
+
+    @classmethod
+    def generate_action(
+        cls,
+        context: str,
+        schemas: List[str],
+        schema_parser: SchemaParser,
+        amount_parser: ParametersParser,
+        banned_parser: KeywordSearching,
+        complex_parser: ComplexParametersParser = None,
+    ) -> List[Dict[str, Any]]:
+        """generate a list containing one or more Leach actions as dictionaries
+
+        Args:
+            context (str): context of the action
+            schemas (List[str]): schemas of the chemicals found used in the action
+            schema_parser (SchemaParser): parser to extract schema information
+            amount_parser (ParametersParser): parser to extract quantities information
+            conditions_parser (ParametersParser): parser to extract different conditions
+            centrifuge_parser (KeywordSearching): parser to detect words linked to Centrifugation
+            filter_parser (KeywordSearching): parser to detect words linked with filtration
+            banned_parser (KeywordSearching): parser to detect banned chemicals names
+            complex_parser (ComplexParametersParser, optional): parser to extract concentration. Defaults to None.
+
+        Returns:
+            List[Dict[str, Any]]: a list containing one or more Leach actions as dictionaries
+        """
+        action: Leach = cls(action_name="Leach", action_context=context)
+        chemicals_info: ChemicalInfo = action.validate_chemicals(
+            schemas,
+            schema_parser,
+            amount_parser,
+            action.action_context,
+            banned_parser,
+            complex_parser=complex_parser,
+        )
+        list_of_actions: List[Any] = []
+        if len(chemicals_info.chemical_list) == 0:
+            list_of_actions.append(action.generate_dict())
+        elif len(schemas) == 1:
+            action.solvent = chemicals_info.chemical_list[0]
+            action.repetitions = chemicals_info.repetitions
+            number_list: List[str] = DimensionlessParser.get_dimensionless_numbers(
+                re.sub(r"\d+[\.:]", "", context)
+            )
+            if action.repetitions == 1:
+                if len(number_list) == 0:
+                    pass
+                elif len(number_list) == 1:
+                    action.repetitions = int(float(number_list[0]))
+                else:
+                    action.repetitions = int(float(number_list[0]))
+                    print(
+                        "Warning: More than one adimensional number was found, only the first one was considered"
+                    )
+                list_of_actions: List[Any] = []
+                if 6 > action.repetitions > 1:
+                    pass
+                else:
+                    action.repetitions = 1
+            list_of_actions.append(action.generate_dict())
+        else:
+            for material in chemicals_info.chemical_list:
+                action.solvent = material
+                action.repetitions = chemicals_info.repetitions
+                number_list: List[str] = DimensionlessParser.get_dimensionless_numbers(
+                    re.sub(r"\d+[\.:]", "", context)
+                )
+                if action.repetitions == 1:
+                    if len(number_list) == 0:
+                        pass
+                    elif len(number_list) == 1:
+                        action.repetitions = int(float(number_list[0]))
+                    else:
+                        action.repetitions = int(float(number_list[0]))
+                        print(
+                            "Warning: More than one adimensional number was found, only the first one was considered"
+                        )
+                    list_of_actions: List[Any] = []
+                    if 6 > action.repetitions > 1:
+                        pass
+                    else:
+                        action.repetitions = 1
+                list_of_actions.append(action.generate_dict())
+        return list_of_actions
 
 class Wash(ActionsWithChemicalAndConditions):
     material: Optional[Chemical] = None
