@@ -171,7 +171,7 @@ To run inference with a LoRA fine-tuned model, you must provide a .json file con
 Once these are available, you can perform inference using the following command:
 
 ``` bash
-
+xlmexlab-adapter2inf path/images_folder path/results.json --base_model_path Qwen/Qwen2.5-VL-7B-Instruct --imports_config_path configs/imports.json --generation_params_path configs/generation_params.json --adapter_path path/adapter
 ```
 
 
