@@ -6,12 +6,13 @@
         "context",
         "definitions",
         "answer_schema",
-        "conclusion"
+        "conclusion",
+        "examples"
     ],
     "input_types": {},
     "output_parser": null,
     "partial_variables": {},
-    "template": "<|im_start|>system\n{expertise}{initialization}{definitions}<|im_end|>\n<|im_start|>user\n{objective}{context}{answer_schema}{conclusion}<|im_end|>\n<|im_start|>assistant",
+    "template": "<|im_start|>system\n{expertise}{initialization}{definitions}<|im_end|>\n<|im_start|>user\n{objective}{context}{answer_schema}{conclusion}{examples}<|im_end|>\n<|im_start|>assistant",
     "template_format": "f-string",
     "validate_template": true,
     "_type": "prompt"

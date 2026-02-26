@@ -49,7 +49,7 @@ from xlmexlab.actions import (
     Transfer,
     Wash,
 )
-from xlmexlab.llm import ModelLLM, ModelVLM
+from xlmexlab.llm import ModelLLM, ModelVLM, AIeduLLM
 from xlmexlab.parser import (
     MOLAR_RATIO_REGISTRY,
     ActionsParser,
@@ -239,15 +239,19 @@ class ActionExtractorFromText(BaseModel):
             self._llm_model = ModelLLM(model_name="microsoft/Phi-3-medium-4k-instruct")
         else:
             self._llm_model = ModelLLM(model_name=self.llm_model_name)
-        print(self.action_prompt_schema_path)
+        #print(self.action_prompt_schema_path)
         with open(self.action_prompt_schema_path, "r") as f:
             action_prompt_dict: Dict[str, Any] = json.load(f)
-        print(action_prompt_dict)
+        #print(action_prompt_dict)
         self._action_prompt = PromptFormatter(**action_prompt_dict, examples_path = self.examples_path)
         self._action_prompt.model_post_init(self.action_prompt_template_path)
-        print(self._action_prompt)
-        self._llm_model.load_model_parameters(llm_param_path)
-        self._llm_model.vllm_load_model()
+        #print(self._action_prompt)
+        if self.llm_model_name == "gpt_4o_aiedu":
+            self._llm_model = AIeduLLM()
+        else:
+            self._llm_model = ModelLLM(model_name=self.llm_model_name)
+            self._llm_model.load_model_parameters(llm_param_path)
+            self._llm_model.vllm_load_model()
         self._action_parser = ActionsParser(
             type=self.actions_type,
             separators=self._action_prompt._definition_separators,
@@ -1206,9 +1210,9 @@ class ActionExtractorFromText(BaseModel):
         ):
             raise AttributeError("You need to post initilize the class")
         paragraph = self._molar_ratio_parser.substitute(paragraph)
-        print(paragraph)
+        #print(paragraph)
         action_prompt: str = self._action_prompt.format_prompt(f"'{paragraph}'")
-        print(action_prompt)
+        #print(action_prompt)
         action_prompt = action_prompt.replace("\x03C", "°C")
         action_prompt = action_prompt.replace("oC", "°C")
         action_prompt = action_prompt.replace("8C", "°C")
@@ -1222,7 +1226,7 @@ class ActionExtractorFromText(BaseModel):
         action_prompt = action_prompt.replace("℃", "°C")
         action_prompt = action_prompt.replace("\x03C", "°C")
         actions_response: str = self._llm_model.run_single_prompt(action_prompt).strip()
-        print(actions_response)
+        #print(actions_response)
         actions_info: Dict[str, List[str]] = self._action_parser.parse(actions_response)
         i: int = 0
         action_list: List[Dict[str, Any]] = []
@@ -1233,7 +1237,7 @@ class ActionExtractorFromText(BaseModel):
             except KeyError:
                 action = None
             if action is None:
-                print(action_name)
+                #print(action_name)
                 if action_name.lower() in stop_words:
                     break
             elif action in set([SetTemperature, Crystallization, ReduceTemperature]):
@@ -1256,7 +1260,7 @@ class ActionExtractorFromText(BaseModel):
                 chemical_response: str = self._llm_model.run_single_prompt(
                     chemical_prompt
                 ).strip()
-                print(chemical_response)
+                #print(chemical_response)
                 schemas: List[str] = self._schema_parser.parse_schema(chemical_response)
                 new_action = action.generate_action(
                     context,
@@ -1284,7 +1288,7 @@ class ActionExtractorFromText(BaseModel):
                 chemical_response = self._llm_model.run_single_prompt(
                     chemical_prompt
                 ).strip()
-                print(chemical_response)
+                #print(chemical_response)
                 schemas = self._schema_parser.parse_schema(chemical_response)
                 new_action = action.generate_action(
                     context,
@@ -1302,7 +1306,7 @@ class ActionExtractorFromText(BaseModel):
                     f"'{context}'"
                 )
                 chemical_response = self._llm_model.run_single_prompt(chemical_prompt)
-                print(chemical_response)
+                #print(chemical_response)
                 schemas = self._schema_parser.parse_schema(chemical_response)
                 new_action = action.generate_action(
                     context,
@@ -1318,7 +1322,7 @@ class ActionExtractorFromText(BaseModel):
             elif action is Transfer:
                 transfer_prompt = self._transfer_prompt.format_prompt(f"'{context}'")
                 transfer_response = self._llm_model.run_single_prompt(transfer_prompt)
-                print(transfer_response)
+                #print(transfer_response)
                 schemas = self._transfer_schema_parser.parse_schema(transfer_response)
                 new_action = action.generate_action(
                     context,
@@ -1355,7 +1359,7 @@ class ActionExtractorFromText(BaseModel):
             elif action.type == "onlychemicals":
                 chemical_prompt = self._chemical_prompt.format_prompt(f"'{context}'")
                 chemical_response = self._llm_model.run_single_prompt(chemical_prompt)
-                print(chemical_response)
+                #print(chemical_response)
                 schemas = self._schema_parser.parse_schema(chemical_response)
                 new_action = action.generate_action(
                     context,
@@ -1368,7 +1372,7 @@ class ActionExtractorFromText(BaseModel):
             elif action.type == "chemicalsandconditions":
                 chemical_prompt = self._chemical_prompt.format_prompt(f"'{context}'")
                 chemical_response = self._llm_model.run_single_prompt(chemical_prompt)
-                print(chemical_response)
+                #print(chemical_response)
                 schemas = self._schema_parser.parse_schema(chemical_response)
                 new_action = action.generate_action(
                     context,
@@ -1393,7 +1397,7 @@ class ActionExtractorFromText(BaseModel):
                 new_action = action.generate_action(context)
                 action_list.extend(new_action)
             i = i + 1
-        print(action_list)
+        #print(action_list)
         if self.post_processing is False:
             final_actions_list: List[Dict[str, Any]] = action_list
         elif self.actions_type == "pistachio":
@@ -1414,7 +1418,7 @@ class ActionExtractorFromText(BaseModel):
             )
         else:
             final_actions_list = action_list
-        print(final_actions_list)
+        #print(final_actions_list)
         if self.elementar_actions is True:
             final_actions_list = ActionExtractorFromText.transform_elementary(
                 final_actions_list

@@ -535,5 +535,10 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         importlib_resources.files("xlmexlab")
         / "resources/template"
         / "llava-onevision-qwen_default_instruct_template.json"
+    ),
+    "gpt_4o_aiedu": str(
+        importlib_resources.files("xlmexlab")
+        / "resources/template"
+        / "blank_template.json"
     )
 }
