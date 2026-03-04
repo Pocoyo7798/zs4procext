@@ -2,7 +2,7 @@ import click
 import json
 import os
 from PIL import Image
-from inference_w_adapter import ModelWithAdapter
+from xlmexlab.inference_w_adapter import ModelWithAdapter
 
 
 @click.command()
