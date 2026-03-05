@@ -50,6 +50,7 @@ def run_inference(
                 else:
                     aggregated_data[key] = subdict
 
+
     with open(output_file, "w") as f:
         json.dump(aggregated_results, f, indent=4)
 
