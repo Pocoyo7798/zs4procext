@@ -17,13 +17,11 @@ def run_inference(
     output_file,
     base_model_path,
     imports_config_path,
-    generation_params_path,
     adapter_path,
 ):
     model = ModelWithAdapter(
         base_model_path=base_model_path,
         imports_config_path=imports_config_path,
-        generation_params_path=generation_params_path,
         adapter_path=adapter_path,
     )
 
