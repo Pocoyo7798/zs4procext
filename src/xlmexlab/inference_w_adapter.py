@@ -2,6 +2,7 @@ import json
 import torch
 import importlib
 from pydantic import BaseModel  
+from typing import Any, Dict, List, Optional
 
 from xlmexlab.parser import ImageParser
 
@@ -9,27 +10,33 @@ from xlmexlab.parser import ImageParser
 class ModelWithAdapter(BaseModel):
     base_model_path: str
     imports_config_path: str
-    adapter_path: str = None
+    adapter_path: Optional[str] = None
 
-    def __init__(self, **data):
-        super().__init__(**data)
+    _device: torch.device = PrivateAttr()
+    _model: Any = PrivateAttr()
+    _processor: Any = PrivateAttr()
+    _process_vision_info: Any = PrivateAttr()
+    _ModelClass: Any = PrivateAttr()
+    _ProcessorClass: Any = PrivateAttr()
+    _imports_config: Dict = PrivateAttr()
 
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    def model_post_init(self, __context: Any) -> None:
+        # Device
+        self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # Load imports configuration
         with open(self.imports_config_path) as f:
-            self.imports_config = json.load(f)
+            self._imports_config = json.load(f)
 
-        # Dynamically load classes and functions
-        self.ModelClass = self._load_class(self.imports_config["model_class"])
-        self.ProcessorClass = self._load_class(self.imports_config["processor_class"])
-        self.process_vision_info = self._load_function(self.imports_config["vision_utils"])
+        # Dynamically load classes/functions
+        self._ModelClass = self._load_class(self._imports_config["model_class"])
+        self._ProcessorClass = self._load_class(self._imports_config["processor_class"])
+        self._process_vision_info = self._load_function(self._imports_config["vision_utils"])
 
-        # Set default dtype
         torch_dtype = torch.float16
 
         # Load model
-        self.model = self.ModelClass.from_pretrained(
+        self._model = self._ModelClass.from_pretrained(
             self.base_model_path,
             torch_dtype=torch_dtype,
             device_map="auto",
@@ -37,60 +44,59 @@ class ModelWithAdapter(BaseModel):
         )
 
         # Load processor
-        self.processor = self.ProcessorClass.from_pretrained(self.base_model_path)
+        self._processor = self._ProcessorClass.from_pretrained(self.base_model_path)
 
         # Load adapter if provided
         if self.adapter_path:
-            self.model.load_adapter(self.adapter_path)
+            self._model.load_adapter(self.adapter_path)
 
-    def _load_class(self, dotted_path: str):
+    def _load_class(self, dotted_path: str) -> Any:
         module_name, class_name = dotted_path.rsplit(".", 1)
         module = importlib.import_module(module_name)
         return getattr(module, class_name)
 
-    def _load_function(self, dotted_path: str):
+    def _load_function(self, dotted_path: str) -> Any:
         module_name, func_name = dotted_path.rsplit(".", 1)
         module = importlib.import_module(module_name)
         return getattr(module, func_name)
 
-    def generate(self, messages):
+    def generate(self, messages: List[Dict[str, Any]]) -> Dict[str, Any]:
         # Apply chat template
-        text = self.processor.apply_chat_template(
+        text = self._processor.apply_chat_template(
             messages, tokenize=False, add_generation_prompt=True
         )
 
-        # Process images / videos
-        image_inputs, video_inputs = self.process_vision_info(messages)
+        # Process images/videos
+        image_inputs, video_inputs = self._process_vision_info(messages)
 
-        inputs = self.processor(
+        inputs = self._processor(
             text=[text],
             images=image_inputs,
             videos=video_inputs,
             padding=True,
             return_tensors="pt",
-        ).to(self.device)
+        ).to(self._device)
 
         # Generate output
         with torch.no_grad():
-            generated_ids = self.model.generate(
+            generated_ids = self._model.generate(
                 **inputs,
                 max_new_tokens=2048,
                 do_sample=False,
             )
 
-        # Remove prompt tokens
         trimmed_ids = [
             out_ids[len(in_ids):]
             for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
         ]
 
-        # Decode text
-        output = self.processor.batch_decode(
+        output = self._processor.batch_decode(
             trimmed_ids,
             skip_special_tokens=True,
             clean_up_tokenization_spaces=False,
         )
-        parser.parse(output_text[0])
+
+        parser.parse(output[0])
         parsed_output = parser.get_data_dict()
 
         return parsed_output
