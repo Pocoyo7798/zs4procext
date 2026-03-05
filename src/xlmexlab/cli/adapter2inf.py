@@ -52,7 +52,7 @@ def run_inference(
 
 
     with open(output_file, "w") as f:
-        json.dump(aggregated_results, f, indent=4)
+        json.dump(aggregated_data, f, indent=4)
 
     print(f"Results saved to {output_file}")
 
