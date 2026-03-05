@@ -57,6 +57,8 @@ def run_inference(
 
     print(f"Results saved to {output_file}")
 
+def main():
+    run_inference()
 
 if __name__ == "__main__":
-    run_inference()
+    main()
