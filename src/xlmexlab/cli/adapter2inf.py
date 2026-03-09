@@ -5,6 +5,7 @@ from PIL import Image
 from xlmexlab.inference_w_adapter import ModelWithAdapter
 
 from typing import Any, Dict, List, Optional
+
 @click.command()
 @click.argument("image_folder", type=str)
 @click.argument("output_file", type=str)
@@ -31,7 +32,7 @@ def run_inference(
         if file.lower().endswith((".png", ".jpg", ".jpeg", ".tiff")):
             path = os.path.join(image_folder, file)
             image = Image.open(path).convert("RGB")
-
+            print(image)
             messages = [
                 {
                     "role": "user",
@@ -43,7 +44,7 @@ def run_inference(
             ]
 
             parsed_data = model.generate(messages)
-
+            print (parsed_data)
             for key, subdict in parsed_data.items():
                 if key in aggregated_data:
                     aggregated_data[key].update(subdict)
