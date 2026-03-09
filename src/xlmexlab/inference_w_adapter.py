@@ -1,7 +1,7 @@
 import json
 import torch
 import importlib
-from pydantic import BaseModel  
+from pydantic import BaseModel, PrivateAttr
 from typing import Any, Dict, List, Optional
 
 from xlmexlab.parser import ImageParser
