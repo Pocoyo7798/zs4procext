@@ -100,4 +100,5 @@ class ModelWithAdapter(BaseModel):
         self._image_parser = ImageParser()
         self._image_parser.parse(output[0])
         parsed_output = self._image_parser.get_data_dict()
+        print (parsed_output)
         return parsed_output
