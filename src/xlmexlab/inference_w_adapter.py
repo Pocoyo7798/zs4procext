@@ -44,6 +44,7 @@ class ModelWithAdapter(BaseModel):
             device_map="auto",
             trust_remote_code=True,
         )
+        self._model.generation_config.temperature = None
 
         # Load processor
         self._processor = self._ProcessorClass.from_pretrained(self.base_model_path)
@@ -64,11 +65,14 @@ class ModelWithAdapter(BaseModel):
 
     def generate(self, messages: List[Dict[str, Any]]) -> Dict[str, Any]:
         # Apply chat template
+        print("STEP 1 - chat template")
         text = self._processor.apply_chat_template(
             messages, tokenize=False, add_generation_prompt=True
         )
 
         # Process images/videos
+
+        print("STEP 2 - process vision")
         image_inputs, video_inputs = self._process_vision_info(messages)
 
         inputs = self._processor(
@@ -80,12 +84,15 @@ class ModelWithAdapter(BaseModel):
         ).to(self._device)
 
         # Generate output
+        print("STEP 4 - generate")
         with torch.no_grad():
+            print("START GENERATE")
             generated_ids = self._model.generate(
                 **inputs,
-                max_new_tokens=2048,
+                max_new_tokens=512,
                 do_sample=False,
             )
+        print("END GENERATE")  
 
         trimmed_ids = [
             out_ids[len(in_ids):]
