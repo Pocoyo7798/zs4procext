@@ -13,11 +13,11 @@ from xlmexlab.inference_w_adapter import ModelWithAdapter
 @click.option("--adapter_path", default=None, help="Path to LoRA adapter (optional)")
 
 def run_inference(
-    image_folder,
-    output_file,
-    base_model_path,
-    imports_config_path,
-    adapter_path,
+    image_folder: str,
+    output_file : str,
+    base_model_path: str,
+    imports_config_path: str ,
+    adapter_path: Optional[str],
 ):
     model = ModelWithAdapter(
         base_model_path=base_model_path,
