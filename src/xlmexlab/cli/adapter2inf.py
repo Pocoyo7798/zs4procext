@@ -4,7 +4,7 @@ import os
 from PIL import Image
 from xlmexlab.inference_w_adapter import ModelWithAdapter
 
-
+from typing import Any, Dict, List, Optional
 @click.command()
 @click.argument("image_folder", type=str)
 @click.argument("output_file", type=str)
