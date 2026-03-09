@@ -19,6 +19,8 @@ class ModelWithAdapter(BaseModel):
     _ModelClass: Any = PrivateAttr()
     _ProcessorClass: Any = PrivateAttr()
     _imports_config: Dict = PrivateAttr()
+    _image_parser: Optional[ImageParser] = PrivateAttr(default=None)
+
 
     def model_post_init(self, __context: Any) -> None:
         # Device
@@ -95,8 +97,7 @@ class ModelWithAdapter(BaseModel):
             skip_special_tokens=True,
             clean_up_tokenization_spaces=False,
         )
-
-        parser.parse(output[0])
-        parsed_output = parser.get_data_dict()
-
+        self._image_parser = ImageParser()
+        self._image_parser.parse(output[0])
+        parsed_output = self._image_parser.get_data_dict()
         return parsed_output
