@@ -9,6 +9,7 @@ from PIL import Image, ImageFile
 from pydantic import BaseModel
 from vllm import LLM, RequestOutput, SamplingParams, TextPrompt
 from vllm.sampling_params import BeamSearchParams
+import time
 
 from xlmexlab.randomization import seed_everything
 
@@ -38,7 +39,7 @@ class AIeduLLM(BaseModel):
             with open("aiedu_config.json", "w") as f:
                 f.write(config_json)
 
-    def extract_dicts_with_type_message(self, response_text: str) -> str:
+    def extract_dicts_with_type_message(self, response_text: str, response_status: Any) -> str:
         s = response_text       
         results = {}
         depth = 0
@@ -57,8 +58,13 @@ class AIeduLLM(BaseModel):
                     if '"type": "message"' in block:
                         results = block
                     start = None
-        result_json = json.loads(results)
-        return result_json["content"]["content"]
+        if results == {}:
+            print(f"Response status: {response_status}")
+            print(response_text)
+            return ""
+        else:
+            result_json = json.loads(results)
+            return result_json["content"]["content"]
     
     def run_single_prompt(self, prompt: str) -> str:
         """Run a single prompt on the loaded model
@@ -79,7 +85,13 @@ class AIeduLLM(BaseModel):
         headers = {"x-api-key": self.api_key}
         response = requests.post(self.endpoint_url, data=payload, headers=headers)
 
-        return self.extract_dicts_with_type_message(response.text)
+        if "Rate limit reached (429)" in response.text:
+            time.sleep(2)  # small fallback
+            return self.run_single_prompt(prompt)
+
+        else:
+            return self.extract_dicts_with_type_message(response.text, response.status_code)
+
 
 class ModelLLM(BaseModel):
     model_name: str
