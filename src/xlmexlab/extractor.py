@@ -2,13 +2,15 @@ import json
 import os
 import re
 from typing import Any, Dict, Iterator, List, Optional, Tuple
-
+import copy
 import click
 import importlib_resources
 import numpy as np
 import torch
 from PIL import Image
 from pydantic import BaseModel, PrivateAttr, validator
+
+from html_table_extractor.extractor import Extractor
 
 from xlmexlab.actions import (
     ACTION_REGISTRY,
@@ -47,7 +49,7 @@ from xlmexlab.actions import (
     Transfer,
     Wash,
 )
-from xlmexlab.llm import ModelLLM, ModelVLM
+from xlmexlab.llm import ModelLLM, ModelVLM, AIeduLLM
 from xlmexlab.parser import (
     MOLAR_RATIO_REGISTRY,
     ActionsParser,
@@ -64,6 +66,7 @@ from xlmexlab.parser import (
     SchemaParser,
     TableParser,
     VariableFinder,
+    LaTeXTableParser #Adicionado
 )
 from xlmexlab.prompt import PromptFormatter
 
@@ -81,6 +84,7 @@ class ActionExtractorFromText(BaseModel):
     llm_model_name: Optional[str] = None
     llm_model_parameters_path: Optional[str] = None
     elementar_actions: bool = False
+    examples_path:  Optional[str] = None
     post_processing: bool = True
     banned_chemicals: bool = True
     _action_prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
@@ -235,15 +239,19 @@ class ActionExtractorFromText(BaseModel):
             self._llm_model = ModelLLM(model_name="microsoft/Phi-3-medium-4k-instruct")
         else:
             self._llm_model = ModelLLM(model_name=self.llm_model_name)
-        print(self.action_prompt_schema_path)
+        #print(self.action_prompt_schema_path)
         with open(self.action_prompt_schema_path, "r") as f:
             action_prompt_dict: Dict[str, Any] = json.load(f)
-        print(action_prompt_dict)
-        self._action_prompt = PromptFormatter(**action_prompt_dict)
+        #print(action_prompt_dict)
+        self._action_prompt = PromptFormatter(**action_prompt_dict, examples_path = self.examples_path)
         self._action_prompt.model_post_init(self.action_prompt_template_path)
-        print(self._action_prompt)
-        self._llm_model.load_model_parameters(llm_param_path)
-        self._llm_model.vllm_load_model()
+        #print(self._action_prompt)
+        if self.llm_model_name == "gpt_4o_aiedu":
+            self._llm_model = AIeduLLM()
+        else:
+            self._llm_model = ModelLLM(model_name=self.llm_model_name)
+            self._llm_model.load_model_parameters(llm_param_path)
+            self._llm_model.vllm_load_model()
         self._action_parser = ActionsParser(
             type=self.actions_type,
             separators=self._action_prompt._definition_separators,
@@ -1202,8 +1210,9 @@ class ActionExtractorFromText(BaseModel):
         ):
             raise AttributeError("You need to post initilize the class")
         paragraph = self._molar_ratio_parser.substitute(paragraph)
-        print(paragraph)
+        #print(paragraph)
         action_prompt: str = self._action_prompt.format_prompt(f"'{paragraph}'")
+        #print(action_prompt)
         action_prompt = action_prompt.replace("\x03C", "°C")
         action_prompt = action_prompt.replace("oC", "°C")
         action_prompt = action_prompt.replace("8C", "°C")
@@ -1217,7 +1226,7 @@ class ActionExtractorFromText(BaseModel):
         action_prompt = action_prompt.replace("℃", "°C")
         action_prompt = action_prompt.replace("\x03C", "°C")
         actions_response: str = self._llm_model.run_single_prompt(action_prompt).strip()
-        print(actions_response)
+        #print(actions_response)
         actions_info: Dict[str, List[str]] = self._action_parser.parse(actions_response)
         i: int = 0
         action_list: List[Dict[str, Any]] = []
@@ -1228,7 +1237,7 @@ class ActionExtractorFromText(BaseModel):
             except KeyError:
                 action = None
             if action is None:
-                print(action_name)
+                #print(action_name)
                 if action_name.lower() in stop_words:
                     break
             elif action in set([SetTemperature, Crystallization, ReduceTemperature]):
@@ -1251,7 +1260,7 @@ class ActionExtractorFromText(BaseModel):
                 chemical_response: str = self._llm_model.run_single_prompt(
                     chemical_prompt
                 ).strip()
-                print(chemical_response)
+                #print(chemical_response)
                 schemas: List[str] = self._schema_parser.parse_schema(chemical_response)
                 new_action = action.generate_action(
                     context,
@@ -1279,7 +1288,7 @@ class ActionExtractorFromText(BaseModel):
                 chemical_response = self._llm_model.run_single_prompt(
                     chemical_prompt
                 ).strip()
-                print(chemical_response)
+                #print(chemical_response)
                 schemas = self._schema_parser.parse_schema(chemical_response)
                 new_action = action.generate_action(
                     context,
@@ -1297,7 +1306,7 @@ class ActionExtractorFromText(BaseModel):
                     f"'{context}'"
                 )
                 chemical_response = self._llm_model.run_single_prompt(chemical_prompt)
-                print(chemical_response)
+                #print(chemical_response)
                 schemas = self._schema_parser.parse_schema(chemical_response)
                 new_action = action.generate_action(
                     context,
@@ -1313,7 +1322,7 @@ class ActionExtractorFromText(BaseModel):
             elif action is Transfer:
                 transfer_prompt = self._transfer_prompt.format_prompt(f"'{context}'")
                 transfer_response = self._llm_model.run_single_prompt(transfer_prompt)
-                print(transfer_response)
+                #print(transfer_response)
                 schemas = self._transfer_schema_parser.parse_schema(transfer_response)
                 new_action = action.generate_action(
                     context,
@@ -1350,7 +1359,7 @@ class ActionExtractorFromText(BaseModel):
             elif action.type == "onlychemicals":
                 chemical_prompt = self._chemical_prompt.format_prompt(f"'{context}'")
                 chemical_response = self._llm_model.run_single_prompt(chemical_prompt)
-                print(chemical_response)
+                #print(chemical_response)
                 schemas = self._schema_parser.parse_schema(chemical_response)
                 new_action = action.generate_action(
                     context,
@@ -1363,7 +1372,7 @@ class ActionExtractorFromText(BaseModel):
             elif action.type == "chemicalsandconditions":
                 chemical_prompt = self._chemical_prompt.format_prompt(f"'{context}'")
                 chemical_response = self._llm_model.run_single_prompt(chemical_prompt)
-                print(chemical_response)
+                #print(chemical_response)
                 schemas = self._schema_parser.parse_schema(chemical_response)
                 new_action = action.generate_action(
                     context,
@@ -1388,7 +1397,7 @@ class ActionExtractorFromText(BaseModel):
                 new_action = action.generate_action(context)
                 action_list.extend(new_action)
             i = i + 1
-        print(action_list)
+        #print(action_list)
         if self.post_processing is False:
             final_actions_list: List[Dict[str, Any]] = action_list
         elif self.actions_type == "pistachio":
@@ -1409,7 +1418,7 @@ class ActionExtractorFromText(BaseModel):
             )
         else:
             final_actions_list = action_list
-        print(final_actions_list)
+        #print(final_actions_list)
         if self.elementar_actions is True:
             final_actions_list = ActionExtractorFromText.transform_elementary(
                 final_actions_list
@@ -1888,7 +1897,7 @@ class TableExtractor(BaseModel):
     vlm_model_parameters_path: Optional[str] = None
     _prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
     _vlm_model: Optional[ModelVLM] = PrivateAttr(default=None)
-    _condition_parser: Optional[TableParser] = PrivateAttr(default=None)
+    #_condition_parser: Optional[LaTeXTableParser] = PrivateAttr(default=None)
 
     def model_post_init(self, __context: Any) -> None:
         if self.vlm_model_parameters_path is None:
@@ -1915,14 +1924,243 @@ class TableExtractor(BaseModel):
             self._vlm_model = ModelVLM(model_name=self.vlm_model_name)
         self._vlm_model.load_model_parameters(vlm_param_path)
         self._vlm_model.vllm_load_model()
+        #self._condition_parser = LaTeXTableParser()
 
     def extract_table_info(self, image_path: str, scale: float = 1.0) -> None:
+        image_name = os.path.basename(image_path) #adicionado
+
         prompt = self._prompt.format_prompt("<image>")
+        print("[TableExtractor] Prompt:")
         print(prompt)
         output = self._vlm_model.run_image_single_prompt_rescale(
             prompt, image_path, scale=scale
         )
-        print(output)
+        #Latex
+        #parsed_output = self._condition_parser.parse(output)
+        #HTML
+        print(f"output is: {output}")
+        extractor = Extractor(output)
+        extractor.parse()
+        table = extractor.return_list()
+        print(table)
+        pattern = r'_\{\text\{([^}]+)\}\}'
+        parsed_output = [[re.sub(pattern, r'\1', cell).replace(' \\)', '').replace('\\( ', '') for cell in row] for row in table]
+        print(parsed_output)
+        return image_path,  parsed_output
+
+class Table2Blocks(BaseModel): #from pdf2data
+    page: int
+    name: str
+    block: List[List[str]]
+    type: str = "Table"
+    collumn_headers: List[int] = []
+    row_indexes: List[int] = []
+    number: int = 0
+    legend: str = ""
+    box: List[float] = []
+    letter_ratio: float = 3
+
+    def find_collumn_headers(self) -> None:
+        """find the collumn headers as rows that do not have numbers"""
+        if len(self.block) == 0:
+            pass
+        elif len(self.block[0]) == 0:
+            pass
+        else:
+            collumn_headers: List[int] = []
+            find_number: bool = True
+            for row_number in range(len(self.block)):
+                if find_number is False:
+                    collumn_headers.append(row_number - 1)
+                find_number = False
+                for entry in self.block[row_number]:
+                    if entry == "":
+                        digits: int = 0
+                        letters: int = 0
+                    else:
+                        digits = len(re.findall("[1-9]", entry))
+                        letters = len(re.findall("[a-zA-Z]", entry))
+                    # Verify if the entry as any letter
+                    if digits > self.letter_ratio * letters:
+                        find_number = True
+                        break
+            self.collumn_headers = collumn_headers
+
+    def find_row_indexes(self, max_rows: int = 2) -> None:
+        """find the row indexes by finding collumns without entries with three times more digits then letters
+
+        Parameters
+        ----------
+        max_rows : int, optional
+            maximum rows to be considered, by default 2
+        """
+        row_indexes: List[int] = []
+        find_number: bool = True
+        if len(self.block) == 0:
+            pass
+        elif len(self.block) == 0:
+            pass
+        else:
+            max_rows: int = min(len(self.block[0]), max_rows)
+            for collumn_number in range(max_rows):
+                find_number = False
+                for row in self.block:
+                    if row[collumn_number] == "":
+                        digits: int = 0
+                        letters: int = 0
+                    else:
+                        # test = re.search('[a-zA-Z]', row[collumn_number])
+                        digits = len(re.findall("[1-9]", row[collumn_number]))
+                        letters = len(re.findall("[a-zA-Z]", row[collumn_number]))
+                        # print(f'{row[collumn_number]} presents {digits} digits and {letters} letters')
+                    # Verify if the entry as any letter
+                    # if test is None:
+                    if digits > self.letter_ratio * letters:
+                        find_number = True
+                        break
+                if find_number is False:
+                    row_indexes.append(collumn_number)
+            self.row_indexes = row_indexes
+
+    def create_dict(
+        self,
+        page: Any,
+        page_size: List[float],
+        layout_boxes: List[List[float]],
+        layout_types: List[str],
+        index: int,
+    ) -> Dict[str, Any]:
+        """generates a dictionary describing the table object
+
+        Parameters
+        ----------
+        page : Any
+            pdf page to be considered
+        page_size : List[float]
+            size of the page
+        boxes : List[List[float]]
+            list of boxes of the page layout
+        types : List[str]
+            list of the types of the page layout
+        index : int
+            position of the table or figure in the layout list
+
+        Returns
+        -------
+        Dict[str, Any]
+            a dictionary with the page number, table entries, type, collumn headers, row indexes, table number, legend and table coordinates
+        """
+        i_vertical: int = 1
+        # Go through all entries in the table
+        self.find_collumn_headers()
+        self.find_row_indexes()
+        self.legend = find_legend(
+            page, page_size, layout_boxes, layout_types, index, type=self.type
+        )
+        for i_horizontal in range(len(self.block)):
+            j_horizontal: int = 0
+            for j_vertical in range(len(self.block[i_horizontal])):
+                if i_vertical < len(self.block):
+                    # Verify if the entry is empty
+                    if self.block[i_vertical][j_vertical] == "":
+                        # New entry is the one above
+                        new_entry_vert: str = self.block[i_vertical - 1][j_vertical]
+                        if (
+                            re.search("[a-zA-Z]", new_entry_vert) is not None
+                            or j_vertical == 0
+                        ):
+                            self.block[i_vertical][j_vertical] = new_entry_vert
+                if j_horizontal < len(self.block[i_horizontal]) and j_horizontal > 0:
+                    if self.block[i_horizontal][j_horizontal] == "":
+                        # New entry is the one on the left
+                        new_entry_horiz = self.block[i_horizontal][j_horizontal - 1]
+                        self.block[i_horizontal][j_horizontal] = new_entry_horiz
+                j_horizontal = j_horizontal + 1
+            i_vertical = i_vertical + 1
+        image_rect: fitz.Rect = fitz.Rect(
+            self.box[0], self.box[1], self.box[2], self.box[3]
+        )
+        mat: fitz.Matrix = fitz.Matrix(3, 3)
+        # Get Image from the Rectangle
+        image: Any = page.get_pixmap(matrix=mat, clip=image_rect)
+        # Save as Tiff
+        image.pil_save(self.name, format="TIFF")
+        result = self.__dict__
+        del result["letter_ratio"]
+        return result
+
+
+class List2Headers(BaseModel):
+    table_type: str = "All"
+    prompt_template_path: Optional[str] = None
+    prompt_schema_path: Optional[str] = None
+    vlm_model_name: Optional[str] = None
+    vlm_model_parameters_path: Optional[str] = None
+
+    _vlm_model: Optional[ModelVLM] = PrivateAttr(default=None)
+
+    def model_post_init(self, __context: Any = None) -> None:
+        if self.vlm_model_name is None:
+            self._vlm_model = ModelVLM(model_name="microsoft/Phi-3-medium-4k-instruct")
+        else:
+            self._vlm_model = ModelVLM(model_name=self.vlm_model_name)
+
+        if self.vlm_model_parameters_path is None:
+            vlm_param_path = str(
+                importlib_resources.files("xlmexlab")
+                / "resources/model_parameters"
+                / "vllm_default_params.json"
+            )
+        else:
+            vlm_param_path = self.vlm_model_parameters_path
+
+        self._vlm_model.load_model_parameters(vlm_param_path)
+        self._vlm_model.vllm_load_model()
+
+    @staticmethod
+    def update_schema_with_extracted_data(base_json_path: str, extracted_data: list):
+        with open(base_json_path, "r", encoding="utf-8") as f:
+            base_json = json.load(f)
+
+        schema_copy = copy.deepcopy(base_json)
+        context_str = json.dumps(extracted_data, ensure_ascii=False)
+
+        if "objective" in schema_copy and "{fille here for each image}" in schema_copy["objective"]:
+            schema_copy["objective"] = schema_copy["objective"].replace(
+                "{fille here for each image}", context_str
+            )
+
+        return schema_copy
+
+    def extract_table_info(
+        self,
+        image_path: str,
+        extracted_data: Optional[list] = None,
+        scale: float = 1.0
+    ):
+        image_name = os.path.basename(image_path)
+
+        if extracted_data is not None:
+            image_schema = self.update_schema_with_extracted_data(
+                self.prompt_schema_path, extracted_data
+            )
+        else:
+            with open(self.prompt_schema_path, "r", encoding="utf-8") as f:
+                image_schema = json.load(f)
+
+        from xlmexlab.prompt import PromptFormatter
+        prompt_formatter = PromptFormatter(**image_schema)
+        prompt_formatter.model_post_init(self.prompt_template_path)
+        prompt = prompt_formatter.format_prompt(image_schema)
+
+        print(f"\n[HEADER PROMPT] {image_name}\n{prompt}\n")
+
+        output = self._vlm_model.run_image_single_prompt_rescale(
+            prompt, image_path, scale=scale
+        )
+
+        return image_path, output
+
 
 
 class ImageExtractor(BaseModel):
@@ -1969,7 +2207,6 @@ class ImageExtractor(BaseModel):
         output = self._vlm_model.run_image_single_prompt_rescale(
             prompt, image_path, scale=scale
         )
-        print(f"Raw Model Output for {image_path}:\n{output}")
 
         self._image_parser.parse(output)
         parsed_output = self._image_parser.get_data_dict()

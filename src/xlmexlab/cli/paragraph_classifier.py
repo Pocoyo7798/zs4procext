@@ -75,6 +75,12 @@ def paragraph_classifier(
             / "resources/schemas"
             / "classify_desilication_dealumination_schema.json"
         )
+    elif type == "desilication":
+        prompt_schema_path = str(
+            importlib_resources.files("xlmexlab")
+            / "resources/schemas"
+            / "classify_desilication_schema.json"
+        )
     elif type == "steaming":
         prompt_schema_path = str(
             importlib_resources.files("xlmexlab")

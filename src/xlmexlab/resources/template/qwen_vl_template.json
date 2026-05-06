@@ -6,13 +6,12 @@
         "context",
         "definitions",
         "answer_schema",
-        "conclusion",
-        "examples"
+        "conclusion"
     ],
     "input_types": {},
     "output_parser": null,
     "partial_variables": {},
-    "template": "<|system|>\n{expertise}{initialization}{definitions}<|end|><|user|>\n{objective}{context}{answer_schema}{conclusion}{examples}<|end|><|assistant|>",
+    "template": "{expertise}{initialization}{definitions}{objective}{context}{answer_schema}{conclusion}Picture 1: <img></img>\n",
     "template_format": "f-string",
     "validate_template": true,
     "_type": "prompt"

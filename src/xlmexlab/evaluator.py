@@ -386,9 +386,9 @@ class Evaluator(BaseModel):
             action_list_transformed: List[Dict[str, Any]] = ast.literal_eval(
                 action_list
             )
-            ref_action_sequence = [action["action"] for action in ref_action_list]
+            ref_action_sequence = [ACTION_DICT_CONVERTER[action["action"].lower()] for action in ref_action_list]
             action_sequence: List[str] = [
-                action["action"] for action in action_list_transformed
+                ACTION_DICT_CONVERTER[action["action"].lower()] for action in action_list_transformed
             ]
             amount_of_actions += len(action_sequence)
             ref_action_sequence2 = "".join(ref_action_sequence)
@@ -691,6 +691,9 @@ class Evaluator(BaseModel):
             if test_value > 1:
                 final_index = i
                 break
+            elif test_value == 1 and len(entry.keys()) == 1:
+                final_index = i
+                break
             i += 1
         return final_index
 
@@ -715,11 +718,8 @@ class Evaluator(BaseModel):
                 dictionary, ref_dictionaries, threshold=threshold
             )
             if index is None:
-                print("###############")
-                print(dictionary)
-                print("Compared Dictionaries")
                 for ref_dicionary in ref_dictionaries:
-                    print(ref_dicionary)
+                    ref_dicionary
                 fp_sample += 1
                 fp_keys += len(dictionary_keys)
                 for key in dictionary_keys:
@@ -775,13 +775,11 @@ class Evaluator(BaseModel):
         fn_data: int = 0
         i: int = 0
         for data in test_dataset:
-            print(i)
             data_dict: Dict[str, Any] = ast.literal_eval(data)
             ref_data_dict: Dict[str, Any] = ast.literal_eval(reference_dataset[i])
-            print(data_dict["table"])
-            print(ref_data_dict["table"])
             test_results: List[Dict[str, Any]] = data_dict["data"]
             ref_results: List[Dict[str, Any]] = ref_data_dict["data"]
+            ref_results_copy = ref_results.copy()
             evaluation_results: Dict[str, int] = self.evaluate_dict_list(
                 test_results, ref_results, threshold=threshold
             )
@@ -897,4 +895,36 @@ CHEMICALS_REGISTRY = {
     "iso-propoxide": "o-ch(ch3)2",
     "germanium": "ge",
     "gold": "au",
+}
+
+ACTION_DICT_CONVERTER = {
+    "add": "a",
+    "stir": "s",
+    "separate": "x",
+    "settemperature": "z",
+    "newsolution": "n",
+    "drysolution": "d",
+    "drysolid": "y",
+    "wash": "w",
+    "dry": "u",
+    "filter": "f",
+    "sieve": "l",
+    "grind": "g",
+    "repeat": "r",
+    "crystallization": "c",
+    "thermaltreatment": "t",
+    "extract": "e",
+    "quench": "q",
+    "degas": "j",
+    "triturate": "m",
+    "partition": "p",
+    "purify": "v",
+    "sonicate": "o",
+    "phaseseparation": "h",
+    "recrystallize": "i",
+    "wait": "k",
+    "setatmosphere": "b",
+    "concentrate": "1",
+    "reflux": "2",
+    "followotherprocedure": "",
 }
