@@ -60,9 +60,10 @@ class NanoparticlesExtractorParagraph(BaseModel):
         prompt = self._prompt.format_prompt(f"'{text}'")
         data_response = self._llm_model.run_single_prompt(prompt).strip()
 
+        print(data_response)
+
         final_answer = self._nanoparticles_parser.replace(
             self._extracted_flags,
             data_response
         )
-
         return final_answer

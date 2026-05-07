@@ -431,7 +431,7 @@ LIPID_KEYWORDS = [
     "MSPC", "monostearoyl phosphatidylcholine", "SPC", "DPPC", "DSPC", "DOPC", "DOPE", "HSPC", "hydrogenated soy phosphatidylcholine", "DPPE", "DMPC", "POPC", "POPE",
     "phosphatidylcholine", "sphingomyelin", "span 60", "PS"
     # sterols
-    "cholesterol hemisuccinate", "CHEMS", "cholesterol", "chol", "CHO",
+    "cholesterol hemisuccinate", "CHEMS", "cholesterol", "chol", "CHO", "choles-terol",
     # PEG-lipids
     "DSPE-PEG", "DSPE-PEG2000", "DSPE-MPEG2000", "DSPE- PEG2000", "DSPE- MPEG2000", "DSPE- MPEG" , "DSPE- PEG",
     "C14-PEG2000", "PEG-DMG", "PEG2000-Cer16",
@@ -441,8 +441,10 @@ LIPID_KEYWORDS = [
     "DODAP", "DOTAP", "DOTMA", "GenVoy-ILM", "Lipid H", "DLODAP",
 ]
 
+
 NORMALIZATION_MAP = {
     "monostearoyl phosphatidylcholine": "MSPC",
+    "choles-terol":"cholesterol",
     "CHO": "cholesterol",
     "chol": "cholesterol",
     "DSPE- PEG2000": "DSPE-PEG2000",
