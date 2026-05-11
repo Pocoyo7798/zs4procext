@@ -78,7 +78,12 @@ CARGO_DB = OrderedDict({
         "curcumin", "resveratrol",
         "ginsenoside", "quercetin",
         "EGCG", "BER"
-    ]
+    ],
+
+    "hematopoietic_growth_factors": [
+        "filgrastim", "pegfilgrastim", 
+        "lenograstim"
+    ],
 })
 
 cargo_list = sorted({
@@ -364,7 +369,23 @@ cargo_map = OrderedDict({
 
     rx(r"ber"): "BER",
     rx(r"berberine"): "BER",
+
+    rx(r"gcsf"): "G-CSF",
+    rx(r"g"+SEP+r"csf"): "G-CSF",
+    rx(r"granulocyte"+SEP+r"colony"+SEP+r"stimulating"+SEP+r"factor"): "G-CSF",
+    rx(r"endogenous"+SEP+r"g"+SEP+r"csf"): "G-CSF",
+    rx(r"g"+SEP+r"csf"+SEP+r"signaling"): "G-CSF",
+
+    rx(r"filgrastim"): "filgrastim",
+    rx(r"neupogen"): "filgrastim",
+
+    rx(r"pegfilgrastim"): "pegfilgrastim",
+    rx(r"neulasta"): "pegfilgrastim",
+
+    rx(r"lenograstim"): "lenograstim",
+    rx(r"granocyte"): "lenograstim",
 })
+
 
 # 4. COMPILE
 COMPILED_MAP = [

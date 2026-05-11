@@ -27,6 +27,7 @@ def extract_flags(extractor, text):
 
 
 def count_true_flags(flags):
+    print (f'VERDADEIROS E FALSOS {flags}')
     return sum(1 for v in flags.values() if v is True)
 
 
@@ -153,6 +154,7 @@ def nanoparticles2data(
 
     llm_extractor = None
     if not skip_llm:
+        print ("aqui!")
         try:
             template = TEMPLATE_REGISTRY.get(
                 llm_model_name.split("/")[-1] if llm_model_name else "default"
