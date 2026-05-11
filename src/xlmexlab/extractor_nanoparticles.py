@@ -58,6 +58,7 @@ class NanoparticlesExtractorParagraph(BaseModel):
     def extract_text_info(self, text: str):
 
         prompt = self._prompt.format_prompt(f"'{text}'")
+        print(prompt)
         data_response = self._llm_model.run_single_prompt(prompt).strip()
 
         print(data_response)

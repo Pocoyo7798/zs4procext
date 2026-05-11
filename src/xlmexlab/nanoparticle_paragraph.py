@@ -439,6 +439,9 @@ LIPID_KEYWORDS = [
     "DLin-MC3-DMA", "MC3", "SM-102", "ALC-0315",
     "lipid A9", "C12-200", "OF-02", "5A2-SC8", "CKK-E12", "DLin-KC2-DMA",
     "DODAP", "DOTAP", "DOTMA", "GenVoy-ILM", "Lipid H", "DLODAP",
+    
+    "Gd.DOTA.DSA", # Gd.DOTA.DSA for MRI imagining
+    "CF750.DSA", # for lipid fluorescence imagining 
 ]
 
 
@@ -706,12 +709,12 @@ BREAST_SUBTYPE_MAP = {
 # imaging modalities ────────────────────────────────────────────────────────
 IMAGING_MAP = {
     "MRI": {
-        "abbrs": ["MRI", "T1", "T2", "T1-weighted", "T2-weighted"],
+        "abbrs": ["MRI", "T1", "T2", "T1-weighted", "T2-weighted", "Gd.DOTA.DSA"],
         "keywords": ["magnetic resonance imaging", "relaxivity"]
     },
 
     "Fluorescence": {
-        "abbrs": ["NIRF", "DiI", "DiD", "DiR", "FITC", "Cy5", "Cy7"],
+        "abbrs": ["NIRF", "DiI", "DiD", "DiR", "FITC", "Cy5", "Cy7", "CF750.DSA"],
         "keywords": ["fluorescence", "fluorescent", "near-infrared fluorescence"]
     },
 
