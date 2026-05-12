@@ -54,9 +54,13 @@ class NanoparticlesExtractorParagraph(BaseModel):
         if self.prompt_schema_path is None:
             self._prompt_creation = PromptCreation()
             prompt_dict, targets = self._prompt_creation.build_extraction_prompt_json(
-                self._paragraph, self._extracted_flags  # já têm valor aqui
+                text, 
+                self._extracted_flags
             )
-        
+        else:
+            # handle the schema path case — add your logic here
+            raise NotImplementedError("prompt_schema_path handling not implemented")
+
         self._prompt = PromptFormatter(**prompt_dict)
         self._prompt.model_post_init(self.prompt_template_path)
         self._nanoparticles_parser._parameters = targets
