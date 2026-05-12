@@ -29,8 +29,8 @@ class NanoparticlesExtractorParagraph(BaseModel):
     _llm_model: Optional[ModelLLM] = PrivateAttr(default=None)
     _nanoparticles_parser: Optional[ParserNanoparticle] = PrivateAttr(default=None)
 
-    _paragraph: Optional[str] = None
-    _extracted_flags: Optional[dict[str, Any]] = None
+    _paragraph: Optional[str] = PrivateAttr(default=None)
+    _extracted_flags: Optional[dict[str, Any]] = PrivateAttr(default=None)
 
     def model_post_init(self, __context: Any) -> None:
         if self.llm_model_parameters_path is None:

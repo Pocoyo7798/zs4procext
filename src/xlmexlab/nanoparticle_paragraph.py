@@ -944,7 +944,7 @@ def _extract_value_unit_closest_to_keyword(
         text,
         re.IGNORECASE
     ))
-    print (unit_matches)
+    #print (unit_matches)
 
     if not unit_matches:
         return None
@@ -955,7 +955,7 @@ def _extract_value_unit_closest_to_keyword(
         text,
         re.IGNORECASE | re.VERBOSE
     ))
-    print (kw_matches)
+    #print (kw_matches)
 
     if not kw_matches:
         return None
@@ -1021,18 +1021,18 @@ class NanoparticleExtractor(BaseModel):
     def _extract_zeta_potential(self, text: str) -> Optional[bool]:
         normalized = (text.replace("±", "+/-").replace("−", "-").replace("–", "-"))
         match = re.search(r"(-?\d+(?:\.\d+)?(?:\s*\+/-\s*\d+(?:\.\d+)?)?)\s*mV", normalized, re.IGNORECASE)
-        print (match.group(0).replace("+/-","±") if match else None)
+        #print (match.group(0).replace("+/-","±") if match else None)
         return True if match else False
         
     def _extract_size(self, text: str) -> Optional[bool]:
         result = _extract_value_unit_closest_to_keyword(text, PART_SIZE, ["nm"])
         #result = _extract_value_near_keyword(text, PART_SIZE, ["nm"])
-        print (result)
+        #print (result)
         return True if result else False 
 
     def _extract_pdi(self, text: str) -> Optional[bool]:
         PDI = (_extract_float_near_keyword(text, r"PDI|polydispersity index|polydispersity"))
-        print (PDI)
+        #print (PDI)
         return True if PDI else False
 
     def _extract_shape(self, text: str) -> Optional[bool]:
@@ -1098,7 +1098,7 @@ class NanoparticleExtractor(BaseModel):
         match = re.search(r'\b\d+(?:\.\d+)?(?:\s*:\s*\d+(?:\.\d+)?)+\b', text)
         if match:
             values = [float(n) for n in match.group().split(':')]
-            print (values)
+            #print (values)
             total = sum(values)
 
             if total == 0:
@@ -1178,10 +1178,10 @@ class NanoparticleExtractor(BaseModel):
         )
         
         if match:
-            print (match.group(0))
+            #print (match.group(0))
             return True
         elif match1:
-            print (match1.group(0))
+            #print (match1.group(0))
             return True
         else:
             return False
@@ -1241,7 +1241,7 @@ class NanoparticleExtractor(BaseModel):
         EE = _extract_value_unit_closest_to_keyword(
             text, EE_PATTERNS, ["%"]
         )
-        print (EE)
+        #print (EE)
         return True if EE else False 
 
     
@@ -1250,21 +1250,21 @@ class NanoparticleExtractor(BaseModel):
             text,
             DELIVERY_E_KEYWORDS,
             ["%"])
-        print (DE)
+        #print (DE)
         return True if DE else False
 
     def _extract_distribution_half_life(self, text: str) -> Optional[bool]:
         DHL= _extract_float_near_keyword(
             text, r"t½α|t1/2α|distribution half.life|alpha half.life"
         )
-        print (DHL)
+        #print (DHL)
         return True if DHL else False
 
     def _extract_circulation_half_life(self, text: str) -> Optional[float]:
         CHL = _extract_float_near_keyword(
             text, r"t½β|t1/2β|circulation half.life|blood circulation.*half|elimination half.life|t1/2|t½"
         )
-        print (CHL)
+        #print (CHL)
         return True if CHL else False
     
     def _extract_biodistribution(self, text: str)-> Optional[bool]:
@@ -1285,7 +1285,7 @@ class NanoparticleExtractor(BaseModel):
             text,
             TUMOR_PATTERNS,
             ["%"])
-        print (TVL)
+        #print (TVL)
         return True if TVL else False
     
     # CARGO
