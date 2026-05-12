@@ -2,124 +2,122 @@ import json
 import os
 import time
 import logging
-from typing import Any, Dict, List, Optional
-import click
 from dataclasses import asdict, is_dataclass
+
+import click
 
 from xlmexlab.extractor_nanoparticles import NanoparticlesExtractorParagraph
 from xlmexlab.nanoparticle_paragraph import NanoparticleExtractor
-from xlmexlab.prompt import TEMPLATE_REGISTRY
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 
-def load_blocks(json_path: str):
+def load_blocks(json_path: str) -> list:
     with open(json_path, "r", encoding="utf-8") as f:
         return json.load(f).get("blocks", [])
 
 
-def extract_flags(extractor, text):
-    result = extractor.extract(text)
+def to_dict(result) -> dict:
     if is_dataclass(result):
         return asdict(result)
     return dict(result)
 
 
-def count_true_flags(flags):
-    print (f'VERDADEIROS E FALSOS {flags}')
-    return sum(1 for v in flags.values() if v is True)
+def has_relevant_findings(flags: dict) -> bool:
+    """Returns True if any flag is exactly True (boolean)."""
+    found = any(v is True for v in flags.values())
+    return found
 
 
-def llm_should_run(flags):
-    return count_true_flags(flags) > 0
-
-
-def extract_llm_values(llm_extractor, text, flags):
-    try:
-        llm_extractor._extracted_flags = flags
-        return llm_extractor.extract_text_info(text), None
-    except Exception as e:
-        return None, str(e)
-
-
-def merge(flags, llm):
-    merged = dict(flags)
-    if llm:
-        merged.update(llm)
-    return merged
-
-
-def process_blocks_stream(
-    blocks,
-    regex_extractor,
-    llm_extractor,
-    min_text_length,
-    skip_llm
-):
-    """
-    Process blocks and return hierarchical structure:
-    header_1, header_2, paragraph_1 (with result), paragraph_2 (with result), 
-    header_3, header_4, paragraph_3 (with result), ...
-    """
+def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip_llm):
     results = []
-    paragraph_id = 1
-    error_count = 0
-    header_count = 0
+    errors = 0
+    paragraph_index = 0
 
-    for b in blocks:
+    for block_index, block in enumerate(blocks):
+        block_type = block.get("type")
+        content = block.get("content", "").strip()
 
-        if b.get("type") == "section_header":
-            header_count += 1
-            header_obj = {
-                f"header_{header_count}": {
-                    "content": b.get("content", "").strip(),
-                    "page": b.get("page")
-                }
-            }
-            results.append(header_obj)
+        # --- Headers ---
+        if block_type == "section_header":
+            print(f"\n[BLOCK {block_index}] HEADER: '{content[:80]}...'")
+            results.append({
+                "type": "header",
+                "content": content,
+                "page": block.get("page"),
+            })
             continue
 
-        if b.get("type") != "paragraph":
+        if block_type != "paragraph":
+            print(f"\n[BLOCK {block_index}] SKIPPING block type='{block_type}'")
             continue
 
-        text = b.get("content", "").strip()
-
-        if len(text) < min_text_length:
+        if len(content) < min_text_length:
+            print(f"\n[BLOCK {block_index}] SKIPPING paragraph too short ({len(content)} chars < {min_text_length})")
             continue
+
+        paragraph_index += 1
+        print(f"\n{'='*60}")
+        print(f"[BLOCK {block_index}] PARAGRAPH #{paragraph_index} | page={block.get('page')} | {len(content)} chars")
+        print(f"  TEXT PREVIEW: '{content[:120]}...'")
 
         try:
-            flags = extract_flags(regex_extractor, text)
+            # --- Step 1: Regex extraction ---
+            print(f"\n  [STEP 1] Running REGEX extractor...")
+            regex_flags = to_dict(regex_extractor.extract(content))
+            
+            true_flags = {k: v for k, v in regex_flags.items() if v is True}
+            print(f"  [STEP 1] Done. TRUE flags: {true_flags if true_flags else 'NONE'}")
+
+            # --- Step 2: Decide if LLM should run ---
+            has_findings = has_relevant_findings(regex_flags)
+            print(f"\n  [STEP 2] has_findings={has_findings} | skip_llm={skip_llm} | llm_extractor={'LOADED' if llm_extractor else 'NOT LOADED'}")
 
             llm_values = None
-            llm_error = None
 
-            if llm_extractor and not skip_llm and llm_should_run(flags):
-                llm_values, llm_error = extract_llm_values(
-                    llm_extractor, text, flags
-                )
+            if not llm_extractor:
+                print(f"  [STEP 2] LLM extractor not loaded, skipping.")
+            elif skip_llm:
+                print(f"  [STEP 2] --skip_llm flag is set, skipping LLM.")
+            elif not has_findings:
+                print(f"  [STEP 2] No True flags found, skipping LLM.")
+            else:
+                print(f"\n  [STEP 3] Running LLM extractor...")
+                print(f"  [STEP 3] Setting _extracted_flags: {true_flags}")
+                llm_extractor._extracted_flags = regex_flags
 
-            merged = merge(flags, llm_values)
+                try:
+                    llm_values = llm_extractor.extract_text_info(content)
+                    print(f"  [STEP 3] LLM returned: {llm_values}")
+                except Exception as e:
+                    print(f"  [STEP 3] !! LLM ERROR: {type(e).__name__}: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    llm_values = None
 
-            # Create paragraph with its result
-            paragraph_obj = {
-                f"paragraph_{paragraph_id}": {
-                    "id": paragraph_id,
-                    "page": b.get("page"),
-                    "text": text,
-                    "extraction": {
-                        "merged": merged
-                    }
-                }
-            }
-            results.append(paragraph_obj)
-            paragraph_id += 1
+            # --- Step 3: Merge ---
+            extraction = {**regex_flags, **(llm_values or {})}
+            print(f"\n  [MERGE] Final extraction keys with non-null values: "
+                  f"{[k for k, v in extraction.items() if v is not None and v is not False and v != []]}")
+
+            results.append({
+                "type": "paragraph",
+                "page": block.get("page"),
+                "text": content,
+                "extraction": extraction,
+            })
 
         except Exception as e:
-            error_count += 1
-            logger.error(e)
+            errors += 1
+            print(f"  !! OUTER ERROR on paragraph #{paragraph_index}: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
+            logger.error(f"Failed to process paragraph: {e}")
 
-    return results, error_count
+    print(f"\n{'='*60}")
+    print(f"PROCESSING COMPLETE: {paragraph_index} paragraphs, {errors} errors")
+    return results, errors
 
 
 @click.command()
@@ -131,7 +129,6 @@ def process_blocks_stream(
 @click.option("--llm_model_parameters_path", default=None)
 @click.option("--skip_llm", is_flag=True, default=False)
 @click.option("--min_text_length", type=int, default=200, show_default=True)
-
 def nanoparticles2data(
     paragraph_json,
     output_file_path,
@@ -142,60 +139,75 @@ def nanoparticles2data(
     skip_llm,
     min_text_length,
 ):
-
     start = time.time()
 
-    print("\nLOADING FILE")
+    print("\n" + "="*60)
+    print("STARTING nanoparticles2data")
+    print(f"  Input:            {paragraph_json}")
+    print(f"  Output:           {output_file_path}")
+    print(f"  skip_llm:         {skip_llm}")
+    print(f"  min_text_length:  {min_text_length}")
+    print(f"  llm_model_name:   {llm_model_name}")
+    print("="*60)
+
+    print("\nLOADING FILE...")
     blocks = load_blocks(paragraph_json)
+    print(f"  Loaded {len(blocks)} blocks total.")
 
-    
-    # EXTRACTORS
+    # --- Regex extractor ---
+    print("\nLOADING REGEX EXTRACTOR...")
     regex_extractor = NanoparticleExtractor()
+    print("  Regex extractor ready.")
 
+    # --- LLM extractor ---
     llm_extractor = None
-    if not skip_llm:
-        print ("aqui!")
+    if skip_llm:
+        print("\nLLM EXTRACTOR: skipped (--skip_llm flag)")
+    else:
+        print("\nLOADING LLM EXTRACTOR...")
         try:
-            template = TEMPLATE_REGISTRY.get(
-                llm_model_name.split("/")[-1] if llm_model_name else "default"
-            )
-
             llm_extractor = NanoparticlesExtractorParagraph(
-                prompt_template_path=template,
+                prompt_template_path=prompt_template_path,
                 prompt_schema_path=prompt_schema_path,
                 llm_model_name=llm_model_name,
                 llm_model_parameters_path=llm_model_parameters_path,
             )
-
+            print("  LLM extractor ready.")
         except Exception as e:
+            print(f"  !! LLM extractor FAILED to load: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
             logger.warning(f"LLM disabled: {e}")
 
-    results, error_count = process_blocks_stream(
+    # --- Process ---
+    print("\nSTARTING BLOCK PROCESSING...")
+    results, error_count = process_blocks(
         blocks=blocks,
         regex_extractor=regex_extractor,
         llm_extractor=llm_extractor,
         min_text_length=min_text_length,
-        skip_llm=skip_llm
+        skip_llm=skip_llm,
     )
 
+    # --- Save ---
     output = {
         "source": {
             "file": os.path.abspath(paragraph_json),
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "total_paragraphs": sum(1 for r in results if any("paragraph_" in k for k in r.keys())),
+            "total_paragraphs": sum(1 for r in results if r["type"] == "paragraph"),
         },
-        "result": results  # Hierarchical: header_1, header_2, paragraph_1, paragraph_2, ...
+        "results": results,
     }
 
+    print(f"\nSAVING OUTPUT to {output_file_path}...")
     os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
-
     with open(output_file_path, "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
 
-    print("\nDONE")
-    print("Paragraphs:", output["source"]["total_paragraphs"])
-    print("Errors:", error_count)
-    print("Time (min):", (time.time() - start) / 60)
+    print(f"\nDONE")
+    print(f"  Paragraphs processed: {output['source']['total_paragraphs']}")
+    print(f"  Errors:               {error_count}")
+    print(f"  Time (min):           {(time.time() - start) / 60:.2f}")
 
 
 def main():
