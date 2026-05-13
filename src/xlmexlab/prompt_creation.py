@@ -7,6 +7,7 @@ Parameter extraction pipeline:
 import re
 from typing import Any
 from pydantic import BaseModel, PrivateAttr
+import json
 
 
 #https://huggingface.co/princeton-nlp/gemma-2-9b-it-SimPO
@@ -117,7 +118,8 @@ class PromptCreation(BaseModel):
 
             "objective": "Extract ONLY the parameters listed below from the provided paragraph.",
 
-            "definitions": definitions,
+            "definitions": {param: json.dumps(meta_dict, ensure_ascii=False)
+                for param, meta_dict in definitions.items()},
 
             "answer_schema": {
                 "Initialization": (
