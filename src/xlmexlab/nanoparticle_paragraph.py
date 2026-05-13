@@ -874,6 +874,16 @@ def _all_keyword_matches(text: str, keywords: List[str]) -> List[str]:
     text_lower = text.lower()
     return list({kw for kw in keywords if kw.lower() in text_lower})
 
+def _map_exact_keywords(text: str, mapping: Dict[str, List[str]]) -> Optional[str]:
+    """
+    Given a dict of {label: [keywords]}, return the first label whose
+    keywords are found in text. Returns None if no match.
+    """
+    for label, keywords in mapping.items():
+        if _match_abbreviation(text, keywords):
+            return label
+    return None
+
 def _map_keywords(text: str, mapping: Dict[str, List[str]]) -> Optional[str]:
     """
     Given a dict of {label: [keywords]}, return the first label whose
@@ -1035,12 +1045,14 @@ class NanoparticleExtractor(BaseModel):
         #print (PDI)
         return True if PDI else False
 
-    def _extract_shape(self, text: str) -> Optional[bool]:
-        if _first_keyword_match(text, ROD_KEYWORDS):
-            return True
-        if _first_keyword_match(text, SPHERE_KEYWORDS):
-            return True
-        return False
+    def _extract_shape(self, text: str) -> Optional[str]:
+        if _match_abbreviation(text, ROD_KEYWORDS):
+            return "Rod"
+        if _match_abbreviation(text, SPHERE_KEYWORDS):
+            return "Sphere"
+        if _match_abbreviation(text, DISK_KEYWORDS):
+            return "Disk"
+        return None
     
     # SURFACE ENGINEERING
 
@@ -1214,7 +1226,7 @@ class NanoparticleExtractor(BaseModel):
         return None
 
     def _extract_cancer_type(self, text: str) -> Optional[str]:
-        return _map_keywords(text, CANCER_TYPE_MAP)
+        return _map_exact_keywords(text, CANCER_TYPE_MAP)
 
     def _extract_breast_subtype(self, text: str) -> Optional[str]:
         return _map_keywords(text, BREAST_SUBTYPE_MAP)

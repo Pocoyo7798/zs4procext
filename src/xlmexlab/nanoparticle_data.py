@@ -34,7 +34,7 @@ class NanoparticleData(BaseModel):
     charge_group: Optional[str] = None
 
     # [keyword] sphere / rod
-    shape: Optional[bool] = None
+    shape: Optional[str] = None
 
     # [keyword] Unilamellar (SUV/LUV) / Multilamellar (MLV)
     lamellarity: Optional[str] = None
