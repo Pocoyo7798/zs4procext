@@ -98,26 +98,44 @@ class PromptCreation(BaseModel):
             definitions[param] = (
                 f"{desc}. (expected unit: {unit})"
             )
-
-        # Generic format unless overridden
-        answer_schema = {
-            "Initialization": (
-                "Return strict key-value pairs, one entry per line."
-            ),
-            "Format": (
-                "<parameter_name> | <value> | <unit> | <condition>"
-            )
-        }
-
-        # Add parameter-specific formats if they exist
+    # Build parameter-specific format text
         special_formats = {
             param: PARAM_META[param]["specific_format"]
             for param in targets
             if "specific_format" in PARAM_META.get(param, {})
         }
+        special_format_text = ""
 
         if special_formats:
-            answer_schema["Parameter_specific_formats"] = special_formats
+
+            formatted_rules = []
+
+            for param, fmt in special_formats.items():
+
+                formatted_rules.append(
+                    f"{param}: {fmt}"
+                )
+
+            special_format_text = (
+                " Specific formats: "
+                + "; ".join(formatted_rules)
+            )
+
+        # Answer schema
+        answer_schema = {
+            "Initialization": (
+                "Return strict key-value pairs, one entry per line, using the specified format. Do NOT add any explanations, headers, extra text, notes or comments."
+            ),
+
+            "Format": (
+                "General format: "
+                "<parameter_name> | <value> | <unit> | <condition>."
+                + special_format_text
+            )
+        }
+
+
+
 
         prompt_json = {
 
@@ -146,8 +164,8 @@ class PromptCreation(BaseModel):
                 "<unit> must be exactly as reported. "
                 "If multiple values exist, output one line per value. "
                 "If mentioned but not numeric/cannot be extracted, write "
-                "<parameter_name> | not_extractable | - | -. "
-                "Do NOT add any explanations, headers, extra text, or comments."
+                "<parameter_name> NOT EXTRACTABLE. "
+                "Do NOT add any explanations, headers, extra text, notes or comments."
                 "Answer format example given before."
             ),
 
