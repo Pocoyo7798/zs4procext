@@ -5,9 +5,11 @@ import logging
 from dataclasses import asdict, is_dataclass
 
 import click
+import torch
 
 from xlmexlab.extractor_nanoparticles import NanoparticlesExtractorParagraph
 from xlmexlab.nanoparticle_paragraph import NanoparticleExtractor
+from xlmexlab.prompt import TEMPLATE_REGISTRY
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -139,16 +141,16 @@ def nanoparticles2data(
     skip_llm,
     min_text_length,
 ):
+    torch.cuda.empty_cache()
     start = time.time()
+    os.environ["VLLM_ENABLE_V1_MULTIPROCESSING"] = "0"
 
-    print("\n" + "="*60)
     print("STARTING nanoparticles2data")
     print(f"  Input:            {paragraph_json}")
     print(f"  Output:           {output_file_path}")
     print(f"  skip_llm:         {skip_llm}")
     print(f"  min_text_length:  {min_text_length}")
     print(f"  llm_model_name:   {llm_model_name}")
-    print("="*60)
 
     print("\nLOADING FILE...")
     blocks = load_blocks(paragraph_json)
@@ -166,6 +168,11 @@ def nanoparticles2data(
     else:
         print("\nLOADING LLM EXTRACTOR...")
         try:
+            name = llm_model_name.split("/")[-1]
+            prompt_template_path = TEMPLATE_REGISTRY[name]
+
+            print(f'template used: {prompt_template_path}')           
+
             llm_extractor = NanoparticlesExtractorParagraph(
                 prompt_template_path=prompt_template_path,
                 prompt_schema_path=prompt_schema_path,
