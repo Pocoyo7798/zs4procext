@@ -149,14 +149,12 @@ class PromptCreation(BaseModel):
         schema_lines += [
             "Rules:",
             "- One line per value. If a parameter has values under different conditions",
-            "  (e.g. pH, temperature, time-point, cell line, formulation),",
             "  output one line per condition.",
             "- <condition>: the condition for that value, or 'none' if absent.",
             "- <value>: numeric, exactly as reported, including deviations and ranges",
-            "  (e.g. 155 +/- 0.1, -18.3, 0.12-0.14, >100, <=200).",
             "- <unit>: exactly as reported in the text.",
-            "- If a parameter is mentioned but its value is not numeric,",
-            "  write: <parameter_name> NOT EXTRACTABLE",
+            "- If a parameter is notmentioned OR its value is not numerical explicitly stated, write:",
+            "  <parameter_name> NOT EXTRACTABLE",
         ]
 
         answer_schema: dict[str, str] = {
