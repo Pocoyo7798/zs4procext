@@ -309,7 +309,7 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
     "Qwen2.5-7B-Instruct": str(
         importlib_resources.files("xlmexlab")
         / "resources/template"
-        / "qwen1.5_default_chat_template.json"
+        / "qwen1.5_default_chat_template_lnp.json"
     ),
     "Starling-LM-7B-alpha": str(
         importlib_resources.files("xlmexlab")
