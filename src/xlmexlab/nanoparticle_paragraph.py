@@ -1306,6 +1306,11 @@ class NanoparticleExtractor(BaseModel):
                 "abbr": SYSTEMIC_ABBR
             }
         }
+
+
+        matches = _find_matches_with_positions(text, rules)
+        matches.sort(key=lambda x: x[0])
+
         filtered = [
             (pos, label)
             for (pos, label) in matches
@@ -1314,10 +1319,6 @@ class NanoparticleExtractor(BaseModel):
                 and _is_excluded(text, IV_EXCLUDED)
             )
         ]
-
-        matches = _find_matches_with_positions(text, rules)
-        matches.sort(key=lambda x: x[0])
-
         return [label for _, label in filtered]
 
     def _extract_route_subtype(self, text: str) -> Optional[list[str]]:
