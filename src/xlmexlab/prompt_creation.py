@@ -31,8 +31,13 @@ from pydantic import BaseModel
 
 PARAM_META: dict[str, dict] = {
     "size_nm": {
-        "description": "Nanoparticle hydrodynamic diameter or size",
+        "description": "Nanoparticle diameter or size",
         "unit_hint": "nm",
+    },
+    "lipid_composition_ratio_units": {
+        "description": "Quantification type for the molar ratios of lipids",
+        "unit_hint": "dimensionless (e.g. mole fraction, weight ratio)",
+        "specific_format": "<parameter_name> |  <quantification_type> "
     },
     "zeta_potential_mv": {
         "description": "Zeta potential (surface charge)",
@@ -59,13 +64,14 @@ PARAM_META: dict[str, dict] = {
         "unit_hint": "h",
     },
     "dose_group": {
-        "description": "Administered dose",
-        "unit_hint": "mg/kg, mg/m2, ug or as reported",
+        "description": ("Extract only administered treatment doses, including drug name, dosage, and administration schedule if present."
+                         " Do not include dose limits, maximum tolerated doses, theoretical ranges, or protocol constraints."),
         "specific_format": "<parameter_name> | <value> | <unit> | <drug_name> | <schedule>",
     },
     "tumor_vol_reduction_pct": {
         "description": "Tumour volume reduction relative to control",
         "unit_hint": "%",
+        "specific_format": "<parameter_name> | <value> | <unit> | <drug_name>",
     },
     "delivery_efficiency": {
         "description": "Cellular or in-vivo delivery efficiency",

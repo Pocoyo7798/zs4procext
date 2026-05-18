@@ -82,7 +82,8 @@ CARGO_DB = OrderedDict({
     "immune_modulators": [
         "imiquimod", "R848", "CpG ODN",
         "poly I:C", "STING agonist", "cGAMP",
-        "DMXAA", "TRAIL", "TLR9 agonist"
+        "DMXAA", "TRAIL", "TLR9 agonist",
+        "TNF-α", "TNF alpha", "tumor necrosis factor alpha"
     ],
 
     "antibodies_peptides": [
@@ -314,6 +315,11 @@ cargo_map = OrderedDict({
     rx(r"tlr9"): "TLR9 agonist",
     rx(r"toll"+SEP+r"like"+SEP+r"receptor"+SEP+r"9"): "TLR9 agonist",
 
+    rx(r"tnf"+SEP+r"[αa]"): "TNF-α",
+    rx(r"tumor"+SEP+r"necrosis"+SEP+r"factor"+SEP+r"[αa]"): "TNF-α",
+    rx(r"tnfalpha"): "TNF-α",
+    rx(r"tnf"+SEP+r"alpha"): "TNF-α",
+
     
     # Antibodies / Peptides
     rx(r"trastuzumab"): "trastuzumab",
@@ -370,34 +376,74 @@ COMPILED_MAP = [
     for pattern, canonical in cargo_map.items()
 ]
 
-# ─────────────────────────────────────────────────────────────────────────────
 # VOCABULARY REGISTRIES
-# These are your keyword lists — extend them freely as you read more papers.
+# These are your keyword lists and regex patterns for direct extraction (no LLM needed)
+
 # type
 ORGANIC_NP_KEYWORDS = [
     "lipid-polymer","liposome", "lipid nanoparticle", "LNP", "solid lipid nanoparticle", "SLN", "liposomal",
-    "polymeric nanoparticle", "PLGA", "PLA", "micelle", "dendrimer", "niosome",
+    "polymeric nanoparticle", "micelle", "dendrimer", "niosome",
     "exosome", "polymersome", "nanoemulsion", "lipoplex", "polyplex",
-    "nanostructured lipid carrier", "NLC", "cationic liposome", "ionizable LNP", "small unilamellar vesicles", "SUV", "multilamellar", "MLV",
+    "nanostructured lipid carrier", "cationic liposome", "ionizable LNP", "small unilamellar vesicles", "multilamellar",
 ]
+
+ORGANIC_NP_ABBR = ["NP", "LNP", "PLGA", "PLA", "SLN", "NLC", "SUV", "MLV", "MLVs", "LUV", "NLC"]
+
 INORGANIC_NP_KEYWORDS = [
     "gold nanoparticle", "iron oxide", "silica", "quantum dot", "silver nanoparticle",
-    "zinc oxide", "titanium dioxide", "carbon nanotube", "graphene", "SPION",
-    "mesoporous silica", "MSN", "calcium phosphate", "copper sulfide",
+    "zinc oxide", "titanium dioxide", "carbon nanotube", "graphene",
+    "mesoporous silica", "calcium phosphate", "copper sulfide",
     "manganese dioxide", "prussian blue",
 ]
+
+INORGANIC_NP_ABBR = ["AuNP", "SPION", "MSN", "GdNP", "Fe3O4", "TiO2", "ZnO", "AgNP", "SiO2", "CNT", "QD", "SPION", "MSN"]
  
-# ── subtype ───────────────────────────────────────────────────────────────────
+# subtype
 SUBTYPE_MAP = {
-    "liposome":   ["liposome", "liposomal", "liposomes", "unilamellar", "SUV", "multilamellar", "MLV",],
-    "LNP":        ["lipid nanoparticle", "LNP", "ionizable lipid nanoparticle"],
-    "SLN":        ["solid lipid nanoparticle", "SLN"],
-    "NLC":        ["nanostructured lipid carrier", "NLC"],
-    "polymeric":  ["PLGA", "PLA", "polymeric nanoparticle", "polymersome", "polyplex"],
-    "micelle":    ["micelle", "polymeric micelle"],
-    "dendrimer":  ["dendrimer", "PAMAM"],
-    "niosome":    ["niosome"],
-    "lipoplex":   ["lipoplex", "cationic lipid-DNA complex"],
+    "liposome": {
+        "keywords": ["liposome", "liposomal", "liposomes","unilamellar", "multilamellar"],
+        "abbr": ["SUV", "MLV", "LUV"]
+    },
+
+    "LNP": {
+        "keywords": ["lipid nanoparticle", "ionizable lipid nanoparticle"],
+        "abbr": ["LNP"]
+    },
+
+    "SLN": {
+        "keywords": ["solid lipid nanoparticle"],
+        "abbr": ["SLN"]
+    },
+
+    "NLC": {
+        "keywords": ["nanostructured lipid carrier"],
+        "abbr": ["NLC"]
+    },
+
+    "polymeric": {
+        "keywords": [ "polymeric nanoparticle", "polymersome", "polyplex",],
+        "abbr": ["PLGA","PLA"]
+    },
+
+    "micelle": {
+        "keywords": ["micelle", "polymeric micelle"],
+        "abbr": []
+    },
+
+    "dendrimer": {
+        "keywords": ["dendrimer",],
+        "abbr": ["PAMAM"]
+    },
+
+    "niosome": {
+        "keywords": ["niosome"],
+        "abbr": []
+    },
+
+    "lipoplex": {
+        "keywords": ["lipoplex", "cationic lipid-DNA complex"],
+        "abbr": []
+    }
 }
  
 # ── charge ────────────────────────────────────────────────────────────────────
@@ -522,29 +568,69 @@ ACTIVE_TARGETING_KEYWORDS = [
  
 # drug loading ──────────────────────────────────────────────────────────────
 DRUG_LOADING_MAP = {
-    "Passive entrapment":             ["passive", "passive entrapment", "passive loading",
-                                       "thin film hydration", "solvent injection"],
-    "Active loading (pH gradient)":   ["active loading", "pH gradient", "remote loading",
-                                       "ammonium sulfate", "citrate buffer"],
-    "Bilayer intercalation":          ["bilayer intercalation", "membrane intercalation",
-                                       "lipophilic", "hydrophobic drug"],
-    "Surface conjugation":            ["surface conjugation", "surface conj",
-                                       "surface-conjugated", "surface-adsorbed"],
-    "Nucleic acid complexation":      ["complexation", "electrostatic complexation","electrostatic encapsulation",
-                                       "N/P ratio", "siRNA loading", "mRNA encapsulation",
-                                       "plasmid condensation", "siRNA targeting", "mRNA", "miR-182-3p",],
-    "Antibody-drug conjugate (ADC)":  ["antibody-drug conjugate", "ADC", "drug-linker",
-                                       "site-specific conjugation", "DAR"],
-    "Proliposome method": ["proliposome", "pro-liposome"],
-    "Solvent injection / Nanoprecipitation": ["ethanol injection", "solvent injection","nanoprecipitation", "solvent displacement","microfluidic mixing", "rapid mixing"],
-    "Reverse-phase evaporation": ["reverse-phase evaporation","REV method"],
-    "Hydration-assisted encapsulation": ["freeze-thaw", "freeze thaw","rehydration", "hydration"],
-    "Size reduction / Homogenization": ["high-pressure homogenization", "HPH","extrusion", "sonication", "microfluidizer"],
-    "Co-loading": ["co-loaded", "dual-loaded","co-encapsulation", "simultaneous loading"],
+    "Passive entrapment": {
+        "keywords": ["passive", "passive entrapment", "passive loading", "thin film hydration", "solvent injection"],
+        "abbr": []
+    },
 
+    "Active loading (pH gradient)": {
+        "keywords": ["active loading", "pH gradient", "remote loading", "ammonium sulfate", "citrate buffer"],
+        "abbr": []
+    },
+
+    "Bilayer intercalation": {
+        "keywords": ["bilayer intercalation", "membrane intercalation", "lipophilic", "hydrophobic drug"],
+        "abbr": []
+    },
+
+    "Surface conjugation": {
+        "keywords": ["surface conjugation", "surface conj", "surface-conjugated", "surface-adsorbed"],
+        "abbr": []
+    },
+
+    "Nucleic acid complexation": {
+        "keywords": ["complexation", "electrostatic complexation", "electrostatic encapsulation", "siRNA loading", "mRNA encapsulation", "plasmid condensation", "siRNA targeting", "mRNA"
+        ],
+        "abbr": ["N/P"]
+    },
+
+    "Antibody-drug conjugate (ADC)": {
+        "keywords": [ "antibody-drug conjugate", "drug-linker", "site-specific conjugation"],
+        "abbr": ["ADC", "DAR"]
+    },
+
+    "Proliposome method": {
+        "keywords": [ "proliposome", "pro-liposome"],
+        "abbr": []
+    },
+
+    "Solvent injection / Nanoprecipitation": {
+        "keywords": ["ethanol injection", "solvent injection", "nanoprecipitation", "solvent displacement", "microfluidic mixing", "rapid mixing"],
+        "abbr": []
+    },
+
+    "Reverse-phase evaporation": {
+        "keywords": ["reverse-phase evaporation", "REV method"],
+        "abbr": ["REV"]
+    },
+
+    "Hydration-assisted encapsulation": {
+        "keywords": ["freeze-thaw", "freeze thaw", "rehydration", "hydration"],
+        "abbr": []
+    },
+
+    "Size reduction / Homogenization": {
+        "keywords": ["high-pressure homogenization", "extrusion", "sonication", "microfluidizer"],
+        "abbr": ["HPH"]
+    },
+
+    "Co-loading": {
+        "keywords": ["co-loaded", "dual-loaded", "co-encapsulation", "simultaneous loading"],
+        "abbr": []
+    }
 }
  
-# dosing ────────────────────────────────────────────────────────────────────
+# dosing 
 SINGLE_DOSE_KEYWORDS   = ["single dose", "single injection", "one injection",
                            "single administration", "single i.v."]
 
@@ -567,7 +653,7 @@ MULTIPLE_DOSE_PATTERNS = [
     r"days",
 ]
  
-# route ─────────────────────────────────────────────────────────────────────
+# route 
 SYSTEMIC_KEYWORDS = ["intravenous", "intraperitoneal", "systemic", "tail vein","intraperitoneally"]
 SYSTEMIC_ABBR = ["i.v.", "IV", "i.p.", "IP"]
 
@@ -575,8 +661,11 @@ LOCAL_KEYWORDS = ["intratumoral", "local", "direct injection",
                           "subcutaneous", "intraductal"]
 LOCAL_ABBR = ["i.t.", "IT"]
 
-IV_WORDS = ["intravenous", "intravenously", "tail vein injection"]
+IV_WORDS = ["intravenous", "intravenously", "tail vein",]
 IV_ABBR = ["IV", "i.v."]
+
+IV_EXCLUDED = ["iv breast cancer", "stage iv breast cancer"]
+
 
 IT_WORDS = ["intratumoral", "intra-tumoral"]
 IT_ABBR = ["IT", "i.t."]
@@ -624,7 +713,7 @@ THERAPY_MAP = {
                                   "androgen receptor inhibitor", "bicalutamide"],
     "CAR-T / cell therapy":      ["CAR-T", "CAR T cell", "adoptive cell therapy",
                                   "NK cell therapy", "TIL therapy"],
-    "Combination therapy":       ["combination", "synergistic", "co-delivery",
+    "Combination therapy":       ["combination therapy", "combined therapy", "synergistic", "co-delivery",
                                   "dual drug", "chemo-immunotherapy",
                                   "chemo-photothermal"],
 }
@@ -894,6 +983,10 @@ def _map_keywords(text: str, mapping: Dict[str, List[str]]) -> Optional[str]:
             return label
     return None
 
+def _is_excluded(text:str, excluded_phrases: List[str]) -> Optional[str]:
+    text_lower = text.lower()
+    return any(p in text_lower for p in excluded_phrases)
+
 
 def _all_map_matches(text: str, mapping: Dict[str, List[str]]) -> List[str]:
     """Return all labels whose keywords are found in text."""
@@ -903,6 +996,31 @@ def _all_map_matches(text: str, mapping: Dict[str, List[str]]) -> List[str]:
             found.append(label)
     return found
 
+def _find_matches_with_positions(text:str, rules_dict: Dict[str, Dict[str, List[str]]]) -> List[Tuple[int, str]]:
+    """
+    rules_dict = {label: {"keywords": [...], "abbr": [...]}}
+    returns: list of (position, label)
+    """
+
+    results = []
+    text_lower = text.lower()
+
+    for label, rules in rules_dict.items():
+
+        # keywords
+        for kw in rules["keywords"]:
+            pos = text_lower.find(kw.lower())
+            if pos != -1:
+                results.append((pos, label))
+
+        # abbreviations (regex for word boundary)
+        for ab in rules["abbr"]:
+            pattern = r"(?<![A-Za-z0-9])" + re.escape(ab) + r"(?![A-Za-z0-9])"
+            match = re.search(pattern, text, flags=re.IGNORECASE)
+            if match:
+                results.append((match.start(), label))
+
+    return results
 
 def _extract_float_near_keyword(text: str, keyword_pattern: str) -> Optional[float]:
     """
@@ -1008,7 +1126,10 @@ class NanoparticleExtractor(BaseModel):
         return None
 
     def _extract_subtype(self, text: str) -> Optional[str]:
-        return _map_keywords(text, SUBTYPE_MAP)
+        for subtype, rules in SUBTYPE_MAP.items():
+            if _abr_first_keyword_match(text, rules["keywords"], rules["abbr"]):
+                return subtype
+            return None
 
     def _extract_lamellarity(self, text: str) -> Optional[str]:
         if _first_keyword_match(text, MULTILAMELLAR_KEYWORDS):
@@ -1105,27 +1226,43 @@ class NanoparticleExtractor(BaseModel):
                 normalized.remove(generic)
 
         return normalized if normalized else None
+    
 
-    def _extract_lipid_ratio(self, text: str)-> Dict:
-        match = re.search(r'\b\d+(?:\.\d+)?(?:\s*:\s*\d+(?:\.\d+)?)+\b', text)
-        if match:
-            values = [float(n) for n in match.group().split(':')]
-            #print (values)
-            total = sum(values)
+    def _extract_lipid_ratio(self, text: str) -> Optional[Dict]:
+        match = re.search(
+            r'\b\d+(?:\.\d+)?(?:\s*[:/]\s*\d+(?:\.\d+)?)+\b',
+            text)
 
-            if total == 0:
-                return None
-            
-            percentages = [(v / total) * 100 for v in values]
-            return {
-                "ratios": percentages
-            }
-        return None
+        if not match:
+            return None
+
+        ratio_text = match.group()
+
+        values = [float(n) for n in re.split(r'\s*[:/]\s*', ratio_text)]
+
+        total = sum(values)
+
+        if total == 0:
+            return None
+
+        percentages = [(v / total) * 100 for v in values]
+
+        return {
+            "ratios": percentages
+        }
+    
+    def _extract_lipid_ratio_units(self, text: str) -> Optional[bool]:
+        if self._extract_lipid_ratio(text) == None or len(self._extract_lipid_ratio(text)["ratios"]) != len(self._extract_lipid_composition(text)):
+            return False
+        return True 
 
     # DOSING & THERAPY
 
     def _extract_drug_loading_method(self, text: str) -> Optional[str]:
-        return _map_keywords(text, DRUG_LOADING_MAP)
+        for subtype, rules in DRUG_LOADING_MAP.items():
+            if _abr_first_keyword_match(text, rules["keywords"], rules["abbr"]):
+                return subtype
+            return None
     
     def _extract_therapies(self, text: str):
         """Returns (therapy_a, therapy_b, therapy_c, combined_grouped)."""
@@ -1158,21 +1295,60 @@ class NanoparticleExtractor(BaseModel):
                 return "Multiple-dose"
         return None
 
-    def _extract_route(self, text: str) -> Optional[str]:
-        if _abr_first_keyword_match(text, LOCAL_KEYWORDS, LOCAL_ABBR):
-            return "Local"
-        if _abr_first_keyword_match(text, SYSTEMIC_KEYWORDS, SYSTEMIC_ABBR):
-            return "Systemic"
-        return None
+    def _extract_route(self, text: str) -> Optional[list[str]]:
+        rules = {
+            "Local": {
+                "keywords": LOCAL_KEYWORDS,
+                "abbr": LOCAL_ABBR
+            },
+            "Systemic": {
+                "keywords": SYSTEMIC_KEYWORDS,
+                "abbr": SYSTEMIC_ABBR
+            }
+        }
+        filtered = [
+            (pos, label)
+            for (pos, label) in matches
+            if not (
+                label == "Systemic"
+                and _is_excluded(text, IV_EXCLUDED)
+            )
+        ]
 
-    def _extract_route_subtype(self, text: str) -> Optional[str]:
-        if _abr_first_keyword_match(text, IT_WORDS, IT_ABBR):
-            return "Intratumoral"
-        if _abr_first_keyword_match(text, IV_WORDS, IV_ABBR):
-            return "IV"
-        if _abr_first_keyword_match(text, IP_WORDS, IP_ABBR):
-            return "IP"
-        return None
+        matches = _find_matches_with_positions(text, rules)
+        matches.sort(key=lambda x: x[0])
+
+        return [label for _, label in filtered]
+
+    def _extract_route_subtype(self, text: str) -> Optional[list[str]]:
+        rules = {
+            "Intravenous": {
+                "keywords": IV_WORDS,
+                "abbr": IV_ABBR
+            },
+            "Intratumoral": {
+                "keywords": IT_WORDS,
+                "abbr": IT_ABBR
+            },
+            "Intraperitoneal": {
+                "keywords": IP_WORDS,
+                "abbr": IP_ABBR
+            }
+        }
+
+        matches = _find_matches_with_positions(text, rules)
+        matches.sort(key=lambda x: x[0])
+
+        filtered = [
+            (pos, label)
+            for (pos, label) in matches
+            if not (
+                label == "Intravenous"
+                and _is_excluded(text, IV_EXCLUDED)
+            )
+        ]
+
+        return [label for _, label in filtered]
 
     def _extract_dose(self, text: str) -> Optional[bool]:
         """
@@ -1361,6 +1537,7 @@ class NanoparticleExtractor(BaseModel):
             coating_number          = self._extract_coating_number(text),
             lipid_composition       = self._extract_lipid_composition(text),
             lipid_composition_ratio = self._extract_lipid_ratio(text),
+            lipid_composition_ratio_units = self._extract_lipid_ratio_units(text),
             stimulus_responsive     = self._extract_stimulus_responsive(text),
             bioconjugation_nature   = self._extract_bioconjugation(text),
             peg_coat                = self._extract_peg_coat(text),

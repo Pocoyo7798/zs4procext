@@ -56,6 +56,8 @@ class NanoparticleData(BaseModel):
     # [ratio] MolarRatioFinder result e.g. {"DPPC": "55", "Chol": "40", "DSPE-PEG": "5"}
     lipid_composition_ratio: Optional[Dict[str, Any]] = None
 
+    lipid_composition_ratio_units: Optional[bool] = None
+
     # [keyword] None / pH-sensitive / Thermosensitive / Redox-sensitive / etc.
     stimulus_responsive: Optional[str] = None
 
@@ -88,10 +90,10 @@ class NanoparticleData(BaseModel):
     no_days_dosing_grouped: Optional[str] = None
 
     # [keyword] Systemic / Local
-    route: Optional[str] = None
+    route: Optional[list[str]] = None
 
     # [keyword] IV / Intratumoral
-    route_subtype: Optional[str] = None
+    route_subtype: Optional[list[str]] = None
 
     # ── Therapeutic strategy ─────────────────────────────────────────────────
 
