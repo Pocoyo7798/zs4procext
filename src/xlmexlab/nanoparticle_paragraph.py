@@ -1240,13 +1240,15 @@ class NanoparticleExtractor(BaseModel):
 
         values = [float(n) for n in re.split(r'\s*[:/]\s*', ratio_text)]
 
-        total = sum(values)
+        if len(values) < self._extract_lipid_composition(text):
+            return None
+        if len(values) > self._extract_lipid_composition(text):
+            print ("[WARNING]: more ratio values than lipid components. Check the LIPID_KEYWORDS and NORMALIZATION_MAP for consistency.")
 
+        total = sum(values)
         if total == 0:
             return None
-
         percentages = [(v / total) * 100 for v in values]
-
         return {
             "ratios": percentages
         }
@@ -1257,7 +1259,6 @@ class NanoparticleExtractor(BaseModel):
         return True 
 
     # DOSING & THERAPY
-
     def _extract_drug_loading_method(self, text: str) -> Optional[str]:
         for subtype, rules in DRUG_LOADING_MAP.items():
             if _abr_first_keyword_match(text, rules["keywords"], rules["abbr"]):

@@ -559,6 +559,84 @@ ORGAN_MAP = {
     "metastasis": "tumor",
 }
 
+DEFAULT_FIELDS = ["parameter_name", "value", "unit", "condition"]
+
+PARAM_META = {
+
+    "size_nm": {
+        "fields": [
+            "parameter_name", "value", "unit", "condition"
+        ],
+    },
+
+    "zeta_potential_mv": {
+        "fields": [
+            "parameter_name", "value", "unit", "condition"
+        ],
+    },
+
+    "pdi": {
+        "fields": [
+            "parameter_name", "value", "unit", "condition"
+        ],
+    },
+
+    "encapsulation_efficiency_pct": {
+        "fields": [
+            "parameter_name", "value", "unit", "condition"
+        ],
+    },
+
+    "ic50": {
+        "fields": [
+            "parameter_name", "value", "unit", "condition"
+        ],
+    },
+
+    "distribution_half_life_h": {
+        "fields": [
+            "parameter_name", "value", "unit", "condition"
+        ],
+    },
+
+    "circulation_half_life_h": {
+        "fields": [
+            "parameter_name", "value", "unit", "condition"
+        ],
+    },
+
+    "dose_group": {
+        "fields": [
+            "parameter_name", "value", "unit", "drug_name", "schedule",
+        ],
+    },
+
+    "tumor_vol_reduction_pct": {
+        "fields": [
+            "parameter_name", "value", "unit", "drug_name",
+        ],
+    },
+
+    "delivery_efficiency": {
+        "fields": [
+            "parameter_name", "value", "unit", "condition"
+        ],
+    },
+
+    "biodistribution": {
+        "fields": [
+            "parameter_name", "value", "unit", "condition"
+        ],
+    },
+
+    "lipid_composition_ratio_units": {
+        "fields": [
+            "parameter_name", "dimension"
+        ]
+    },
+}
+
+
 class ParserNanoparticle(BaseModel):
     _parameters: List[str] = PrivateAttr(default_factory=list)
 
@@ -577,63 +655,68 @@ class ParserNanoparticle(BaseModel):
             return param  # já é perfeito
         else:
             return best_match  # substitui pelo mais próximo
-    def parse_extraction_response(self, response: str) -> dict[str, list[dict]]:
-        """
-        Parse the LLM key-value response into a structured dict.
-    
-        Returns:
-            {
-            "size_nm": [
-                {"value": 155.0, "unit": "nm", "condition": "pH 7.4"},
-                ...
-            ],
-            ...
-            }
-    
-        Values that could not be extracted are stored as:
-            {"value": None, "unit": None, "condition": None, "raw": "<original line>"}
-        """
-        results: dict[str, list[dict]] = {}
-    
-        for raw_line in response.strip().splitlines():
-            line = raw_line.strip()
-            if not line or line.startswith("#"):
-                continue
-    
-            parts = [p.strip() for p in line.split("|")]
-    
-            # Expect exactly 4 parts; be lenient with trailing missing fields
-            if len(parts) < 2:
-                continue  # unrecognisable line
-            
-    
-            param = parts[0]
-            param = self.correct_param(param, self._parameters)
-            value_str = parts[1] if len(parts) > 1 else ""
-            unit = parts[2] if len(parts) > 2 else ""
-            condition = parts[3] if len(parts) > 3 else "none"
+        
+    def normalize_value(self, field: str, value):
 
-            # Normalise sentinel values
-            if unit in ("-", ""):
-                unit = None
-            if condition in ("-", "", "none"):
-                condition = None
+        if value in ("", "-", "none", "not_extractable", None):
+            return None
+
+        value = value.strip()
+
+        # convert numeric values automatically
+        if field == "value":
+            try:
+                return float(value)
+            except Exception:
+                return value
+
+        return value
     
-            # Try to cast value to float
-            if value_str == "not_extractable" or value_str in ("-", ""):
-                entry = {"value": None, "unit": unit, "condition": condition, "raw": line}
-            else:
-                numeric = value_str
-                entry = {
-                    "value": numeric if numeric is not None else value_str,
-                    "unit": unit,
-                    "condition": condition,
-                }
-                if numeric is None:
-                    entry["raw"] = line  # keep original for debugging
-    
+    def parse_response(self, response: str) -> dict[str, list[dict]]:
+
+        results = {}
+
+        for raw_line in response.strip().splitlines():
+
+            line = raw_line.strip()
+
+            if not line:
+                continue
+
+            if line.startswith("#"):
+                continue
+
+            parts = [p.strip() for p in line.split("|")]
+
+            if len(parts) < 1:
+                continue
+
+            raw_param = parts[0]
+
+            param = self.correct_param(
+                raw_param,
+                self._parameters
+            )
+
+            meta = PARAM_META.get(param, {})
+
+            fields = meta.get("fields", DEFAULT_FIELDS)
+
+            # remove parameter_name
+            data_fields = fields[1:]
+
+            entry = {}
+
+            for idx, field in enumerate(data_fields, start=1):
+
+                value = parts[idx] if idx < len(parts) else None
+
+                value = self.normalize_value(field, value)
+
+                entry[field] = value
+
             results.setdefault(param, []).append(entry)
-    
+
         return results
 
     def detect_organ(self, text: str, organ_map: dict) -> str:
@@ -709,6 +792,23 @@ class ParserNanoparticle(BaseModel):
                 "cargo": cargo,
             })
         return processed
+    
+    def postprocess_ratio(self, lipids_list: list[str], lipids_ratio_list: list[str], dimension: str) -> dict:
+        if lipids_list is not None and lipids_ratio_list is not None:
+            if len(lipids_list) != len(lipids_ratio_list):
+                lipids_list = None
+                lipids_ratio_list = None
+            else: 
+                    processed = []
+                    for lipid, ratio in zip(lipids_list, lipids_ratio_list):
+                        processed.append({
+                            "lipid": lipid,
+                            "ratio": ratio,
+                            "distribution": dimension,
+                        })
+        return processed
+    
+
 
     def postprocess_dose_group(self, entries: list[dict]) -> list[dict]:
         processed = []
@@ -758,46 +858,42 @@ class ParserNanoparticle(BaseModel):
 
         return None
 
-    def replace(self, T_and_F_list: list[dict], simulated_llm_response: str) -> list[dict]:
-        parsed = self.parse_extraction_response(simulated_llm_response)
+    def replace(self, T_and_F_list: dict, simulated_llm_response: str) -> dict:
 
-        if "biodistribution" in parsed:
-            parsed["biodistribution"] = self.postprocess_biodistribution(
-                parsed["biodistribution"]
+        parsed = self.parse_response(simulated_llm_response)
+
+        postprocessors = {
+            "biodistribution":
+                self.postprocess_biodistribution,
+
+            "ic50":
+                self.postprocess_IC50,
+
+            "dose_group":
+                self.postprocess_dose_group,
+        }
+
+        for key, fn in postprocessors.items():
+
+            if key in parsed:
+                parsed[key] = fn(parsed[key])
+
+        for key, value in parsed.items():
+
+            if key in T_and_F_list:
+                T_and_F_list[key] = value
+
+        if (
+            "zeta_potential_mv" in T_and_F_list
+            and not T_and_F_list.get("charge_group")
+        ):
+
+            charge = self.compute_charge_group(
+                T_and_F_list["zeta_potential_mv"]
             )
-        if "ic50" in parsed:
-            parsed["ic50"] = self.postprocess_IC50(
-                parsed["ic50"]
-            )
-        if "dose_group" in parsed:
-            parsed["dose_group"] = self.postprocess_dose_group(
-                parsed["dose_group"]
-            )
-        if "size_nm" in T_and_F_list and "size_nm" in parsed:
-            T_and_F_list["size_nm"] = parsed["size_nm"]
-        if "zeta_potential_mv" in T_and_F_list and "zeta_potential_mv" in parsed:
-            T_and_F_list["zeta_potential_mv"] = parsed["zeta_potential_mv"]   
-        if ("zeta_potential_mv" in T_and_F_list) and ("charge_group" in T_and_F_list is None):
-            charge = self.compute_charge_group(T_and_F_list["zeta_potential_mv"])
+
             T_and_F_list["charge_group"] = charge
-        if "pdi" in T_and_F_list and "pdi" in parsed:
-            T_and_F_list["pdi"] = parsed["pdi"]
-        if "encapsulation_efficiency_pct" in T_and_F_list and "encapsulation_efficiency_pct" in parsed:
-            T_and_F_list["encapsulation_efficiency_pct"] = parsed["encapsulation_efficiency_pct"]
-        if "ic50" in T_and_F_list and "ic50" in parsed:
-            T_and_F_list["ic50"] = parsed["ic50"]
-        if "distribution_half_life_h" in T_and_F_list and "distribution_half_life_h" in parsed:
-            T_and_F_list["distribution_half_life_h"] = parsed["distribution_half_life_h"]             
-        if "circulation_half_life_h" in T_and_F_list and "circulation_half_life_h" in parsed:
-            T_and_F_list["circulation_half_life_h"] = parsed["circulation_half_life_h"]
-        if "dose_group" in T_and_F_list and "dose_group" in parsed:
-            T_and_F_list["dose_group"] = parsed["dose_group"]
-        if "tumor_vol_reduction_pct" in T_and_F_list and "tumor_vol_reduction_pct" in parsed:
-            T_and_F_list["tumor_vol_reduction_pct"] = parsed["tumor_vol_reduction_pct"]
-        if "delivery_efficiency" in T_and_F_list and "delivery_efficiency" in parsed:
-            T_and_F_list["delivery_efficiency"] = parsed["delivery_efficiency"]
-        if "biodistribution" in T_and_F_list and "biodistribution" in parsed:
-            T_and_F_list["biodistribution"] = parsed["biodistribution"]
+
         return T_and_F_list
 
 
