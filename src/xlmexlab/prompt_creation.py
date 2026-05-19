@@ -140,6 +140,7 @@ class PromptCreation(BaseModel):
 
         # 3. answer_schema — all format rules in one place
         #    3a.  parameter-specific format overrides (if any)
+        schema_lines: list[str] = []
         override_lines: list[str] = [
             f"  - {param}: {PARAM_META[param]['specific_format']}"
             for param in targets
