@@ -43,8 +43,8 @@ CARGO_DB = OrderedDict({
     ],
 
     "chemotherapy": [
-        "paclitaxel", "docetaxel", "DOX",
-        "epirubicin", "gemcitabine", "5-FU",
+        "paclitaxel", "docetaxel", "doxorubicin",
+        "epirubicin", "gemcitabine", "fulorouracil",
         "eribulin", "mertansine"
     ],
 
@@ -61,7 +61,7 @@ CARGO_DB = OrderedDict({
     "immune_modulators": [
         "imiquimod", "R848", "CpG ODN",
         "poly I:C", "STING agonist", "cGAMP",
-        "DMXAA", "TRAIL", "TLR9 agonist"
+        "vadimezan", "dulanermin", "TLR9 agonist"
     ],
 
     "antibodies_peptides": [
@@ -77,7 +77,7 @@ CARGO_DB = OrderedDict({
     "natural_products": [
         "curcumin", "resveratrol",
         "ginsenoside", "quercetin",
-        "EGCG", "BER"
+        "EGCG", "berberine"
     ],
 
     "hematopoietic_growth_factors": [
@@ -146,8 +146,6 @@ cargo_map = OrderedDict({
 
     
     # saRNA / circRNA
-    
-
     rx(r"muc1"+SEP+r"sa"+RNA): "MUC1 saRNA",
     rx(r"her2"+SEP+r"sa"+RNA): "HER2 saRNA",
     rx(r"ny"+SEP+r"eso"+SEP+r"1"+SEP+r"sa"+RNA): "NY-ESO-1 saRNA",
@@ -156,8 +154,6 @@ cargo_map = OrderedDict({
 
     
     # siRNA / shRNA
-    
-
     rx(r"anti"+SEP+r"egfr"+SEP+r"si"+RNA): "anti-EGFR siRNA",
     rx(r"egfr"+SEP+r"si"+RNA): "EGFR siRNA",
     rx(r"erbb1"+SEP+r"si"+RNA): "EGFR siRNA",
@@ -188,8 +184,6 @@ cargo_map = OrderedDict({
 
     
     # miRNA
-    
-
     rx(r"mir"+SEP+r"34a"): "miR-34a",
     rx(r"micro"+SEP+r"rna"+SEP+r"34a"): "miR-34a",
 
@@ -221,24 +215,25 @@ cargo_map = OrderedDict({
 
     
     # Chemotherapy
-    
-
     rx(r"paclitaxel"): "paclitaxel",
     rx(r"taxol"): "paclitaxel",
     rx(r"ptx"): "paclitaxel",
+    rx(r"nab-paclitaxel"): "paclitaxel",
+    rx(r"abraxane"): "paclitaxel",   
 
     rx(r"docetaxel"): "docetaxel",
     rx(r"taxotere"): "docetaxel",
 
-    rx(r"dox"): "DOX",
-    rx(r"doxorubicin"): "DOX",
-    rx(r"adriamycin"): "DOX",
-    rx(r"hydroxydaunorubicin"): "DOX",
+    rx(r"dox"): "doxorubicin",
+    rx(r"doxorubicin"): "doxorubicin",
+    rx(r"adriamycin"): "doxorubicin",
+    rx(r"hydroxydaunorubicin"): "doxorubicin",
+    rx(r"doxil"): "doxorubicin",
 
     rx(r"epirubicin"): "epirubicin",
     rx(r"gemcitabine"): "gemcitabine",
-    rx(r"5"+SEP+r"fu"): "5-FU",
-    rx(r"fluorouracil"): "5-FU",
+    rx(r"5"+SEP+r"fu"): "fluorouracil",
+    rx(r"fluorouracil"): "fluorouracil",
 
     rx(r"eribulin"): "eribulin",
     rx(r"halaven"): "eribulin",
@@ -271,15 +266,12 @@ cargo_map = OrderedDict({
     # Bisphosphonates
     
 
-    rx(r"man"+SEP+r"lp@zol"): "Man-LP@ZOL",
-    rx(r"mannosylated"+SEP+r"liposome"+SEP+r"zol"): "Man-LP@ZOL",
-
-    rx(r"man"+SEP+r"np@zol"): "Man-NP@ZOL",
-
+    rx(r"man"+SEP+r"lp@zol"): "zoledronic acid",
+    rx(r"mannosylated"+SEP+r"liposome"+SEP+r"zol"): "zoledronic acid",
     rx(r"zoledronic"+SEP+r"acid"): "zoledronic acid",
     rx(r"zoledronate"): "zoledronic acid",
     rx(r"zometa"): "zoledronic acid",
-    rx(r"zol"): "ZOL",
+    rx(r"zol"): "zoledronic acid",
 
     rx(r"alendronate"): "alendronate",
     rx(r"fosamax"): "alendronate",
@@ -294,11 +286,11 @@ cargo_map = OrderedDict({
     rx(r"r848"): "R848",
     rx(r"resiquimod"): "R848",
 
-    rx(r"cpg"+SEP+r"odn"): "CpG ODN",
-    rx(r"cpg"+SEP+r"oligodeoxynucleotide"): "CpG ODN",
+    rx(r"cpg"+SEP+r"odn"): "CpG Oligodeoxynucleotide",
+    rx(r"cpg"+SEP+r"oligodeoxynucleotide"): "CpG Oligodeoxynucleotide",
 
-    rx(r"poly"+SEP+r"i:c"): "poly I:C",
-    rx(r"polyinosinic"+SEP+r"polycytidylic"+SEP+r"acid"): "poly I:C",
+    rx(r"poly"+SEP+r"i:c"): "polyinosinic:polycytidylic acid",
+    rx(r"polyinosinic"+SEP+r"polycytidylic"+SEP+r"acid"): "polyinosinic:polycytidylic acid",
 
     rx(r"sting"+SEP+r"agonist"): "STING agonist",
     rx(r"stimulator"+SEP+r"of"+SEP+r"interferon"+SEP+r"genes"): "STING agonist",
@@ -306,24 +298,33 @@ cargo_map = OrderedDict({
     rx(r"cgamp"): "cGAMP",
     rx(r"2'?3'?"+SEP+r"cgamp"): "cGAMP",
 
-    rx(r"dmxaa"): "DMXAA",
-    rx(r"vadimezan"): "DMXAA",
+    rx(r"dmxaa"): "vadimezan",
+    rx(r"vadimezan"): "vadimezan",
 
-    rx(r"trail"): "TRAIL",
-    rx(r"tnf"+SEP+r"related"+SEP+r"apoptosis"+SEP+r"inducing"+SEP+r"ligand"): "TRAIL",
+    rx(r"trail"): "dulanermin",
+    rx(r"tnf"+SEP+r"related"+SEP+r"apoptosis"+SEP+r"inducing"+SEP+r"ligand"): "dulanermin",
+    rx(r"dulanermin"): "dulanermin",
 
     rx(r"tlr9"): "TLR9 agonist",
     rx(r"toll"+SEP+r"like"+SEP+r"receptor"+SEP+r"9"): "TLR9 agonist",
 
     
     # Antibodies / Peptides
-    
-
     rx(r"trastuzumab"): "trastuzumab",
     rx(r"herceptin"): "trastuzumab",
 
     rx(r"anti"+SEP+r"pd"+SEP+r"l1"): "anti-PD-L1",
     rx(r"pd"+SEP+r"l1"+SEP+r"antibody"): "anti-PD-L1",
+
+    rx(r"pembrolizumab"):"keytruda",
+    rx(r"keytruda"):"keytruda",
+    
+    rx(r"nivolumab"):"opdivo",
+    rx(r"opdivo"):"opdivo",
+
+    rx(r"atezolizumab"):"tecentriq",
+    rx(r"tecentriq"):"tecentriq",
+
 
     rx(r"rgd"+SEP+r"peptide"): "RGD peptide",
     rx(r"arg"+SEP+r"gly"+SEP+r"asp"): "RGD peptide",
@@ -367,23 +368,95 @@ cargo_map = OrderedDict({
     rx(r"egcg"): "EGCG",
     rx(r"epigallocatechin"+SEP+r"gallate"): "EGCG",
 
-    rx(r"ber"): "BER",
-    rx(r"berberine"): "BER",
+    rx(r"ber"): "berberine",
+    rx(r"berberine"): "berberine",
 
-    rx(r"gcsf"): "G-CSF",
-    rx(r"g"+SEP+r"csf"): "G-CSF",
-    rx(r"granulocyte"+SEP+r"colony"+SEP+r"stimulating"+SEP+r"factor"): "G-CSF",
-    rx(r"endogenous"+SEP+r"g"+SEP+r"csf"): "G-CSF",
-    rx(r"g"+SEP+r"csf"+SEP+r"signaling"): "G-CSF",
+    rx(r"gcsf"): "filgrastim",
+    rx(r"g"+SEP+r"csf"): "filgrastim",
+    rx(r"granulocyte"+SEP+r"colony"+SEP+r"stimulating"+SEP+r"factor"): "filgrastim",
+    rx(r"endogenous"+SEP+r"g"+SEP+r"csf"): "filgrastim",
+    rx(r"g"+SEP+r"csf"+SEP+r"signaling"): "filgrastim",
+
+
 
     rx(r"filgrastim"): "filgrastim",
     rx(r"neupogen"): "filgrastim",
 
     rx(r"pegfilgrastim"): "pegfilgrastim",
+    rx(r"peg"+SEP+r"filgrastim"): "pegfilgrastim",
     rx(r"neulasta"): "pegfilgrastim",
 
     rx(r"lenograstim"): "lenograstim",
     rx(r"granocyte"): "lenograstim",
+
+    rx(r"yervoy"): "yervoy",
+    rx(r"ipilimumab"): "yervoy",
+
+    rx((r"talazoparib")): "talazoparib",
+    rx(r"talzenna"): "talazoparib",
+
+    rx((r"palbociclib")): "palbociclib",
+    rx(r"ibrance"): "palbociclib",
+
+    rx((r"abemaciclib")): "abemaciclib",
+    rx(r"verzenio"): "abemaciclib",
+
+    rx(r"ribociclib"): "ribociclib",
+    rx(r"kisqali"): "ribociclib",
+
+    rx(r"avelumab"): "avelumab",
+    rx(r"bavencio"): "avelumab",
+
+    rx(r"durvalumab"): "durvalumab",
+    rx(r"imfinzi"): "durvalumab",
+
+    rx(r"tarceva"): "erlotinib",
+    rx(r"erlotinib"): "erlotinib",
+
+    rx(r"afatinib"): "afatinib",
+    rx(r"gilotrif"): "afatinib",
+
+    rx(r"osimertinib"): "osimertinib",
+    rx(r"tagrisso"): "osimertinib",
+
+    rx(r"crizotinib"): "crizotinib",
+    rx(r"xalkori"): "crizotinib",
+
+    rx(r"ceritinib"): "ceritinib",
+    rx(r"zykadia"): "ceritinib",
+
+    rx(r"alectinib"): "alectinib",
+    rx(r"alunbrig"): "alectinib",
+
+    rx(r"brigatinib"): "brigatinib",
+    rx(r"alunbrig"): "brigatinib",
+
+    rx(r"alpelisib"): "alpelisib",
+    rx(r"piqray"): "alpelisib",
+
+    rx(r"copanlisib"): "copanlisib",
+    rx(r"aliqopa"): "copanlisib",
+
+    rx(r"duvelisib"): "duvelisib",
+    rx(r"copiktra"): "duvelisib",
+
+    rx(r"ibrutinib"): "ibrutinib",
+    rx(r"imbruvica"): "ibrutinib",
+
+    rx(r"acalabrutinib"): "acalabrutinib",
+    rx(r"calquence"): "acalabrutinib",
+
+    rx(r"zanubrutinib"): "zanubrutinib",
+
+    rx(r"ibrance"): "palbociclib",
+    rx(r"palbociclib"): "palbociclib",
+
+    rx(r"tarceva"): "erlotinib",
+    rx(r"erlotinib"): "erlotinib",
+
+    rx(r"todelvy"): "sacituzumab govitecan",
+    rx(r"sacituzumab"+SEP+r"govitecan"): "sacituzumab govitecan",
+
 })
 
 

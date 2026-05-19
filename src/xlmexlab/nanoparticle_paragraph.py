@@ -381,13 +381,13 @@ COMPILED_MAP = [
 
 # type
 ORGANIC_NP_KEYWORDS = [
-    "lipid-polymer","liposome", "lipid nanoparticle", "LNP", "solid lipid nanoparticle", "SLN", "liposomal",
+    "lipid-polymer","liposome", "lipid nanoparticle", "solid lipid nanoparticle", "liposomal",
     "polymeric nanoparticle", "micelle", "dendrimer", "niosome",
     "exosome", "polymersome", "nanoemulsion", "lipoplex", "polyplex",
     "nanostructured lipid carrier", "cationic liposome", "ionizable LNP", "small unilamellar vesicles", "multilamellar",
 ]
 
-ORGANIC_NP_ABBR = ["NP", "LNP", "PLGA", "PLA", "SLN", "NLC", "SUV", "MLV", "MLVs", "LUV", "NLC"]
+ORGANIC_NP_ABBR = ["NP", "LNP", "LNPs", "PLGA", "PLA", "SLN", "NLC", "SUV", "MLV", "MLVs", "LUV", "NLC"]
 
 INORGANIC_NP_KEYWORDS = [
     "gold nanoparticle", "iron oxide", "silica", "quantum dot", "silver nanoparticle",
@@ -407,7 +407,7 @@ SUBTYPE_MAP = {
 
     "LNP": {
         "keywords": ["lipid nanoparticle", "ionizable lipid nanoparticle"],
-        "abbr": ["LNP"]
+        "abbr": ["LNP", "LNPs"]
     },
 
     "SLN": {
@@ -466,10 +466,11 @@ ROD_KEYWORDS    = ["rod", "rod-shaped", "elongated", "cylindrical"]
 DISK_KEYWORDS   = ["disc", "disk", "discoidal", "flat nanoparticle"]
  
 # ── lamellarity ───────────────────────────────────────────────────────────────
-UNILAMELLAR_KEYWORDS   = [
-    "unilamellar", "SUV", "SUVs", "LUV", "small unilamellar", "large unilamellar",
-]
-MULTILAMELLAR_KEYWORDS = ["multilamellar", "MLV", "MLVs", "multi-lamellar"]
+UNILAMELLAR_KEYWORDS   = [ "unilamellar", "small unilamellar", "large unilamellar",]
+UNILAMELLAR_ABBR = ["SUV", "SUVs", "LUV"]
+
+MULTILAMELLAR_KEYWORDS = ["multilamellar", "multi-lamellar"]
+MULTILAMELLAR_ABBR = ["MLV", "MLVs"]
  
 # ── lipid composition ─────────────────────────────────────────────────────────
 LIPID_KEYWORDS = [
@@ -513,20 +514,12 @@ GENERIC_TERMS = {
  
 # ── stimulus responsive ───────────────────────────────────────────────────────
 STIMULUS_MAP = {
-    "pH-sensitive":          ["pH-sensitive", "pH-responsive", "acid-responsive",
-                              "pH-triggered", "endosomal pH", "tumor acidic pH"],
-    "Thermosensitive":       ["thermosensitive", "temperature-responsive",
-                              "heat-sensitive", "thermo-responsive", "LTSL"],
-    "Redox-sensitive":       ["redox-sensitive", "redox-responsive", "GSH-responsive",
-                              "glutathione", "disulfide bond", "ROS-responsive",
-                              "reactive oxygen species", "H2O2-responsive"],
-    "Enzyme-responsive":     ["enzyme-responsive", "MMP-responsive", "protease-triggered",
-                              "cathepsin", "furin-cleavable", "MMP-2", "MMP-9",
-                              "hyaluronidase-responsive"],
-    "Light-triggered":       ["light-triggered", "photo-responsive", "photosensitive",
-                              "NIR-responsive", "azobenzene"],
-    "Hypoxia-responsive":    ["hypoxia-responsive", "hypoxia-triggered",
-                              "nitroimidazole", "azobenzene hypoxia"],
+    "pH-sensitive":          ["pH-sensitive", "pH-responsive", "acid-responsive", "pH-triggered", "endosomal pH", "tumor acidic pH"],
+    "Thermosensitive":       ["thermosensitive", "temperature-responsive", "heat-sensitive", "thermo-responsive", "LTSL"],
+    "Redox-sensitive":       ["redox-sensitive", "redox-responsive", "GSH-responsive", "glutathione", "disulfide bond", "ROS-responsive", "reactive oxygen species", "H2O2-responsive"],
+    "Enzyme-responsive":     ["enzyme-responsive", "MMP-responsive", "protease-triggered", "cathepsin", "furin-cleavable", "MMP-2", "MMP-9", "hyaluronidase-responsive"],
+    "Light-triggered":       ["light-triggered", "photo-responsive", "photosensitive", "NIR-responsive", "azobenzene"],
+    "Hypoxia-responsive":    ["hypoxia-responsive", "hypoxia-triggered", "nitroimidazole", "azobenzene hypoxia"],
 }
  
 # bioconjugation
@@ -1132,9 +1125,9 @@ class NanoparticleExtractor(BaseModel):
             return None
 
     def _extract_lamellarity(self, text: str) -> Optional[str]:
-        if _first_keyword_match(text, MULTILAMELLAR_KEYWORDS):
+        if _abr_first_keyword_match(text, MULTILAMELLAR_KEYWORDS, MULTILAMELLAR_ABBR):
             return "Multilamellar (MLV)"
-        if _first_keyword_match(text, UNILAMELLAR_KEYWORDS):
+        if _abr_first_keyword_match(text, UNILAMELLAR_KEYWORDS, UNILAMELLAR_ABBR):
             return "Unilamellar (SUV/LUV)"
         return None
     

@@ -1,96 +1,206 @@
-"""
-Parameter extraction pipeline:
-  1. build_extraction_prompt_json() → creates the LLM prompt dict for a paragraph,
-     with keys matching PromptFormatter fields exactly.
-  2. parse_extraction_response()    → parses the LLM key-value output into structured dicts.
-
-PromptFormatter field → chat-template turn mapping:
-
-  SYSTEM turn (stable, same for every paragraph):
-    expertise       → model identity
-    initialization  → hard constraint: only extract explicit values
-
-  USER turn (dynamic, rebuilt per paragraph):
-    definitions     → parameter list with descriptions and expected units
-    objective       → the task in one short sentence
-    answer_schema   → output format rules (default + overrides)
-    context         → the paragraph  [passed via format_prompt(context=paragraph)]
-    conclusion      → short closing reminder (no extra text)
-
-  Template order:
-    <|im_start|>system
-    {expertise}{initialization}<|im_end|>
-    <|im_start|>user
-    {definitions}{objective}{answer_schema}{context}{conclusion}<|im_end|>
-    <|im_start|>assistant
-"""
-
 from typing import Any
 from pydantic import BaseModel
 
 
+DEFAULT_FIELDS = ["parameter_name", "value", "unit", "condition"]
+
+
+# Global two-step screening applied to ALL parameters
+GLOBAL_SCREENING = (
+    "For each numerical candidate found in the text, apply these two steps:\n"
+    "  STEP 1 — Is it introduced by 'X et al.', 'reported', 'showed', 'found', "
+    "'according to', or a citation [N]? → DISCARD\n"
+    "  STEP 2 — Is it from the authors' own experiment? → KEEP\n"
+    "Only KEPT values are extracted."
+)
+
+GLOBAL_NULL_RULE = (
+    "- If a parameter is not mentioned, has no numerical value, "
+    "or all values were DISCARDED by the screening steps:\n"
+    "  <parameter_name> | not_extractable"
+)
+
+
 PARAM_META: dict[str, dict] = {
     "size_nm": {
-        "description": "Nanoparticle diameter or size",
+        "description": "Nanoparticle diameter or size explicitly measured in the study.",
         "unit_hint": "nm",
         "specific_format": "<parameter_name> | <value> | <unit> | <condition>",
+        "field_rules": {
+            "<value>": "Numeric size exactly as reported (can include ranges).",
+            "<unit>": "Unit exactly as written in text.",
+            "<condition>": "Experimental condition if stated, otherwise 'none'.",
+        },
+        "exclude": [
+            "theoretical sizes",
+            "expected sizes",
+            "pore sizes",
+            "filter sizes",
+            "instrument limits",
+        ],
     },
+
     "lipid_composition_ratio_units": {
-        "description": "Quantification type for the molar ratios of lipids",
-        "unit_hint": "dimensionless (e.g. mole fraction, weight ratio)",
-        "specific_format": "<parameter_name> |  <quantification_type> ",
-    }, 
+        "description": "Quantification type used for lipid composition ratios.",
+        "unit_hint": "dimensionless (molar ratio, weight ratio, etc.)",
+        "specific_format": "<parameter_name> | <quantification_type>",
+        "field_rules": {
+            "<quantification_type>": "Type of ratio exactly as stated (e.g., mol%, molar ratio).",
+        },
+        "exclude": [
+            "raw lipid names without ratios",
+            "concentration units",
+        ],
+    },
+
     "zeta_potential_mv": {
-        "description": "Zeta potential (surface charge)",
+        "description": "Zeta potential (surface charge).",
         "unit_hint": "mV",
-        "specific_format": "<parameter_name> | <value> | <unit>"
+        "specific_format": "<parameter_name> | <value> | <unit>",
+        "field_rules": {
+            "<value>": "Numeric zeta potential exactly as reported.",
+            "<unit>": "Unit exactly as written.",
+        },
+        "exclude": [
+            "predicted charge",
+            "theoretical surface charge",
+        ],
     },
+
     "pdi": {
-        "description": "Polydispersity index",
-        "unit_hint": "dimensionless (0-1)",
-        "specific_format": "<parameter_name> | <value>"
+        "description": "Polydispersity index.",
+        "unit_hint": "dimensionless",
+        "specific_format": "<parameter_name> | <value>",
+        "field_rules": {
+            "<value>": "Numeric PDI exactly as reported.",
+        },
+        "exclude": [
+            "size distributions",
+            "statistical variance",
+        ],
     },
+
     "encapsulation_efficiency_pct": {
-        "description": "Encapsulation efficiency",
+        "description": "Encapsulation efficiency.",
         "unit_hint": "%",
-        "specific_format": "<parameter_name> | <value> | <unit> | <drug_name/condition>",
+        "specific_format": "<parameter_name> | <value> | <unit> | <drug_name>",
+        "field_rules": {
+            "<value>": "Numeric efficiency exactly as reported.",
+            "<unit>": "Percentage or unit as written.",
+            "<drug_name>": "Drug explicitly mentioned in experiment.",
+        },
+        "exclude": [
+            "loading capacity",
+            "drug concentration",
+            "release percentage",
+            "theoretical efficiency",
+        ],
     },
+
     "ic50": {
-        "description": "Half-maximal inhibitory concentration (IC50)",
-        "unit_hint": "uM, nM, mg/mL, or as reported",
-        "specific_format": "<parameter_name> | <value> | <unit> | <drug_name/condition>",
+        "description": "Half-maximal inhibitory concentration.",
+        "unit_hint": "uM, nM, mg/mL, etc.",
+        "specific_format": "<parameter_name> | <value> | <unit> | <drug_name>",
+        "field_rules": {
+            "<value>": "Numeric IC50 exactly as reported.",
+            "<unit>": "Unit exactly as written.",
+            "<drug_name>": "Drug or condition tested.",
+        },
+        "exclude": [
+            "EC50",
+            "GI50",
+            "CC50",
+            "predicted values",
+        ],
     },
+
     "distribution_half_life_h": {
-        "description": "Distribution half-life (alpha phase)",
+        "description": "Distribution half-life (alpha phase).",
         "unit_hint": "h",
-        "specific_format": "<parameter_name> | <value> | <unit> | <drug_name/condition>",
+        "specific_format": "<parameter_name> | <value> | <unit> | <drug_name>",
+        "field_rules": {
+            "<value>": "Numeric half-life exactly as reported.",
+            "<unit>": "Unit in hours or as stated.",
+            "<drug_name>": "Drug studied.",
+        },
+        "exclude": [
+            "elimination half-life",
+            "circulation half-life",
+        ],
     },
+
     "circulation_half_life_h": {
-        "description": "Circulation / elimination half-life",
+        "description": "Circulation / elimination half-life.",
         "unit_hint": "h",
-        "specific_format": "<parameter_name> | <value> | <unit> | <drug_name/condition>",
+        "specific_format": "<parameter_name> | <value> | <unit> | <drug_name>",
+        "field_rules": {
+            "<value>": "Numeric half-life exactly as reported.",
+            "<unit>": "Unit as written.",
+            "<drug_name>": "Drug studied.",
+        },
+        "exclude": [
+            "distribution half-life",
+        ],
     },
+
     "dose_group": {
-        "description": "Extract only administered treatment doses.",
-        "specific_format": "<parameter_name> | <value> | <unit> | <drug_name> | <schedule>",
+        "description": "Administered treatment doses from the AUTHORS' OWN experiment only.",
+        "unit_hint": "as reported",
+        "specific_format": "dose_group | <value> | <unit> | <drug_name> | <schedule: multi_dose | single_dose | unknown>",
+        "field_rules": {
+            "<value>": "Numeric only, exactly as reported. Do NOT include units or route.",
+            "<unit>": "Dose unit exactly as written (e.g. mg/kg, μg/100 μl). Valid formats: mg/kg, μg/kg, μg/volume, mg/m², mg/animal.",
+            "<drug_name>": "Drug actually administered in this study.",
+            "<schedule>": "single_dose, multi_dose, or unknown.",
+        },
+        "exclude": [
+            "theoretical doses",
+        ],
     },
+
     "tumor_vol_reduction_pct": {
-        "description": "Tumour volume reduction relative to control, inhibition of growth.",
+        "description": "Tumour volume reduction vs control.",
         "unit_hint": "%",
-        "specific_format": "<parameter_name> | <value> | <unit> | <drug_name/control>",
+        "specific_format": "<parameter_name> | <value> | <unit> | <drug_name>",
+        "field_rules": {
+            "<value>": "Numeric reduction exactly as reported.",
+            "<unit>": "Percentage.",
+            "<drug_name>": "Drug or treatment used.",
+        },
+        "exclude": [
+            "absolute tumor volume",
+            "predicted inhibition",
+        ],
     },
+
     "delivery_efficiency": {
-        "description": "Cellular or in-vivo delivery efficiency",
+        "description": "Cellular or in-vivo delivery efficiency.",
         "unit_hint": "% or fold-change",
         "specific_format": "<parameter_name> | <value> | <unit> | <condition>",
+        "field_rules": {
+            "<value>": "Numeric efficiency exactly as reported.",
+            "<unit>": "Unit or fold-change exactly as written.",
+            "<condition>": "Experimental condition if present.",
+        },
+        "exclude": [
+            "qualitative statements",
+        ],
     },
+
     "biodistribution": {
-        "description": "Biodistribution / accumulation in organs",
-        "unit_hint": "% or % ID",
+        "description": "Organ accumulation / biodistribution.",
+        "unit_hint": "% ID, %ID/g, etc.",
         "specific_format": "<parameter_name> | <value> | <unit> | <organ>",
+        "field_rules": {
+            "<value>": "Numeric accumulation exactly as reported.",
+            "<unit>": "Unit exactly as written.",
+            "<organ>": "Organ explicitly mentioned.",
+        },
+        "exclude": [
+            "qualitative targeting",
+        ],
     },
 }
-
 
 
 class PromptCreation(BaseModel):
@@ -100,49 +210,44 @@ class PromptCreation(BaseModel):
         paragraph: str,
         extracted_flags: dict[str, Any],
     ) -> tuple[dict, list[str]]:
-        """
-        Build a prompt dict whose keys map directly to PromptFormatter fields.
 
-        Returns:
-            prompt_json : dict  – ready to unpack into PromptFormatter(**prompt_json)
-            targets     : list  – active parameter names
-        """
         targets = [k for k, v in extracted_flags.items() if v is True]
 
         if not targets:
             return {}, []
-        
-        # SYSTEM TURN — stable across all paragraphs
+
+        #  EXPERTISE (system role) 
         expertise = (
             "You are a nanoparticle information-extraction assistant. "
-            "You extract data truthfully from scientific text."
-        )
-
-        initialization = (
-            "Only extract values explicitly stated in the paragraph. "
+            "You extract data truthfully from scientific text. "
+            "Only extract values explicitly stated as part of the AUTHORS' OWN experiment. "
             "Do not infer, guess, or hallucinate values."
         )
 
-        # USER TURN — rebuilt per paragraph
+        # INITIALIZATION 
+        initialization = (
+            "Only extract values explicitly stated as part of the AUTHORS' OWN experiment. "
+            "Ignore values mentioned from other studies, literature comparisons, hypotheses, or discussions."
+        )
 
-
-        # 1. definitions — what each parameter is and its expected unit
-        definitions: dict[str, str] = {
-            param: (
-                f"{PARAM_META[param].get('description', param.replace('_', ' '))}. "
-                f"Expected unit: {PARAM_META[param].get('unit_hint', 'as reported')}."
+        #  DEFINITIONS 
+        definitions: dict[str, str] = {}
+        for param in targets:
+            meta = PARAM_META[param]
+            definitions[param] = (
+                f"{meta.get('description', param.replace('_', ' '))}. "
+                f"Expected unit: {meta.get('unit_hint', 'as reported')}."
             )
-            for param in targets
-        }
 
-        # 2. objective — the task, one sentence
+        # OBJECTIVE 
         objective = "Extract ONLY the parameters listed above from the paragraph below."
 
-        # 3. answer_schema — all format rules in one place
-        #    3a.  parameter-specific format overrides (if any)
+        # Answer schema construction
         schema_lines: list[str] = []
-        override_lines: list[str] = [
-            f"  - {param}: {PARAM_META[param]['specific_format']}"
+
+        # Format per parameter
+        override_lines = [
+            f"  {param}: {PARAM_META[param]['specific_format']}"
             for param in targets
             if "specific_format" in PARAM_META.get(param, {})
         ]
@@ -150,35 +255,45 @@ class PromptCreation(BaseModel):
             schema_lines.append("Format answers:")
             schema_lines.extend(override_lines)
 
-        #    3c. field-level rules
-        schema_lines += [
-            "Rules:",
-            "- Do not include values referred to limits, theoretical ranges, or protocol constraints."
-            "- One line per value. If a parameter has values under different conditions",
-            "  output one line per condition.",
-            "- <condition>: the condition for that value, or 'none' if absent.",
-            "- <value>: numeric, exactly as reported, including deviations and ranges",
-            "- <unit>: exactly as reported in the text.",
-            "- If a parameter is notmentioned OR its value is not numerical explicitly stated, write:",
-            "  <parameter_name> NOT EXTRACTABLE",
-        ]
+        schema_lines.append("Rules:")
+        schema_lines.append("- One line per extracted value.")
+        schema_lines.append(
+            "- For each numerical candidate found in the text, apply these two steps:\n"
+            "  STEP 1 \u2014 Is it introduced by 'X et al.', 'reported', 'showed', 'found', "
+            "'according to', or a citation [N]? \u2192 DISCARD\n"
+            "  STEP 2 \u2014 Is it from the authors' own experiment? \u2192 KEEP\n"
+            "  Only KEPT values are extracted."
+        )
+
+        # Per-parameter field rules and exclusions (format/parsing only)
+        for param in targets:
+            meta = PARAM_META[param]
+            if "field_rules" in meta:
+                schema_lines.append(f"- Field rules for {param}:")
+                for field, rule in meta["field_rules"].items():
+                    schema_lines.append(f"  - {field}: {rule}")
+            if "exclude" in meta:
+                schema_lines.append(f"- Do NOT extract for {param}:")
+                for ex in meta["exclude"]:
+                    schema_lines.append(f"  - {ex}")
+
+        # Global null rule
+        schema_lines.append(GLOBAL_NULL_RULE)
 
         answer_schema: dict[str, str] = {
-            "Format": "\n".join(schema_lines)
+            "Format": "\n".join(schema_lines),
         }
 
-        # 4. conclusion — single closing reminder, keeps the model on track
+        # Conclusions
         conclusion = "Return ONLY the extraction lines. No explanations, headers, or comments."
 
-        # context (the paragraph) is NOT included here —
-        # it is passed separately via format_prompt(context=paragraph)
         prompt_json = {
-            "expertise":      expertise,
+            "expertise": expertise,
             "initialization": initialization,
-            "definitions":    definitions,
-            "objective":      objective,
-            "answer_schema":  answer_schema,
-            "conclusion":     conclusion,
+            "definitions": definitions,
+            "objective": objective,
+            "answer_schema": answer_schema,
+            "conclusion": conclusion,
         }
 
         return prompt_json, targets
