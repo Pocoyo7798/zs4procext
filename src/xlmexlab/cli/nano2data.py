@@ -90,8 +90,35 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
                 llm_extractor._extracted_flags = regex_flags
 
                 try:
+                    # --- First extraction ---
                     llm_values = llm_extractor.extract_text_info(content)
+
                     print(f"  [STEP 3] LLM returned: {llm_values}")
+
+                    # --- Second extraction: schedule info ---
+                    schedule_values = None
+
+                    if llm_values and llm_values.get("dose_group"):
+
+                        print("\n  [STEP 4] Running schedule extractor...")
+
+                        try:
+                            schedule_values = llm_extractor.extract_schedule_info(
+                                text=content,
+                                data_response=llm_values
+                            )
+
+                            print(f"  [STEP 4] Schedule returned: {schedule_values}")
+
+                        except Exception as e:
+                            print(f"  [STEP 4] !! SCHEDULE ERROR: {type(e).__name__}: {e}")
+                            import traceback
+                            traceback.print_exc()
+
+                    # --- Merge both ---
+                    if schedule_values:
+                        llm_values["schedule_info"] = schedule_values
+
                 except Exception as e:
                     print(f"  [STEP 3] !! LLM ERROR: {type(e).__name__}: {e}")
                     import traceback

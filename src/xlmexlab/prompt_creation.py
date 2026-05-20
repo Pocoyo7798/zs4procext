@@ -247,7 +247,7 @@ class PromptCreation(BaseModel):
 
         # Format per parameter
         override_lines = [
-            f"  {param}: {PARAM_META[param]['specific_format']}"
+            f"{PARAM_META[param]['specific_format']}"
             for param in targets
             if "specific_format" in PARAM_META.get(param, {})
         ]
@@ -297,3 +297,53 @@ class PromptCreation(BaseModel):
         }
 
         return prompt_json, targets
+    
+class PromptCreationSchedule(BaseModel):
+
+    def build_extraction_prompt_json(
+        self,
+        drug_names: list[str],
+    ) -> tuple[dict, list[str]]:
+        
+        expertise = (
+            "You are an expert assistant for extracting dosing schedule information from scientific text."
+        )
+        # INITIALIZATION 
+        initialization = (
+            "Given this text, for each drug below, what is the dosing schedule?"
+        )
+
+        #  DEFINITIONS 
+        definitions: dict[str, str] = {}
+
+        # OBJECTIVE 
+        objective = "Only answer with: single_dose, multi_dose, or unknown."
+
+        # Answer schema construction
+        schema_lines: list[str] = []
+
+        schema_lines.append(
+            "Rules:"
+            "Use ONLY explicit frequency words ('every X days', 'twice', 'q.d.', 'BID', 'once', 'single dose').\n"        
+            "Do NOT use timing words ('prior to', '15 min before', 'day 0', 'for X days') as evidence.\n"
+            "Format: <drug_name> | <schedule>\n"
+            "Drug names: " + ", ".join(drug_names)
+            )
+
+        answer_schema: dict[str, str] = {
+            "Format": "\n".join(schema_lines),
+        }
+
+        # Conclusions
+        conclusion = "Return ONLY the extraction lines. No explanations, headers, or comments."
+
+        prompt_json = {
+            "expertise": expertise,
+            "initialization": initialization,
+            "definitions": definitions,
+            "objective": objective,
+            "answer_schema": answer_schema,
+            "conclusion": conclusion,
+        }
+
+        return prompt_json
