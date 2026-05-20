@@ -113,16 +113,23 @@ class NanoparticlesExtractorParagraph(BaseModel):
         return final_answer
     
     def extract_schedule_info(self, text: str, data_response: str):
-        if (self._extracted_flags.get("dose_group") is True):
-            x = self._nanoparticles_parser.parse_response(data_response)
-            print(f"\n  [EXTRACTOR.extract_schedule_info] Parsed LLM response into dict: {x}")
-            drug_names = []
-            for item in x.get("dose_group", []):
-                drug_name = item.get("drug_name")
-                print(f"  [EXTRACTOR.extract_schedule_info] Extracted drug_name: {drug_name}")
+            # Use data_response directly (it's already a dict from extract_text_info)
+            # and check if dose_group is a non-empty list, not True
+            dose_group = data_response.get("dose_group")
+            
+            if not dose_group:  # handles None, False, and empty list
+                print("  [EXTRACTOR.extract_schedule_info] No dose_group found, skipping.")
+                return None
 
-                if drug_name is not None:
-                    drug_names.append(drug_name)
+            drug_names = [
+                item.get("drug_name")
+                for item in dose_group
+                if item.get("drug_name") is not None
+            ]
+
+            if not drug_names:
+                print("  [EXTRACTOR.extract_schedule_info] No drug names found, skipping.")
+                return None
 
             if drug_names:
                 print(f"\n  [EXTRACTOR.extract_schedule_info] Called.")
@@ -136,10 +143,7 @@ class NanoparticlesExtractorParagraph(BaseModel):
 
                     # FIX: use `text` argument, NOT self._paragraph (which was always None)
                     print(f"  [EXTRACTOR.extract_schedule_info] Calling build_extraction_prompt_json with text and flags...")
-                    prompt_dict_s  = self._prompt_creation.build_extraction_prompt_json(
-                        text,                   # ← FIXED: was self._paragraph (always None)
-                        drug_names
-                    )
+                    prompt_dict_s  = self._prompt_creation.build_extraction_prompt_json(drug_names)
                     print(f"  [EXTRACTOR.extract_schedule_info] prompt_dict keys: {list(prompt_dict_s.keys())}")
                 else:
                     # If you have a schema path, handle it here
