@@ -168,4 +168,6 @@ class NanoparticlesExtractorParagraph(BaseModel):
                 print(data_response_s)
                 print(f"  [EXTRACTOR.extract_schedule_info] \n")
 
-                return data_response_s
+                updated_dose_group = self._nanoparticles_parser.update_schedule(data_response, data_response_s)
+
+                return updated_dose_group

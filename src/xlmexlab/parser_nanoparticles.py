@@ -964,5 +964,50 @@ class ParserNanoparticle(BaseModel):
             T_and_F_list["charge_group"] = charge
 
         return T_and_F_list
+    
+
+    def parse_schedule_response(self, response: str) -> dict[str, str]:
+        """
+        Parses the schedule LLM response into a dict of {drug_name: schedule}.
+        Expected format per line:  DrugName | single_dose
+        """
+        results = {}
+
+        for raw_line in response.strip().splitlines():
+            line = raw_line.strip()
+
+            if not line or line.startswith("#"):
+                continue
+
+            parts = [p.strip() for p in line.split("|")]
+
+            if len(parts) < 2:
+                continue
+
+            drug_name = parts[0]
+            schedule  = parts[1] if parts[1] else "unknown"
+
+            results[drug_name] = schedule
+
+        return results
+
+
+    def update_schedule(self, T_and_F_list: dict, schedule_raw: str) -> dict:
+        """
+        Parses the raw schedule LLM response and injects 'schedule'
+        into each entry of dose_group, matched by drug_name.
+        """
+        if "dose_group" not in T_and_F_list or not T_and_F_list["dose_group"]:
+            return T_and_F_list
+
+        parsed = self.parse_schedule_response(schedule_raw)
+        print(f"  [PARSER.update_schedule] Parsed schedule: {parsed}")
+
+        for entry in T_and_F_list["dose_group"]:
+            drug_name = entry.get("drug_name")
+            entry["schedule"] = parsed.get(drug_name, "unknown")
+            print(f"  [PARSER.update_schedule] {drug_name} → {entry['schedule']}")
+
+        return T_and_F_list
 
 
