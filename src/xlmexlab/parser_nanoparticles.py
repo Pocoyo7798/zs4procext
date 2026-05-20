@@ -896,7 +896,7 @@ class ParserNanoparticle(BaseModel):
             processed.append({
                 "value": value,
                 "unit": unit,
-                "drug_name": item.get("condition"),
+                "drug_name": item.get("drug_name"),
             })
 
         return processed
