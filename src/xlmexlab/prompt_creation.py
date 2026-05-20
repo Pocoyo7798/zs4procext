@@ -25,7 +25,7 @@ PARAM_META: dict[str, dict] = {
     "size_nm": {
         "description": "Nanoparticle diameter or size explicitly measured in the study.",
         "unit_hint": "nm",
-        "specific_format": "<parameter_name> | <value> | <unit> | <condition>",
+        "specific_format": "size_nm | <value> | <unit> | <condition>",
         "field_rules": {
             "<value>": "Numeric size exactly as reported (can include ranges).",
             "<unit>": "Unit exactly as written in text.",
@@ -43,20 +43,17 @@ PARAM_META: dict[str, dict] = {
     "lipid_composition_ratio_units": {
         "description": "Quantification type used for lipid composition ratios.",
         "unit_hint": "dimensionless (molar ratio, weight ratio, etc.)",
-        "specific_format": "<parameter_name> | <quantification_type>",
+        "specific_format": "lipid_composition_ratio_units | <quantification_type>",
         "field_rules": {
             "<quantification_type>": "Type of ratio exactly as stated (e.g., mol%, molar ratio).",
         },
-        "exclude": [
-            "raw lipid names without ratios",
-            "concentration units",
-        ],
+        "exclude": [],
     },
 
     "zeta_potential_mv": {
         "description": "Zeta potential (surface charge).",
         "unit_hint": "mV",
-        "specific_format": "<parameter_name> | <value> | <unit>",
+        "specific_format": "zeta_potential_mv | <value> | <unit>",
         "field_rules": {
             "<value>": "Numeric zeta potential exactly as reported.",
             "<unit>": "Unit exactly as written.",
@@ -70,20 +67,17 @@ PARAM_META: dict[str, dict] = {
     "pdi": {
         "description": "Polydispersity index.",
         "unit_hint": "dimensionless",
-        "specific_format": "<parameter_name> | <value>",
+        "specific_format": "pdi | <value>",
         "field_rules": {
             "<value>": "Numeric PDI exactly as reported.",
         },
-        "exclude": [
-            "size distributions",
-            "statistical variance",
-        ],
+        "exclude": [],
     },
 
     "encapsulation_efficiency_pct": {
         "description": "Encapsulation efficiency.",
         "unit_hint": "%",
-        "specific_format": "<parameter_name> | <value> | <unit> | <drug_name>",
+        "specific_format": "encapsulation_efficiency_pct | <value> | <unit> | <drug_name>",
         "field_rules": {
             "<value>": "Numeric efficiency exactly as reported.",
             "<unit>": "Percentage or unit as written.",
@@ -100,47 +94,37 @@ PARAM_META: dict[str, dict] = {
     "ic50": {
         "description": "Half-maximal inhibitory concentration.",
         "unit_hint": "uM, nM, mg/mL, etc.",
-        "specific_format": "<parameter_name> | <value> | <unit> | <drug_name>",
+        "specific_format": "ic50 | <value> | <unit> | <drug_name>",
         "field_rules": {
             "<value>": "Numeric IC50 exactly as reported.",
             "<unit>": "Unit exactly as written.",
             "<drug_name>": "Drug or condition tested.",
         },
-        "exclude": [
-            "EC50",
-            "GI50",
-            "CC50",
-            "predicted values",
-        ],
+        "exclude": [],
     },
 
     "distribution_half_life_h": {
         "description": "Distribution half-life (alpha phase).",
         "unit_hint": "h",
-        "specific_format": "<parameter_name> | <value> | <unit> | <drug_name>",
+        "specific_format": "distribution_half_life_h | <value> | <unit> | <drug_name>",
         "field_rules": {
             "<value>": "Numeric half-life exactly as reported.",
             "<unit>": "Unit in hours or as stated.",
             "<drug_name>": "Drug studied.",
         },
-        "exclude": [
-            "elimination half-life",
-            "circulation half-life",
-        ],
+        "exclude": [],
     },
 
     "circulation_half_life_h": {
         "description": "Circulation / elimination half-life.",
         "unit_hint": "h",
-        "specific_format": "<parameter_name> | <value> | <unit> | <drug_name>",
+        "specific_format": "circulation_half_life_h | <value> | <unit> | <drug_name>",
         "field_rules": {
             "<value>": "Numeric half-life exactly as reported.",
             "<unit>": "Unit as written.",
             "<drug_name>": "Drug studied.",
         },
-        "exclude": [
-            "distribution half-life",
-        ],
+        "exclude": [],
     },
 
     "dose_group": {
@@ -149,7 +133,7 @@ PARAM_META: dict[str, dict] = {
         "specific_format": "dose_group | <value> | <unit> | <drug_name>",
         "field_rules": {
             "<value>": "Numeric only, exactly as reported. Do NOT include units or route.",
-            "<unit>": "Dose unit exactly as written. Valid formats: mg/kg, μg/kg, μg/volume, mg/m², mg/animal,  μg/100 μl, etc.",
+            "<unit>": "Dose unit exactly as written. Valid formats: mg/kg, μg/kg, μg/volume, mg/m², mg/animal,  μg/100 μl, μg, etc.",
             "<drug_name>": "Drug actually administered in this study.",
         },
         "exclude": [
@@ -160,14 +144,13 @@ PARAM_META: dict[str, dict] = {
     "tumor_vol_reduction_pct": {
         "description": "Tumour volume reduction vs control.",
         "unit_hint": "%",
-        "specific_format": "<parameter_name> | <value> | <unit> | <drug_name>",
+        "specific_format": "tumor_vol_reduction_pct | <value> | <unit> | <drug_name>",
         "field_rules": {
             "<value>": "Numeric reduction exactly as reported.",
             "<unit>": "Percentage.",
             "<drug_name>": "Drug or treatment used.",
         },
         "exclude": [
-            "absolute tumor volume",
             "predicted inhibition",
         ],
     },
@@ -175,7 +158,7 @@ PARAM_META: dict[str, dict] = {
     "delivery_efficiency": {
         "description": "Cellular or in-vivo delivery efficiency.",
         "unit_hint": "% or fold-change",
-        "specific_format": "<parameter_name> | <value> | <unit> | <condition>",
+        "specific_format": "delivery_efficiency | <value> | <unit> | <condition>",
         "field_rules": {
             "<value>": "Numeric efficiency exactly as reported.",
             "<unit>": "Unit or fold-change exactly as written.",
@@ -189,7 +172,7 @@ PARAM_META: dict[str, dict] = {
     "biodistribution": {
         "description": "Organ accumulation / biodistribution.",
         "unit_hint": "% ID, %ID/g, etc.",
-        "specific_format": "<parameter_name> | <value> | <unit> | <organ>",
+        "specific_format": "biodistribution | <value> | <unit> | <organ>",
         "field_rules": {
             "<value>": "Numeric accumulation exactly as reported.",
             "<unit>": "Unit exactly as written.",
