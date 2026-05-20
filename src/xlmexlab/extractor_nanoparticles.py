@@ -115,9 +115,11 @@ class NanoparticlesExtractorParagraph(BaseModel):
     def extract_schedule_info(self, text: str, data_response: str):
         if (self._extracted_flags.get("dose_group") is True):
             x = self._nanoparticles_parser.parse_response(data_response)
+            print(f"\n  [EXTRACTOR.extract_schedule_info] Parsed LLM response into dict: {x}")
             drug_names = []
             for item in x.get("dose_group", []):
                 drug_name = item.get("drug_name")
+                print(f"  [EXTRACTOR.extract_schedule_info] Extracted drug_name: {drug_name}")
 
                 if drug_name is not None:
                     drug_names.append(drug_name)
