@@ -115,9 +115,6 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
                             import traceback
                             traceback.print_exc()
 
-                    # --- Merge both ---
-                    if schedule_values:
-                        llm_values["schedule_info"] = schedule_values
 
                 except Exception as e:
                     print(f"  [STEP 3] !! LLM ERROR: {type(e).__name__}: {e}")
