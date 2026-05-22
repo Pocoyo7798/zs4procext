@@ -1116,7 +1116,7 @@ def _find_matches_with_positions(text:str, rules_dict: Dict[str, Dict[str, List[
         # abbreviations (regex for word boundary)
         for ab in rules["abbr"]:
             pattern = r"(?<![A-Za-z0-9])" + re.escape(ab) + r"(?![A-Za-z0-9])"
-            match = re.search(pattern, text, flags=re.IGNORECASE)
+            match = re.search(pattern, text)
             if match:
                 results.append((match.start(), label))
 
