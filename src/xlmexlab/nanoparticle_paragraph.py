@@ -1331,7 +1331,8 @@ class NanoparticleExtractor(BaseModel):
     def _extract_lipid_ratio(self, text: str) -> Optional[Dict]:
         match = re.search(
             r'\b\d+(?:\.\d+)?(?:\s*[:/]\s*\d+(?:\.\d+)?)+\b',
-            text)
+            text
+        )
 
         if not match:
             return None
@@ -1340,15 +1341,25 @@ class NanoparticleExtractor(BaseModel):
 
         values = [float(n) for n in re.split(r'\s*[:/]\s*', ratio_text)]
 
-        if len(values) < self._extract_lipid_composition(text):
+        composition = self._extract_lipid_composition(text)
+
+        if not composition:
             return None
-        if len(values) > self._extract_lipid_composition(text):
-            print ("[WARNING]: more ratio values than lipid components. Check the LIPID_KEYWORDS and NORMALIZATION_MAP for consistency.")
+
+        if len(values) < len(composition):
+            return None
+
+        if len(values) > len(composition):
+            print("[WARNING]: more ratio values than lipid components. "
+                "Check the LIPID_KEYWORDS and NORMALIZATION_MAP for consistency.")
 
         total = sum(values)
+
         if total == 0:
             return None
+
         percentages = [(v / total) * 100 for v in values]
+
         return {
             "ratios": percentages
         }
