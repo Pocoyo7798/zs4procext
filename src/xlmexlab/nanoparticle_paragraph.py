@@ -544,7 +544,7 @@ SUBTYPE_MAP = {
 
     "niosome": {
         "keywords": ["niosome"],
-        "abbr": []
+        "abbr": ["NISM"]
     },
 
     "lipoplex": {
@@ -583,7 +583,9 @@ MULTILAMELLAR_ABBR = ["MLV", "MLVs"]
 LIPID_KEYWORDS = [
     # structural phospholipids
     "MSPC", "monostearoyl phosphatidylcholine", "SPC", "DPPC", "DSPC", "DOPC", "DOPE", "HSPC", "hydrogenated soy phosphatidylcholine", "DPPE", "DMPC", "POPC", "POPE",
-    "phosphatidylcholine", "sphingomyelin", "span 60", "PS"
+    "phosphatidylcholine", "sphingomyelin", "span 60", "PS", 
+
+    "span", "twen"
     # sterols
     "cholesterol hemisuccinate", "CHEMS", "cholesterol", "chol", "CHO", "choles-terol",
     # PEG-lipids
@@ -777,45 +779,63 @@ IP_ABBR = ["IP", "i.p."]
 
 # therapy types ─────────────────────────────────────────────────────────────
 THERAPY_MAP = {
-    "Chemotherapy":              ["chemotherapy", "chemo", "cytotoxic",
+    "Chemotherapy":              {"keywords": ["chemotherapy", "chemo", "cytotoxic",
                                   "doxorubicin", "paclitaxel", "docetaxel",
                                   "gemcitabine", "carboplatin", "cisplatin",
                                   "eribulin", "capecitabine", "nab-paclitaxel",
                                   "abraxane", "sacituzumab govitecan"],
-    "Gene therapy":              ["gene therapy", "siRNA", "mRNA", "plasmid",
+                                  "abbr": ["ADC"]},
+
+    "Gene therapy":              {"keywords": ["gene therapy", "siRNA", "mRNA", "plasmid",
                                   "gene silencing", "gene delivery", "miRNA",
-                                  "antisense oligonucleotide", "ASO", "shRNA",
-                                  "CRISPR", "cas9"],
-    "Immunotherapy":             ["immunotherapy", "immune checkpoint",
+                                  "antisense oligonucleotide", "shRNA"], 
+                                  "abbr": ["ASO","CRISPR", "cas9"]},   
+
+    "Immunotherapy":             {"keywords": ["immunotherapy", "immune checkpoint",
                                   "PD-L1", "anti-PD1", "anti-PD-L1",
                                   "checkpoint inhibitor", "atezolizumab",
                                   "pembrolizumab", "nivolumab", "ipilimumab",
-                                  "CTLA-4", "TIM-3", "LAG-3",
                                   "tumor microenvironment reprogramming",
                                   "macrophage polarization", "M1 polarization",
                                   "innate immune activation", "STING agonist",
-                                  "toll-like receptor", "TLR agonist"],
-    "Photodynamic therapy":      ["photodynamic", "PDT", "photosensitizer",
+                                  "toll-like receptor", "TLR agonist"], 
+                                  "abbr": ["CTLA-4", "TIM-3", "LAG-3"]},
+
+    "Photodynamic therapy":      {"keywords": ["photodynamic",  "photosensitizer",
                                   "ROS generation", "singlet oxygen",
-                                  "chlorin e6", "ICG photodynamic"],
-    "Photothermal therapy":      ["photothermal", "PTT", "NIR irradiation",
-                                  "laser irradiation", "indocyanine green", "ICG",
+                                  "chlorin e6"], 
+                                  "abbr": ["PDT",]}, 
+
+    "Photothermal therapy":      {"keywords": ["photothermal", "NIR irradiation",
+                                  "laser irradiation", "indocyanine green",
                                   "gold nanorod", "copper sulfide"],
-    "Radiotherapy":              ["radiotherapy", "radiation therapy",
-                                  "radiosensitization", "radiodynamic"],
-    "Ultrasound":                ["ultrasound", "sonodynamic", "HIFU",
-                                  "focused ultrasound"],
-    "Photoacoustic therapy":     ["photoacoustic therapy", "photoacoustic"],
-    "Targeted therapy":          ["targeted therapy", "PARP inhibitor", "olaparib",
+                                  "abbr": ["PTT"]},
+
+    "Radiotherapy":              {"keywords": ["radiotherapy", "radiation therapy",
+                                  "radiosensitization", "radiodynamic"], 
+                                  "abbr": []},
+
+    "Ultrasound":                {"keywords": ["ultrasound", "sonodynamic", "HIFU",
+                                  "focused ultrasound"], 
+                                  "abbr": ["HIFU"]},
+
+    "Photoacoustic therapy":     {"keywords": ["photoacoustic therapy", "photoacoustic"], 
+                                  "abbr": []},
+
+    "Targeted therapy":          {"keywords": ["targeted therapy", "PARP inhibitor", "olaparib",
                                   "talazoparib", "CDK4/6 inhibitor", "palbociclib",
                                   "PI3K inhibitor", "mTOR inhibitor",
                                   "EGFR inhibitor", "erlotinib",
-                                  "androgen receptor inhibitor", "bicalutamide"],
-    "CAR-T / cell therapy":      ["CAR-T", "CAR T cell", "adoptive cell therapy",
-                                  "NK cell therapy", "TIL therapy"],
-    "Combination therapy":       ["combination therapy", "combined therapy", "synergistic", "co-delivery",
-                                  "dual drug", "chemo-immunotherapy",
+                                  "androgen receptor inhibitor", "bicalutamide"], 
+                                  "abbr": []},
+
+    "CAR-T / cell therapy":      {"keywords": ["CAR-T", "CAR T cell", "adoptive cell therapy",
+                                  "NK cell therapy", "TIL therapy"], 
+                                  "abbr": []},
+
+    "Combination therapy":       {"keywords": ["combination therapy", "combined therapy", "synergistic", "co-delivery", "dual drug", "chemo-immunotherapy",
                                   "chemo-photothermal"],
+                                  "abbr": []},
 }
  
 # study strategy ────────────────────────────────────────────────────────────
@@ -1091,8 +1111,8 @@ def _is_excluded(text:str, excluded_phrases: List[str]) -> Optional[str]:
 def _all_map_matches(text: str, mapping: Dict[str, List[str]]) -> List[str]:
     """Return all labels whose keywords are found in text."""
     found = []
-    for label, keywords in mapping.items():
-        if _first_keyword_match(text, keywords):
+    for label, data in mapping.items():
+        if _abr_first_keyword_match(text, data["keywords"], data["abbr"]):
             found.append(label)
     return found
 
@@ -1518,7 +1538,7 @@ class NanoparticleExtractor(BaseModel):
         return _map_exact_keywords(text, CANCER_TYPE_MAP)
 
     def _extract_breast_subtype(self, text: str) -> Optional[str]:
-        return _map_keywords(text, BREAST_SUBTYPE_MAP)
+        return _map_exact_keywords(text, BREAST_SUBTYPE_MAP)
 
     def _extract_imaging(self, text: str):
         found = []

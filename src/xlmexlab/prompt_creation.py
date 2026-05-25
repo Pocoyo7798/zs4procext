@@ -25,11 +25,11 @@ PARAM_META: dict[str, dict] = {
     "size_nm": {
         "description": "Nanoparticle diameter or size explicitly measured in the study.",
         "unit_hint": "nm",
-        "specific_format": "size_nm | <value> | <unit> | <condition>",
+        "specific_format": "size_nm | <value> | <unit> | <drug_name>",
         "field_rules": {
             "<value>": "Numeric size exactly as reported (can include ranges).",
             "<unit>": "Unit exactly as written in text.",
-            "<condition>": "Experimental condition if stated, otherwise 'none'.",
+            "<drug_name>": "Drug name, nanoparticle name or cargo if stated, otherwise 'none'.",
         },
         "exclude": [
             "theoretical sizes",
@@ -75,11 +75,11 @@ PARAM_META: dict[str, dict] = {
     },
 
     "encapsulation_efficiency_pct": {
-        "description": "Encapsulation efficiency.",
+        "description": "Percentage of compound encapsulated (Encapsulation Efficiency).",
         "unit_hint": "%",
         "specific_format": "encapsulation_efficiency_pct | <value> | <unit> | <drug_name>",
         "field_rules": {
-            "<value>": "Numeric efficiency exactly as reported.",
+            "<value>": "Numeric efficiency exactly as reported (include the standard deviation if available).",
             "<unit>": "Percentage or unit as written.",
             "<drug_name>": "Drug explicitly mentioned in experiment.",
         },
