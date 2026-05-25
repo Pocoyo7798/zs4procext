@@ -1036,8 +1036,8 @@ EE_PATTERNS = r"""
   |efficienc(?:y|ies)\s+of\s+drug\s*loading
   |\bDL\b\s*%?
   |encapsulation\s*(?:rate|ratio)
-  |(?:encapsulation|loading).*?(?:efficienc(?:y|ies))
-  | (?:encapsulated).*?(?:efficienc(?:y|ies))
+  |(?:encapsulation|loading).{0,40}?(?:efficienc(?:y|ies))
+  | (?:encapsulated).{0,40}?(?:efficienc(?:y|ies))
 )
 """
 

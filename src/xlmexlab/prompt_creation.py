@@ -23,13 +23,13 @@ GLOBAL_NULL_RULE = (
 
 PARAM_META: dict[str, dict] = {
     "size_nm": {
-        "description": "Nanoparticle diameter or size explicitly measured in the study.",
+        "description": "Nanoparticle diameter or size explicitly measured in the study",
         "unit_hint": "nm",
         "specific_format": "size_nm | <value> | <unit> | <drug_name>",
         "field_rules": {
-            "<value>": "Numeric size exactly as reported (can include ranges).",
+            "<value>": "Numeric size exactly as reported (include ranges and deviations).",
             "<unit>": "Unit exactly as written in text.",
-            "<drug_name>": "Drug name, nanoparticle name or cargo if stated, otherwise 'none'.",
+            "<drug_name>": "Look at the sentence containing the size value and its immediate surrounding sentences. Identify the nanoparticle type and any cargo or drug being encapsulated.\n Use that as the drug_name. If a sentence reports two sizes linked to a before/after or increase/decrease due to encapsulation: \n- The smaller value belongs to the bare particle: append '_unloaded' to the nanoparticle name.\n - The larger value belongs to the cargo-loaded particle: use the cargo name combined with the nanoparticle name and append '_loaded'.\n Extract each as a separate line.",
         },
         "exclude": [
             "theoretical sizes",
@@ -41,7 +41,7 @@ PARAM_META: dict[str, dict] = {
     },
 
     "lipid_composition_ratio_units": {
-        "description": "Quantification type used for lipid composition ratios.",
+        "description": "Quantification type used for lipid composition ratios",
         "unit_hint": "dimensionless (molar ratio, weight ratio, etc.)",
         "specific_format": "lipid_composition_ratio_units | <quantification_type>",
         "field_rules": {
@@ -75,7 +75,7 @@ PARAM_META: dict[str, dict] = {
     },
 
     "encapsulation_efficiency_pct": {
-        "description": "Percentage of compound encapsulated (Encapsulation Efficiency).",
+        "description": "Encapsulation efficiency.",
         "unit_hint": "%",
         "specific_format": "encapsulation_efficiency_pct | <value> | <unit> | <drug_name>",
         "field_rules": {
@@ -133,7 +133,7 @@ PARAM_META: dict[str, dict] = {
         "specific_format": "dose_group | <value> | <unit> | <drug_name>",
         "field_rules": {
             "<value>": "Numeric only, exactly as reported. Do NOT include units or route.",
-            "<unit>": "Dose unit exactly as written. Valid formats: mg/kg, μg/kg, μg/volume, mg/m², mg/animal,  μg/100 μl, μg, etc.",
+            "<unit>": "Dose unit exactly as written. Valid formats: mg/kg, μg/kg, mg/animal, μg, mg, g, etc.",
             "<drug_name>": "Drug actually administered in this study.",
         },
         "exclude": [
