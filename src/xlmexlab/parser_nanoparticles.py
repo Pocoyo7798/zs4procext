@@ -46,7 +46,7 @@ CARGO_DB = OrderedDict({
         "paclitaxel", "docetaxel", "doxorubicin",
         "epirubicin", "gemcitabine", "fluorouracil",
         "eribulin", "mertansine",
-        "sacituzumab govitecan"                    
+        "sacituzumab govitecan", "vinorelbine",                  
     ],
 
     "targeted_small_molecules": [
@@ -228,6 +228,7 @@ cargo_map = OrderedDict({
     rx(r"ptx"): "paclitaxel",
     rx(r"nab-paclitaxel"): "paclitaxel",
     rx(r"abraxane"): "paclitaxel",
+    rx(r"vinorelbine"):"vinorelbine",
 
     rx(r"docetaxel"): "docetaxel",
     rx(r"taxotere"): "docetaxel",

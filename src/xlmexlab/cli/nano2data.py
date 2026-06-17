@@ -31,6 +31,41 @@ def has_relevant_findings(flags: dict) -> bool:
     found = any(v is True for v in flags.values())
     return found
 
+def remove_introduction_content(blocks):
+    filtered_blocks = []
+    inside_introduction = False
+
+    for block in blocks:
+        block_type = block.get("type")
+        content = block.get("content", "").strip()
+
+        # Section headers
+        if block_type == "section_header":
+
+            # Enter Introduction section
+            if content.lower() == "introduction":
+                print(f"ENTERING INTRODUCTION")
+                inside_introduction = True
+                filtered_blocks.append(block)  # keep header if desired
+                continue
+
+            # Any other header after Introduction ends the skip
+            if inside_introduction:
+                print(f"LEAVING INTRODUCTION -> '{content}'")
+                inside_introduction = False
+
+            filtered_blocks.append(block)
+            continue
+
+        # Skip paragraphs inside Introduction
+        if inside_introduction:
+            print(f"SKIPPING: {content[:80]}...")
+            continue
+
+        filtered_blocks.append(block)
+
+    return filtered_blocks
+
 
 def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip_llm):
     results = []
@@ -213,7 +248,7 @@ def nanoparticles2data(
     # --- Process ---
     print("\nSTARTING BLOCK PROCESSING...")
     results, error_count = process_blocks(
-        blocks=blocks,
+        blocks=remove_introduction_content(blocks),
         regex_extractor=regex_extractor,
         llm_extractor=llm_extractor,
         min_text_length=min_text_length,
