@@ -601,8 +601,8 @@ LIPID_KEYWORDS = [
     # sterols
     "cholesterol hemisuccinate", "CHEMS", "cholesterol", "chol", "CHO", "choles-terol",
     # PEG-lipids
-    "DSPE-PEG", "DSPE-PEG2000", "DSPE-MPEG2000", "DSPE- PEG2000", "DSPE- MPEG2000", "DSPE- MPEG" , "DSPE- PEG",
-    "C14-PEG2000", "PEG-DMG", "PEG2000-Cer16",
+    "DSPE-PEG", "DSPE-PEG2000", "DSPE-MPEG2000", "DSPE- PEG2000", "DSPE-PEG_2000", "DSPE- PEG_2000", "DSPE- MPEG2000", "DSPE- MPEG" , "DSPE- PEG",
+    "C14-PEG2000","C14- PEG2000", "PEG-DMG", "PEG- DMG", "PEG2000-Cer16",
     # ionizable lipids
     "DLin-MC3-DMA", "MC3", "SM-102", "ALC-0315",
     "lipid A9", "C12-200", "OF-02", "5A2-SC8", "CKK-E12", "DLin-KC2-DMA",
@@ -620,6 +620,8 @@ NORMALIZATION_MAP = {
     "chol": "cholesterol",
     "DSPE- PEG2000": "DSPE-PEG2000",
     "DSPE- MPEG2000": "DSPE-MPEG2000",
+    "DSPE- PEG_2000": "DSPE-PEG2000",
+    "DSPE-PEG_2000": "DSPE-PEG2000",
     "PEG-DMG": "DMG-PEG2000",  # escolher forma dominante
     "hydrogenated soy phosphatidylcholine": "HSPC",
     "cholesterol hemisuccinate": "CHEMS",
