@@ -1032,7 +1032,6 @@ TUMOR_PATTERNS = r"""
   | tumou?r\s*growth\s*(?:inhibition|inhibited)
   | (?:inhibition|suppression)\s+of\s+tumou?r\s*growth
   | \bTGI\b
-  | anti[-\s]?tumou?r\s*(?:activity|efficacy|effect)
   | tumou?r.*?(?:shrinkage|regression)
   | reduc(?:e|ed|tion|es)
 )
@@ -1568,7 +1567,7 @@ class NanoparticleExtractor(BaseModel):
     # OUTCOMES
 
     def _extract_ic50(self, text: str) -> bool:
-        return True if re.search(r"IC\s*50|IC₅₀", text, re.IGNORECASE) else False
+        return True if re.search(r"IC\s*50|IC₅₀|IC_50", text, re.IGNORECASE) else False
 
     def _extract_encapsulation_efficiency(self, text: str) ->  Optional[bool]:
         EE = _extract_value_unit_closest_to_keyword(

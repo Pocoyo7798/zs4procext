@@ -51,7 +51,7 @@ PARAM_META: dict[str, dict] = {
     },
 
     "zeta_potential_mv": {
-        "description": "Zeta potential (surface charge).",
+        "description": "Zeta potential (surface charge)",
         "unit_hint": "mV",
         "specific_format": "zeta_potential_mv | <value> | <unit>",
         "field_rules": {
@@ -65,9 +65,10 @@ PARAM_META: dict[str, dict] = {
     },
 
     "pdi": {
-        "description": "Polydispersity index.",
+        "description": "Polydispersity index",
         "unit_hint": "dimensionless",
-        "specific_format": "pdi | <value>",
+        "method": "methodology usedfor preparation",
+        "specific_format": "pdi | <value>| <methodology>",
         "field_rules": {
             "<value>": "Numeric PDI exactly as reported.",
         },
@@ -75,7 +76,7 @@ PARAM_META: dict[str, dict] = {
     },
 
     "encapsulation_efficiency_pct": {
-        "description": "Encapsulation efficiency.",
+        "description": "Encapsulation efficiency or EE",
         "unit_hint": "%",
         "specific_format": "encapsulation_efficiency_pct | <value> | <unit> | <drug_name>",
         "field_rules": {
@@ -92,7 +93,7 @@ PARAM_META: dict[str, dict] = {
     },
 
     "ic50": {
-        "description": "Half-maximal inhibitory concentration.",
+        "description": "Half-maximal inhibitory concentration",
         "unit_hint": "uM, nM, mg/mL, etc.",
         "specific_format": "ic50 | <value> | <unit> | <drug_name>",
         "field_rules": {
@@ -104,7 +105,7 @@ PARAM_META: dict[str, dict] = {
     },
 
     "distribution_half_life_h": {
-        "description": "Distribution half-life (alpha phase).",
+        "description": "Distribution half-life (alpha phase)",
         "unit_hint": "h",
         "specific_format": "distribution_half_life_h | <value> | <unit> | <drug_name>",
         "field_rules": {
@@ -116,7 +117,7 @@ PARAM_META: dict[str, dict] = {
     },
 
     "circulation_half_life_h": {
-        "description": "Circulation / elimination half-life.",
+        "description": "Circulation / elimination half-life",
         "unit_hint": "h",
         "specific_format": "circulation_half_life_h | <value> | <unit> | <drug_name>",
         "field_rules": {
@@ -128,7 +129,7 @@ PARAM_META: dict[str, dict] = {
     },
 
     "dose_group": {
-        "description": "Administered treatment doses from the AUTHORS' OWN experiment only.",
+        "description": "Administered treatment doses from the AUTHORS' OWN experiment only",
         "unit_hint": "as reported",
         "specific_format": "dose_group | <value> | <unit> | <drug_name>",
         "field_rules": {
@@ -142,7 +143,7 @@ PARAM_META: dict[str, dict] = {
     },
 
     "tumor_vol_reduction_pct": {
-        "description": "Tumour volume reduction vs control.",
+        "description": "Tumour volume reduction vs control",
         "unit_hint": "%",
         "specific_format": "tumor_vol_reduction_pct | <value> | <unit> | <drug_name>",
         "field_rules": {
@@ -156,7 +157,7 @@ PARAM_META: dict[str, dict] = {
     },
 
     "delivery_efficiency": {
-        "description": "Cellular or in-vivo delivery efficiency.",
+        "description": "Cellular or in-vivo delivery efficiency",
         "unit_hint": "% or fold-change",
         "specific_format": "delivery_efficiency | <value> | <unit> | <condition>",
         "field_rules": {
@@ -170,7 +171,7 @@ PARAM_META: dict[str, dict] = {
     },
 
     "biodistribution": {
-        "description": "Organ accumulation / biodistribution.",
+        "description": "Organ accumulation/ biodistribution",
         "unit_hint": "% ID, %ID/g, etc.",
         "specific_format": "biodistribution | <value> | <unit> | <organ>",
         "field_rules": {

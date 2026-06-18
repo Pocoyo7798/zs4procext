@@ -65,52 +65,54 @@ class NanoparticlesExtractorParagraph(BaseModel):
         print(f"\n  [EXTRACTOR.extract_text_info] Called.")
         print(f"  [EXTRACTOR.extract_text_info] text preview: '{text[:120]}...'")
         print(f"  [EXTRACTOR.extract_text_info] _extracted_flags: {self._extracted_flags}")
-        print(f"  [EXTRACTOR.extract_text_info] prompt_schema_path: {self.prompt_schema_path}")
 
-        if self.prompt_schema_path is None:
-            print(f"  [EXTRACTOR.extract_text_info] Building prompt via PromptCreation...")
-            self._prompt_creation = PromptCreation()
-
-            # FIX: use `text` argument, NOT self._paragraph (which was always None)
-            print(f"  [EXTRACTOR.extract_text_info] Calling build_extraction_prompt_json with text and flags...")
-            prompt_dict, targets = self._prompt_creation.build_extraction_prompt_json(
-                text,                   # ← FIXED: was self._paragraph (always None)
-                self._extracted_flags
-            )
-            print(f"  [EXTRACTOR.extract_text_info] prompt_dict keys: {list(prompt_dict.keys())}")
-            print(f"  [EXTRACTOR.extract_text_info] targets: {targets}")
-        else:
-            # If you have a schema path, handle it here
+        if self.prompt_schema_path is not None:
             raise NotImplementedError(
-                f"prompt_schema_path='{self.prompt_schema_path}' handling is not implemented. "
-                f"Set prompt_schema_path=None to use the default PromptCreation flow."
+                f"prompt_schema_path='{self.prompt_schema_path}' handling is not implemented."
             )
 
-        print(f"\n  [EXTRACTOR.extract_text_info] Building PromptFormatter...")
-        self._prompt = PromptFormatter(**prompt_dict)
-        self._prompt.model_post_init(self.prompt_template_path)
-        self._nanoparticles_parser._parameters = targets
+        # Parâmetros ativos
+        active_params = [k for k, v in self._extracted_flags.items() if v is True]
+        print(f"  [EXTRACTOR.extract_text_info] Active params: {active_params}")
 
-        print(f"\n  [EXTRACTOR.extract_text_info] Formatting final prompt with text...")
-        prompt = self._prompt.format_prompt(f"'{text}'")
-        print(f"\n  [EXTRACTOR.extract_text_info]  PROMPT SENT TO LLM")
-        print(prompt)
-        print(f"  [EXTRACTOR.extract_text_info] \n")
+        if not active_params:
+            print("  [EXTRACTOR.extract_text_info] No active params, returning empty dict.")
+            return {}
 
-        print(f"  [EXTRACTOR.extract_text_info] Running LLM inference...")
-        data_response = self._llm_model.run_single_prompt(prompt).strip()
-        print(f"\n  [EXTRACTOR.extract_text_info] LLM RAW RESPONSE ")
-        print(data_response)
-        print(f"  [EXTRACTOR.extract_text_info] \n")
+        final_result = {}
 
-        print(f"  [EXTRACTOR.extract_text_info] Running parser.replace()...")
-        final_answer = self._nanoparticles_parser.replace(
-            self._extracted_flags,
-            data_response
-        )
-        print(f"  [EXTRACTOR.extract_text_info] Parser output: {final_answer}")
+        for param_key in active_params:
+            print(f"\n  [EXTRACTOR.extract_text_info] === Processing param: '{param_key}' ===")
 
-        return final_answer
+            # Flag com apenas este parâmetro ativo
+            single_flag = {k: (k == param_key) for k in self._extracted_flags}
+
+            self._prompt_creation = PromptCreation()
+            prompt_dict, targets = self._prompt_creation.build_extraction_prompt_json(
+                text,
+                single_flag
+            )
+
+            self._prompt = PromptFormatter(**prompt_dict)
+            self._prompt.model_post_init(self.prompt_template_path)
+            self._nanoparticles_parser._parameters = targets
+
+            prompt = self._prompt.format_prompt(f"'{text}'")
+            print(f"\n  [EXTRACTOR.extract_text_info] PROMPT SENT TO LLM (param='{param_key}')")
+            print(prompt)
+
+            data_response = self._llm_model.run_single_prompt(prompt).strip()
+            print(f"\n  [EXTRACTOR.extract_text_info] LLM RAW RESPONSE (param='{param_key}')")
+            print(data_response)
+
+            parsed = self._nanoparticles_parser.replace(single_flag, data_response)
+            print(f"  [EXTRACTOR.extract_text_info] Parsed '{param_key}': {parsed}")
+
+            # Merge no resultado final
+            final_result.update(parsed)
+
+        print(f"\n  [EXTRACTOR.extract_text_info] FINAL MERGED RESULT: {final_result}")
+        return final_result
     
     def extract_schedule_info(self, text: str, data_response: str):
             # Use data_response directly (it's already a dict from extract_text_info)
