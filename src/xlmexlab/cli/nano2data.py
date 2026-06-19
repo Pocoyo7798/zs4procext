@@ -43,7 +43,7 @@ def remove_introduction_content(blocks):
         if block_type == "section_header":
 
             # Enter Introduction section
-            if content.lower() == "introduction":
+            if "introduction" in content.lower():
                 print(f"ENTERING INTRODUCTION")
                 inside_introduction = True
                 filtered_blocks.append(block)  # keep header if desired

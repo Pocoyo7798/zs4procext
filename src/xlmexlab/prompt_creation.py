@@ -202,15 +202,15 @@ class PromptCreation(BaseModel):
         #  EXPERTISE (system role) 
         expertise = (
             "You are a nanoparticle information-extraction assistant. "
-            "You extract data truthfully from scientific text. "
-            "Only extract values explicitly stated as part of the AUTHORS' OWN experiment. "
-            "Do not infer, guess, or hallucinate values."
+            #"You extract data truthfully from scientific text. "
+            #"Only extract values explicitly stated as part of the AUTHORS' OWN experiment. "
+            #"Do not infer, guess, or hallucinate values."
         )
 
         # INITIALIZATION 
         initialization = (
-            "Only extract values explicitly stated as part of the AUTHORS' OWN experiment. "
-            "Ignore values mentioned from other studies, literature comparisons, hypotheses, or discussions."
+            #"Only extract values explicitly stated as part of the AUTHORS' OWN experiment. "
+            #"Ignore values mentioned from other studies, literature comparisons, hypotheses, or discussions."
         )
 
         #  DEFINITIONS 
