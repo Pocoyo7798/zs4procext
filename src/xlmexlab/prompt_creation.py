@@ -209,6 +209,7 @@ class PromptCreation(BaseModel):
 
         # INITIALIZATION 
         initialization = (
+            ""
             #"Only extract values explicitly stated as part of the AUTHORS' OWN experiment. "
             #"Ignore values mentioned from other studies, literature comparisons, hypotheses, or discussions."
         )
