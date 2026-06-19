@@ -1506,7 +1506,7 @@ class NanoparticleExtractor(BaseModel):
         quantity_units in your synthesis_parsing_parameters.json config.
         Fallback: direct regex.
         """
-        match = re.searchre.search(
+        match = re.search.search(
             r"([\d.]+(?:\s*[-–]\s*[\d.]+)?)\s*(?:mg|µg|ug|g)\s*/\s*kg\b",
             text,
             re.IGNORECASE,
