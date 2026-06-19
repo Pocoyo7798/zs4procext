@@ -580,7 +580,7 @@ IONIZABLE_KEYWORDS = [
 ]
  
 # ── shape ─────────────────────────────────────────────────────────────────────
-SPHERE_KEYWORDS = ["spherical", "sphere", "spheroid", "round"]
+SPHERE_KEYWORDS = ["spherical", "sphere", "spheroid"]
 ROD_KEYWORDS    = ["rod", "rod-shaped", "elongated", "cylindrical"]
 DISK_KEYWORDS   = ["disc", "disk", "discoidal", "flat nanoparticle"]
  
@@ -881,9 +881,13 @@ METASTATIC_MODEL_KEYWORDS = ["metastatic model", "lung metastasis",
  
 # immune status ─────────────────────────────────────────────────────────────
 IMMUNOCOMPROMISED_KEYWORDS = [
-    "nude mice", "athymic", "SCID", "NOD/SCID", "immunodeficient",
-    "immunocompromised", "NSG", "RAG", "NCr nude",
+    "nude mice", "athymic", "immunodeficient",
+    "immunocompromised", "NCr nude",
 ]
+IMMUNOCOMPROMISED_ABBR = [
+     "SCID", "NOD/SCID", "NSG", "RAG",
+]
+
 IMMUNOCOMPETENT_KEYWORDS = [
     "BALB/c", "C57BL/6", "immunocompetent", "syngeneic", "intact immune",
     "FVB/N", "immune",
@@ -1502,14 +1506,16 @@ class NanoparticleExtractor(BaseModel):
         quantity_units in your synthesis_parsing_parameters.json config.
         Fallback: direct regex.
         """
-        match = re.search(
-            r"([\d\.]+(?:\s*[-–]\s*[\d\.]+)?)\s*mg[\s/]kg",
-            text, re.IGNORECASE
-        )
+        match = re.searchre.search(
+            r"([\d.]+(?:\s*[-–]\s*[\d.]+)?)\s*(?:mg|µg|ug|g)\s*/\s*kg\b",
+            text,
+            re.IGNORECASE,
+            )
         match1 = re.search(
-            r"([\d\.]+(?:\s*[-–]\s*[\d\.]+)?)\s*\u00b5g",
-            text, re.IGNORECASE
-        )
+            r"([\d.]+(?:\s*[-–]\s*[\d.]+)?)\s*(?:mg|µg|ug|g|kg)\b(?!\s*/)",
+            text,
+            re.IGNORECASE,
+            )
         
         if match:
             #print (match.group(0))
@@ -1541,7 +1547,7 @@ class NanoparticleExtractor(BaseModel):
                 return "In vivo generic keyword"
 
     def _extract_immune_status(self, text: str) -> Optional[str]:
-        if _first_keyword_match(text, IMMUNOCOMPROMISED_KEYWORDS):
+        if _abr_first_keyword_match(text, IMMUNOCOMPROMISED_KEYWORDS, IMMUNOCOMPROMISED_ABBR):
             return "Immunocompromised"
         if _first_keyword_match(text, IMMUNOCOMPETENT_KEYWORDS):
             return "Immunocompetent"
