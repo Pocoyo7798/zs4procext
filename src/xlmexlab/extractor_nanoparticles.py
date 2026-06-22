@@ -105,11 +105,13 @@ class NanoparticlesExtractorParagraph(BaseModel):
             print(f"\n  [EXTRACTOR.extract_text_info] LLM RAW RESPONSE (param='{param_key}')")
             print(data_response)
 
-            parsed = self._nanoparticles_parser.replace(single_flag, data_response)
-            print(f"  [EXTRACTOR.extract_text_info] Parsed '{param_key}': {parsed}")
 
-            # Merge no resultado final
-            final_result.update(parsed)
+
+            final_result = self._nanoparticles_parser.replace(
+            final_result,
+            data_response,
+             )
+
 
         print(f"\n  [EXTRACTOR.extract_text_info] FINAL MERGED RESULT: {final_result}")
         return final_result
