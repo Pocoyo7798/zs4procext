@@ -71,7 +71,6 @@ class NanoparticlesExtractorParagraph(BaseModel):
                 f"prompt_schema_path='{self.prompt_schema_path}' handling is not implemented."
             )
 
-        # Parâmetros ativos
         active_params = [k for k, v in self._extracted_flags.items() if v is True]
         print(f"  [EXTRACTOR.extract_text_info] Active params: {active_params}")
 
@@ -84,7 +83,6 @@ class NanoparticlesExtractorParagraph(BaseModel):
         for param_key in active_params:
             print(f"\n  [EXTRACTOR.extract_text_info] === Processing param: '{param_key}' ===")
 
-            # Flag com apenas este parâmetro ativo
             single_flag = {k: (k == param_key) for k in self._extracted_flags}
 
             self._prompt_creation = PromptCreation()
@@ -105,13 +103,13 @@ class NanoparticlesExtractorParagraph(BaseModel):
             print(f"\n  [EXTRACTOR.extract_text_info] LLM RAW RESPONSE (param='{param_key}')")
             print(data_response)
 
+            parsed = self._nanoparticles_parser.replace(single_flag.copy(), data_response)
+            print(f"  [EXTRACTOR.extract_text_info] Parsed '{param_key}': {parsed}")
 
+            final_result[param_key] = parsed.get(param_key)
 
-            final_result = self._nanoparticles_parser.replace(
-            final_result,
-            data_response,
-             )
-
+            if "charge_group" in parsed and parsed["charge_group"] is not None:
+                final_result["charge_group"] = parsed["charge_group"]
 
         print(f"\n  [EXTRACTOR.extract_text_info] FINAL MERGED RESULT: {final_result}")
         return final_result
