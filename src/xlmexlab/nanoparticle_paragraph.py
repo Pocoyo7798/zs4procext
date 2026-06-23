@@ -109,7 +109,7 @@ CARGO_DB = OrderedDict({
     "natural_products": [
         "curcumin", "resveratrol",
         "ginsenoside", "quercetin",
-        "EGCG", "berberine" 
+        "EGCG", "berberine", "lupeol",
     ],
 
     "hematopoietic_growth_factors": [
@@ -471,6 +471,15 @@ cargo_map = OrderedDict({
 
     rx(r"ber"): "berberine",                # BER is the alias; canonical = berberine
     rx(r"berberine"): "berberine",
+
+    rx(r"lupeol"): "lupeol",
+    rx(r"fagarasterol"): "lupeol",
+    rx(r"fagarsterol"): "lupeol",
+    rx(r"monogynol B"): "lupeol",
+    rx(r"clerodol"): "lupeol",
+    rx(r"farganasterol"): "lupeol",
+    rx(r"lupenol"): "lupeol",
+    rx(r"tsl-lup\d+"): "lupeol",
  
     # Hematopoietic growth factors
     rx(r"gcsf"): "filgrastim",
@@ -987,6 +996,10 @@ IMAGING_MAP = {
         "abbrs": ["SPECT", "99mTc", "111In"],
         "keywords": ["single-photon emission"]
     },
+    "Cytometry":{
+        "abbrs": [],
+        "keywords": ["cytometry"]
+    },
 }
  
 # off-target organs note: hepatic accumulation = liver acc., 
@@ -1205,30 +1218,28 @@ def _extract_float_near_keyword(text: str, keyword_pattern: str) -> Optional[flo
 def _extract_value_unit_closest_to_keyword(
     text: str,
     keyword_pattern: str,
-    units: list[str] = None
+    units: list[str] = None,
+    max_distance: int =400
 ) -> Optional[Tuple[float, Optional[str], Optional[float], Optional[str]]]:
     text = text.replace("−", "-")
 
     unit_pattern = "|".join(re.escape(u) for u in units)
 
-    # all find all unit
     unit_matches = list(re.finditer(
         rf"(\d+(?:\.\d+)?)\s*({unit_pattern})",
         text,
         re.IGNORECASE
     ))
-    #print (unit_matches)
 
     if not unit_matches:
         return None
 
-    # all keyword matches
     kw_matches = list(re.finditer(
         keyword_pattern,
         text,
         re.IGNORECASE | re.VERBOSE
     ))
-    #print (kw_matches)
+    print(kw_matches)
 
     if not kw_matches:
         return None
@@ -1243,7 +1254,7 @@ def _extract_value_unit_closest_to_keyword(
             unit_center = (unit.start() + unit.end()) / 2
             dist = abs(unit_center - kw_center)
 
-            if dist < best_dist:
+            if dist < best_dist and dist <= max_distance:
                 best_dist = dist
                 best = unit
 
@@ -1252,6 +1263,7 @@ def _extract_value_unit_closest_to_keyword(
         unit = best.group(2)
         return value, None, None, unit
 
+    return None
     return None
 
 
@@ -1444,13 +1456,6 @@ class NanoparticleExtractor(BaseModel):
             return "Diagnosis"
         return None
         
-    def _extract_dosing_schedule(self, text: str) -> Optional[str]:
-        if _first_keyword_match(text, SINGLE_DOSE_KEYWORDS):
-            return "Single Dose"
-        for pattern in MULTIPLE_DOSE_PATTERNS:
-            if re.search(pattern, text):
-                return "Multiple-dose"
-        return None
 
     def _extract_route(self, text: str) -> Optional[list[str]]:
         rules = {
@@ -1525,14 +1530,33 @@ class NanoparticleExtractor(BaseModel):
             re.IGNORECASE,
             )
         
+        exclude = re.search(
+            r"([\d.]+(?:\s*[-–]\s*[\d.]+)?)\s*(?:mg mL−1|µg mL−1|ug mL−1|g mL−1|kg mL−1)\b",
+            text,
+            re.IGNORECASE,
+            )
+        
         if match:
             #print (match.group(0))
             return True
+        elif exclude:
+            return False
         elif match1:
             #print (match1.group(0))
             return True
         else:
             return False
+        
+
+    def _extract_dosing_schedule(self, text: str) -> Optional[str]:
+        if self._extract_dose(text)==False:
+            return None
+        if _first_keyword_match(text, SINGLE_DOSE_KEYWORDS):
+            return "Single Dose"
+        for pattern in MULTIPLE_DOSE_PATTERNS:
+            if re.search(pattern, text):
+                return "Multiple-dose"
+        return None
 
 
     # BIOLOGICAL CONTEXT
@@ -1589,7 +1613,7 @@ class NanoparticleExtractor(BaseModel):
 
     def _extract_encapsulation_efficiency(self, text: str) ->  Optional[bool]:
         EE = _extract_value_unit_closest_to_keyword(
-            text, EE_PATTERNS, ["%"]
+            text, EE_PATTERNS, ["%"], 200
         )
         #print (EE)
         return True if EE else False 

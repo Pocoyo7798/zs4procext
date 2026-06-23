@@ -88,7 +88,7 @@ CARGO_DB = OrderedDict({
     "natural_products": [
         "curcumin", "resveratrol",
         "ginsenoside", "quercetin",
-        "EGCG", "berberine" 
+        "EGCG", "berberine", "lupeol", 
     ],
 
     "hematopoietic_growth_factors": [
@@ -439,6 +439,15 @@ cargo_map = OrderedDict({
 
     rx(r"ber"): "berberine",                # BER is the alias; canonical = berberine
     rx(r"berberine"): "berberine",
+
+    rx(r"lupeol"): "lupeol",
+    rx(r"fagarasterol"): "lupeol",
+    rx(r"fagarsterol"): "lupeol",
+    rx(r"monogynol B"): "lupeol",
+    rx(r"clerodol"): "lupeol",
+    rx(r"farganasterol"): "lupeol",
+    rx(r"lupenol"): "lupeol",
+    rx(r"tsl-lup\d+"): "lupeol",
  
     # Hematopoietic growth factors
     rx(r"gcsf"): "filgrastim",

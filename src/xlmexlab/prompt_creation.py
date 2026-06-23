@@ -27,10 +27,25 @@ PARAM_META: dict[str, dict] = {
         "unit_hint": "nm",
         "specific_format": "size_nm | <value> | <unit> | <drug_name>",
         "field_rules": {
-            "<value>": "Numeric size exactly as reported (include ranges and deviations).",
+         "<value>": "Numeric size exactly as reported (include ranges and deviations).",
             "<unit>": "Unit exactly as written in text.",
-            "<drug_name>": "Look at the sentence containing the size value and its immediate surrounding sentences. Identify the nanoparticle type and any cargo or drug being encapsulated.\n Use that as the drug_name. If a sentence reports two sizes linked to a before/after or increase/decrease due to encapsulation: \n- The smaller value belongs to the bare particle: append '_unloaded' to the nanoparticle name.\n - The larger value belongs to the cargo-loaded particle: use the cargo name combined with the nanoparticle name and append '_loaded'.\n Extract each as a separate line.",
-        },
+            "<drug_name>": (
+                "Look at the sentence containing the size value and its immediate surrounding sentences. "
+                "Identify the nanoparticle type and any cargo or drug being encapsulated. Use that as the drug_name. "
+                "LOADED/UNLOADED rule — apply ONLY when ALL of these are true: "
+                "1. Two sizes are explicitly compared in the SAME sentence or consecutive sentences. "
+                "2. The text explicitly mentions encapsulation, loading, or drug incorporation "
+                "as the cause of the size difference (e.g. 'increased due to encapsulation', "
+                "'after loading', 'upon drug incorporation'). "
+                "3. One particle is described as bare/empty and the other as drug-loaded. "
+                "Then: smaller = <nanoparticle>_unloaded, larger = <cargo>_<nanoparticle>_loaded. "
+                "If sizes differ due to METHOD (e.g. two preparation protocols, two instruments, "
+                "two batches, two concentrations): extract each value separately using the "
+                "formulation name as drug_name, NO _loaded/_unloaded suffix. "
+                "If sizes differ due to FORMULATION VARIANT (e.g. different drug concentrations "
+                "of the same loaded particle): extract each with its formulation name, NO suffix."
+            ),
+    },
         "exclude": [
             "theoretical sizes",
             "expected sizes",
@@ -201,7 +216,8 @@ class PromptCreation(BaseModel):
 
         #  EXPERTISE (system role) 
         expertise = (
-            "You are a nanoparticle information-extraction assistant. "
+            ""
+            #You are a nanoparticle information-extraction assistant. "
             #"You extract data truthfully from scientific text. "
             #"Only extract values explicitly stated as part of the AUTHORS' OWN experiment. "
             #"Do not infer, guess, or hallucinate values."
