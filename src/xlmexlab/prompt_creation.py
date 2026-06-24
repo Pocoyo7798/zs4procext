@@ -139,7 +139,7 @@ PARAM_META: dict[str, dict] = {
 
     "dose_group": {
         "description": "Administered treatment doses from the AUTHORS' OWN experiment only",
-        "unit_hint": "mg/kg, μg/kg, mg/animal, μg, mg, g",
+        "unit_hint": "as reported",
         "specific_format": "dose_group | <value> | <unit> | <drug_name>",
         "field_rules": {
             "<value>": "Numeric only, exactly as reported. Do NOT include units or route.",
