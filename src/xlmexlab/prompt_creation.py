@@ -30,7 +30,7 @@ PARAM_META: dict[str, dict] = {
             "<value>": "Numeric size exactly as reported (include ranges and deviations).",
             "<unit>": "Unit exactly as written in text.",
             "<drug_name>": (
-                "Identify the nanoparticle cargo, drug, or encapsulated compound associated to the reported size."
+                "Identify the drug name associated to the reported size."
                 "If no cargo or drug is specified, leave blank."
             ),
             "<load>": (
