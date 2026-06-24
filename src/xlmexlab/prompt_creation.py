@@ -10,7 +10,7 @@ GLOBAL_SCREENING = (
     "For each numerical candidate found in the text, apply these two steps:\n"
     "  STEP 1 — Is it introduced by 'X et al.', 'reported', 'showed', 'found', "
     "'according to', or a citation [N]? → DISCARD\n"
-    "  STEP 2 — Is it from the authors' own experiment, referred as \"tested\" or obtained in this study?  → KEEP\n"
+    "  STEP 2 — Is it from the authors' own experiment?  → KEEP\n"
     "Only KEPT values are extracted."
 )
 
@@ -31,15 +31,15 @@ PARAM_META: dict[str, dict] = {
             "<unit>": "Unit exactly as written in text.",
             "<drug_name>": (
                 "Identify the drug name associated to the reported size."
-                "If no cargo or drug is specified, leave blank."
+                "If no cargo or drug is specified, leave empty"
             ),
             "<load>": (
                 "Loading status of the nanoparticle. "
                 "Use 'loaded' only when the text explicitly states that a drug, "
-                "cargo, or active compound has been encapsulated, incorporated, "
+                "cargo, or active compound is refered as encapsulated, incorporated, "
                 "or loaded. Use 'unloaded' only when the particle is explicitly "
                 "described as empty, bare, blank, or unloaded. "
-                "Leave blank if loading status is not specified."
+                "Leave empty if loading status is not specified."
             ),
             "<method>": "Preparation, formulation, or measurement method associated with the reported size when explicitly stated.",
     },
@@ -79,7 +79,7 @@ PARAM_META: dict[str, dict] = {
     "pdi": {
         "description": "Polydispersity index",
         "unit_hint": "dimensionless",
-        "method": "methodology usedfor preparation",
+        "method": "Preparation, formulation, or measurement method asssociated to the reported PDI",
         "specific_format": "pdi | <value>| <methodology>",
         "field_rules": {
             "<value>": "Numeric PDI exactly as reported.",
