@@ -79,10 +79,10 @@ PARAM_META: dict[str, dict] = {
     "pdi": {
         "description": "Polydispersity index",
         "unit_hint": "dimensionless",
-        "method": "Preparation, formulation, or measurement method asssociated to the reported PDI",
         "specific_format": "pdi | <value>| <methodology>",
         "field_rules": {
             "<value>": "Numeric PDI exactly as reported.",
+            "<methodology>": "Preparation, formulation, or measurement method asssociated to the reported PDI",
         },
         "exclude": [],
     },
@@ -218,9 +218,8 @@ class PromptCreation(BaseModel):
 
         # INITIALIZATION 
         initialization = (
-            ""
-            #"Only extract values explicitly stated as part of the AUTHORS' OWN experiment. "
-            #"Ignore values mentioned from other studies, literature comparisons, hypotheses, or discussions."
+            "Only extract values explicitly stated as part of the AUTHORS' OWN experiment."
+            "Ignore values mentioned from other studies, literature comparisons, hypotheses, or discussions."
         )
 
         #  DEFINITIONS 
