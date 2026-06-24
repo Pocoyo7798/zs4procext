@@ -10,7 +10,7 @@ GLOBAL_SCREENING = (
     "For each numerical candidate found in the text, apply these two steps:\n"
     "  STEP 1 — Is it introduced by 'X et al.', 'reported', 'showed', 'found', "
     "'according to', or a citation [N]? → DISCARD\n"
-    "  STEP 2 — Is it from the authors' own experiment? → KEEP\n"
+    "  STEP 2 — Is it from the authors' own experiment, referred as \"tested\" or obtained in this study?  → KEEP\n"
     "Only KEPT values are extracted."
 )
 
@@ -25,26 +25,23 @@ PARAM_META: dict[str, dict] = {
     "size_nm": {
         "description": "Nanoparticle diameter or size explicitly measured in the study",
         "unit_hint": "nm",
-        "specific_format": "size_nm | <value> | <unit> | <drug_name>",
+        "specific_format": "size_nm | <value> | <unit> | <drug_name> | <load> | <method>",
         "field_rules": {
-         "<value>": "Numeric size exactly as reported (include ranges and deviations).",
+            "<value>": "Numeric size exactly as reported (include ranges and deviations).",
             "<unit>": "Unit exactly as written in text.",
             "<drug_name>": (
-                "Look at the sentence containing the size value and its immediate surrounding sentences. "
-                "Identify the nanoparticle type and any cargo or drug being encapsulated. Use that as the drug_name. "
-                "LOADED/UNLOADED rule — apply ONLY when ALL of these are true: "
-                "1. Two sizes are explicitly compared in the SAME sentence or consecutive sentences. "
-                "2. The text explicitly mentions encapsulation, loading, or drug incorporation "
-                "as the cause of the size difference (e.g. 'increased due to encapsulation', "
-                "'after loading', 'upon drug incorporation'). "
-                "3. One particle is described as bare/empty and the other as drug-loaded. "
-                "Then: smaller = <nanoparticle>_unloaded, larger = <cargo>_<nanoparticle>_loaded. "
-                "If sizes differ due to METHOD (e.g. two preparation protocols, two instruments, "
-                "two batches, two concentrations): extract each value separately using the "
-                "formulation name as drug_name, NO _loaded/_unloaded suffix. "
-                "If sizes differ due to FORMULATION VARIANT (e.g. different drug concentrations "
-                "of the same loaded particle): extract each with its formulation name, NO suffix."
+                "Identify the nanoparticle cargo, drug, or encapsulated compound associated to the reported size."
+                "If no cargo or drug is specified, leave blank."
             ),
+            "<load>": (
+                "Loading status of the nanoparticle. "
+                "Use 'loaded' only when the text explicitly states that a drug, "
+                "cargo, or active compound has been encapsulated, incorporated, "
+                "or loaded. Use 'unloaded' only when the particle is explicitly "
+                "described as empty, bare, blank, or unloaded. "
+                "Leave blank if loading status is not specified."
+            ),
+            "<method>": "Preparation, formulation, or measurement method associated with the reported size when explicitly stated.",
     },
         "exclude": [
             "theoretical sizes",
@@ -95,14 +92,11 @@ PARAM_META: dict[str, dict] = {
         "unit_hint": "%",
         "specific_format": "encapsulation_efficiency_pct | <value> | <unit> | <drug_name>",
         "field_rules": {
-            "<value>": "Numeric efficiency exactly as reported (include the standard deviation if available).",
+            "<value>": "Numeric EE (Encapsulation Efficiency) exactly as reported (include the standard deviation if available).",
             "<unit>": "Percentage or unit as written.",
             "<drug_name>": "Drug explicitly mentioned in experiment.",
         },
         "exclude": [
-            "loading capacity",
-            "drug concentration",
-            "release percentage",
             "theoretical efficiency",
         ],
     },
@@ -145,7 +139,7 @@ PARAM_META: dict[str, dict] = {
 
     "dose_group": {
         "description": "Administered treatment doses from the AUTHORS' OWN experiment only",
-        "unit_hint": "as reported",
+        "unit_hint": "mg/kg, μg/kg, mg/animal, μg, mg, g",
         "specific_format": "dose_group | <value> | <unit> | <drug_name>",
         "field_rules": {
             "<value>": "Numeric only, exactly as reported. Do NOT include units or route.",
@@ -216,8 +210,7 @@ class PromptCreation(BaseModel):
 
         #  EXPERTISE (system role) 
         expertise = (
-            ""
-            #You are a nanoparticle information-extraction assistant. "
+            "You are a nanoparticle information-extraction assistant."
             #"You extract data truthfully from scientific text. "
             #"Only extract values explicitly stated as part of the AUTHORS' OWN experiment. "
             #"Do not infer, guess, or hallucinate values."

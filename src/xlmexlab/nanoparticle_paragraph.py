@@ -1519,33 +1519,23 @@ class NanoparticleExtractor(BaseModel):
         quantity_units in your synthesis_parsing_parameters.json config.
         Fallback: direct regex.
         """
-        match = re.search(
-            r"([\d.]+(?:\s*[-–]\s*[\d.]+)?)\s*(?:mg|µg|ug|g)\s*/\s*kg\b",
+        # Dose por peso corporal (mg/kg, µg/kg, ...)
+        if re.search(
+            r"\b\d+(?:\.\d+)?\s*(?:mg|µg|μg|ug|g)\s*/\s*kg\b",
             text,
             re.IGNORECASE,
-            )
-        match1 = re.search(
-            r"([\d.]+(?:\s*[-–]\s*[\d.]+)?)\s*(?:mg|µg|ug|g|kg)\b(?!\s*/)",
-            text,
-            re.IGNORECASE,
-            )
-        
-        exclude = re.search(
-            r"([\d.]+(?:\s*[-–]\s*[\d.]+)?)\s*(?:mg mL−1|µg mL−1|ug mL−1|g mL−1|kg mL−1)\b",
-            text,
-            re.IGNORECASE,
-            )
-        
-        if match:
-            #print (match.group(0))
+        ):
             return True
-        elif exclude:
-            return False
-        elif match1:
-            #print (match1.group(0))
+
+        # Massa simples, mas NÃO seguida de mL ou L
+        if re.search(
+            r"\b\d+(?:\.\d+)?\s*(?:mg|µg|μg|ug|g|kg)\b(?!\s*(?:/|\b(?:mL|L)\b))",
+            text,
+            re.IGNORECASE,
+        ):
             return True
-        else:
-            return False
+
+        return False
         
 
     def _extract_dosing_schedule(self, text: str) -> Optional[str]:
