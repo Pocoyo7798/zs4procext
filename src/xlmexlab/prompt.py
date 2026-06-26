@@ -549,6 +549,18 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
     "Qwen3.5-9B": str(
         importlib_resources.files("xlmexlab")
         / "resources/template"
-        / "qwen1.5_default_chat_template.json"
-    )
+        / "qwen_vl_template.json"
+    ),
+    #"qwen1.5_default_chat_template.json"
+    "DeepSeek-OCR-2": str(
+        importlib_resources.files("xlmexlab")
+        / "resources/template"
+        / "deepseek_ocr_default_template.json"
+    ),
+    "InternVL3_5-8B-Instruct": str(
+        importlib_resources.files("xlmexlab")
+        / "resources/template"
+        / "internvl_default_instruct_template.json"
+    ),
+
 }
