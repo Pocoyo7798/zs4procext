@@ -1334,12 +1334,17 @@ TUMOR_PATTERNS = r"""
 (?:
     tumor\s*volume\s*(?:reduction|decrease|shrinkage)
   | (?:reduc(?:e|ed|tion|es)|decreas(?:e|ed|es)|shrink(?:age|ing|es)?)\s+(?:in\s+)?tumou?r\s*volume
+  | (?:reduc(?:e|ed|tion|es)|decreas(?:e|ed|es)|shrink(?:age|ing|es)?)\s+(?:in\s+)?tumo?r\s*volume
+  | (?:reduc(?:e|ed|tion|es)|decreas(?:e|ed|es)|shrink(?:age|ing|es)?)\s+(?:in\s+)?tumou?r\s*size
+  | (?:reduc(?:e|ed|tion|es)|decreas(?:e|ed|es)|shrink(?:age|ing|es)?)\s+(?:in\s+)?tumou?r\s*size
   | tumou?r\s*volume.*?(?:reduc(?:e|ed|tion|es)|decreas(?:e|ed|es)|shrink(?:age|ing|es)?|inhibit(?:ed|ing|s)?)
   | tumou?r\s*growth\s*(?:inhibition|inhibited)
   | (?:inhibition|suppression)\s+of\s+tumou?r\s*growth
   | \bTGI\b
   | tumou?r.*?(?:shrinkage|regression)
   | reduc(?:e|ed|tion|es)
+  | tumor\s*size\s*(?:reduction|decrease|shrinkage)
+  | tumour\s*size\s*(?:reduction|decrease|shrinkage)
 )
 """
 
