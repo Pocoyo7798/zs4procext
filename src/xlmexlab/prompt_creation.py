@@ -25,7 +25,7 @@ PARAM_META: dict[str, dict] = {
     "size_nm": {
         "description": "Nanoparticle diameter or size explicitly measured in the study",
         "unit_hint": "nm",
-        "specific_format": "size_nm | <value> | <unit> | <drug_name> | <load> | <method> | <size_type>",
+        "specific_format": "size_nm | <value> | <unit> | <drug_name> | <load> | <size_type>",
         "field_rules": {
             "<value>": "Numeric size exactly as reported (include ranges , intervals and deviations).",
             "<unit>": "Unit exactly as written in text.",
@@ -38,15 +38,15 @@ PARAM_META: dict[str, dict] = {
                 "Use 'loaded' only when the text explicitly states that a drug, "
                 "cargo, or active compound is refered as encapsulated, incorporated, "
                 "or loaded. Use 'unloaded' only when the particle is explicitly "
-                "described as empty, bare, blank, or unloaded. "
+                "described as unloaded. "
                 "Leave empty if the loading status is not explicitly stated or cannot be unambiguously determined."
             ),
             "<size_type>": (
                 "Type of particle size measurement reported. "
                 "Indicate the method used to determine size, such as 'DLS', "
-                "'hydrodynamic diameter', 'TEM', 'diameter', 'z-average', 'particle size', "
+                "'hydrodynamic diameter', 'TEM', 'z-average' "
                 "or other explicitly stated measurement type. "
-                "Use only values that are explicitly mentioned in the text; do not infer the method if it is not clearly specified."
+                "Use only values that are explicitly mentioned in the text; do not infer the method if it is not clearly specified if not specified, leave empty."
             )
     },
         "exclude": [
