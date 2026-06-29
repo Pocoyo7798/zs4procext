@@ -27,7 +27,7 @@ PARAM_META: dict[str, dict] = {
         "unit_hint": "nm",
         "specific_format": "size_nm | <value> | <unit> | <drug_name> | <load> | <method>",
         "field_rules": {
-            "<value>": "Numeric size exactly as reported (include ranges and deviations).",
+            "<value>": "Numeric size exactly as reported (include ranges , intervals and deviations).",
             "<unit>": "Unit exactly as written in text.",
             "<drug_name>": (
                 "Identify the drug name associated to the reported size."
@@ -41,7 +41,7 @@ PARAM_META: dict[str, dict] = {
                 "described as empty, bare, blank, or unloaded. "
                 "Leave empty if loading status is not specified."
             ),
-            "<method>": "Preparation, formulation, or measurement method associated with the reported size when explicitly stated.",
+            "<method>": "Measurement method associated with the reported size when explicitly stated.",
     },
         "exclude": [
             "theoretical sizes",

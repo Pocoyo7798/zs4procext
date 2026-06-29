@@ -27,95 +27,416 @@ import pandas as pd
 
 # 1. CANONICAL DATABASE
 CARGO_DB = OrderedDict({
-
-    "mrna": [
-        "neoantigen mRNA", "mRNA-4157", "mRNA-4359",
-        "OX40L mRNA", "IL-12 mRNA", "IL-23 mRNA",
-        "TGF-β trap mRNA", "WT1 antigen mRNA",
-        "HER2 antigen mRNA", "MUC1 mRNA",
-        "TRP2 mRNA", "gp100 mRNA", "p53 mRNA",
-        "Cas9 mRNA", "Cas12a mRNA"
+    "alcohol_antagonist": [
+        "Antabuse",
+        "DS",
     ],
 
-    "sarna_circrna": [
-        "MUC1 saRNA", "HER2 saRNA",
-        "NY-ESO-1 saRNA", "hTERT circRNA"
+    "alkaloid": [
+        "Vinblastine",
+        "Vincristine",
+        "Vinorelbine",
     ],
 
-    "sirna_shrna": [
-        "STAT3 siRNA", "survivin siRNA", "BCL-2 siRNA",
-        "VEGF siRNA", "MMP-9 siRNA", "EZH2 siRNA",
-        "Twist1 siRNA", "EGFR siRNA", "anti-EGFR siRNA",
-        "PI3K siRNA", "AKT siRNA", "generic siRNA", "shRNA"
+    "alkylating_agent": [
+        "BCNU",
+        "Busulfan",
+        "Carmustine",
+        "Cyclophosphamide",
+        "Melphalan",
+        "Temozolomide",
+        "TMZ",
     ],
 
-    "mirna": [
-        "miR-34a", "miR-155", "miR-21", "miR-200",
-        "miR-145", "miR-10b", "miR-373",
-        "miR-182-3p", "let-7"
+    "anthracycline": [
+        "Adriamycin",
+        "daunorubicin",
+        "DOX",
+        "Doxil",
+        "epirubicin",
+        "Hydroxydaunorubicin",
+        "idarubicin",
     ],
 
-    "crispr": [
-        "Cas9 + HER2 sgRNA",
-        "Cas9 + ESR1 sgRNA",
-        "Cas9 + PIK3CA sgRNA",
+    "anti_malarial": [
+        "Chloroquine",
+        "Hydroxychloroquine",
+    ],
+
+    "anti_tumourigenic_cytokine": [
+        "IFN-γ",
+        "IL-2",
+    ],
+
+    "anti_tumourigenic_cytokine_nucleic_acid": [
+        "IL-12 mRNA",
+        "IL-23 mRNA",
+    ],
+
+    "antibody": [
+        "anti-PD-L1",
+        "Atezolizumab",
+        "Avelumab",
+        "Bavencio",
+        "Durvalumab",
+        "Herceptin",
+        "Imfinzi",
+        "Ipilimumab",
+        "Keytruda",
+        "Nivolumab",
+        "Opdivo",
+        "Pembrolizumab",
+        "Tecentriq",
+        "Yervoy",
+    ],
+
+    "antibody_anthracycline": [
+        "sacituzumab govitecan",
+        "Trodelvy",
+    ],
+
+    "antifungal": [
+        "Amphotericin B",
+    ],
+
+    "antigen": [
+        "neoantigen mRNA",
+        "OVA",
+        "OVA peptide",
+        "Tumor lysate",
+    ],
+
+    "antigen_nucleic_acid": [
+        "HER2 antigen mRNA",
+    ],
+
+    "antihelmintic_ribosome_inactivating": [
+        "Mebendazole",
+    ],
+
+    "antimetabolite": [
+        "5-Fluorouracil",
+        "5-FU",
+        "Cytarabine",
+        "GEM",
+        "MTX",
+        "Pemetrexed",
+    ],
+
+    "antiviral_nucleic_acid": [
+        "Acyclovir",
+    ],
+
+    "beta_blocker": [
+        "Propranolol",
+    ],
+
+    "biologic": [
+        "DM1",
+        "Filgrastim",
+        "G-CSF",
+        "Granocyte",
+        "Lenograstim",
+        "Neulasta",
+        "Neupogen",
+        "Pegfilgrastim",
+    ],
+
+    "biphosphonates": [
+        "Fosamax",
+        "Man-LP@ZOL",
+        "Man-NP@ZOL",
+        "Mannosylated Liposome ZOL",
+        "ZOL",
+        "Zoledronate",
+        "Zometa",
+    ],
+
+    "boron_neutron_capture_therapy": [
+        "BPA",
+        "BSH",
+    ],
+
+    "cdk4_6_inhibitor_autophagy_inhibitor": [
+        "Abemaciclib",
+        "Ibrance",
+        "Kisqali",
+        "Palbociclib",
+        "Ribociclib",
+        "Verzenio",
+    ],
+
+    "enzyme": [
+        "DNase",
+        "glucose oxidase",
+        "L-asparaginase",
+    ],
+
+    "enzyme_inhibitor": [
+        "Lynparza",
+        "Talzenna",
+    ],
+
+    "estrogen_receptor_modulator": [
+        "Fulvestrant",
+        "Tamoxifen",
+    ],
+
+    "gnrh_agonist": [
+        "Goserelin",
+        "Leuprolide",
+        "Lupron",
+        "Zoladex",
+    ],
+
+    "hypoxic_cytotoxin": [
+        "AQ4N",
+        "Tirapazamine",
+    ],
+
+    "immunoadjuvant": [
+        "cGAMP",
+        "CpG ODN",
+        "DMXAA",
+        "imiquimod",
+        "poly I:C",
+        "R837",
+        "R848",
+        "Resiquimod",
+        "STING agonist",
+        "TLR9 agonist",
+        "vadimezan",
+    ],
+
+    "kinase_inhibitor": [
+        "Acalabrutinib",
+        "Afatinib",
+        "Alecensa",
+        "Alectinib",
+        "Aliqopa",
+        "Alpelisib",
+        "Alunbrig",
+        "Bicalutamide",
+        "Brigatinib",
+        "Brukinsa",
+        "Calquence",
+        "Casodex",
+        "Ceritinib",
+        "Copanlisib",
+        "Copiktra",
+        "Crizotinib",
+        "Duvelisib",
+        "Erlotinib",
+        "Gilotrif",
+        "Gleevec",
+        "Ibrutinib",
+        "Imatinib",
+        "Imbruvica",
+        "Lapatinib",
+        "Nexavar",
+        "Osimertinib",
+        "Piqray",
+        "Rap",
+        "Sirolimus",
+        "Sorafenib",
+        "Sunitinib",
+        "Sutent",
+        "Tagrisso",
+        "Tarceva",
+        "Tykerb",
+        "Xalkori",
+        "Zanubrutinib",
+        "Zykadia",
+    ],
+
+    "ligand": [
+        "C-peptide-SLN-PTX",
+        "iRGD",
+        "MMP-responsive peptide",
+        "RGD peptide",
+    ],
+
+    "metal_compound": [
+        "Gd-DTPA",
+    ],
+
+    "natural_product": [
+        "BER",
+        "Berberine",
+        "clerodol",
+        "Curcumin",
+        "diferuloylmethane",
+        "EGCG",
+        "epigallocatechin gallate",
+        "fagarasterol",
+        "fagarsterol",
+        "farganasterol",
+        "Ginsenoside",
+        "lupenol",
+        "Lupeol",
+        "monogynol B",
+        "Quercetin",
+        "Resveratrol",
+        "tsl-lup",
+    ],
+
+    "nitroxide_radical": [
+        "4-amino-TEMPO",
+        "TEMPO",
+    ],
+
+    "non_steroidal_anti_inflammatory": [
+        "Aspirin",
+        "Celecoxib",
+        "Indomethacin",
+    ],
+
+    "nucleic_acid": [
+        "AKT siRNA",
+        "anti-EGFR siRNA",
         "base editor BRCA1",
-        "sgRNA", "crRNA"
+        "BCL-2 siRNA",
+        "Cas12a mRNA",
+        "Cas9 + ESR1 sgRNA",
+        "Cas9 + HER2 sgRNA",
+        "Cas9 + PIK3CA sgRNA",
+        "Cas9 mRNA",
+        "circRNA",
+        "crRNA",
+        "EGFR siRNA",
+        "EZH2 siRNA",
+        "generic siRNA",
+        "gp100 mRNA",
+        "HER2 saRNA",
+        "hTERT circRNA",
+        "let-7",
+        "miR-10b",
+        "miR-145",
+        "miR-155",
+        "miR-182-3p",
+        "miR-200",
+        "miR-21",
+        "miR-34a",
+        "miR-373",
+        "miRNA",
+        "MMP-9 siRNA",
+        "mRNA",
+        "mRNA-4157",
+        "mRNA-4359",
+        "MUC1 mRNA",
+        "MUC1 saRNA",
+        "NY-ESO-1 saRNA",
+        "OX40L mRNA",
+        "p53 mRNA",
+        "PI3K siRNA",
+        "saRNA",
+        "sgRNA",
+        "shRNA",
+        "siRNA",
+        "STAT3 siRNA",
+        "survivin siRNA",
+        "TGF-β trap mRNA",
+        "TRP2 mRNA",
+        "Twist1 siRNA",
+        "VEGF siRNA",
+        "WT1 antigen mRNA",
     ],
 
-    "chemotherapy": [
-        "paclitaxel", "docetaxel", "doxorubicin",
-        "epirubicin", "gemcitabine", "fluorouracil",
-        "eribulin", "mertansine",
-        "sacituzumab govitecan", "vinorelbine",                
+    "peripheral_vasostimulant": [
+        "Nitroglycerin",
+        "Sildenafil",
     ],
 
-    "targeted_small_molecules": [
-        "lapatinib", "olaparib",
-        "bicalutamide", "rapamycin", "disulfiram",
-        "talazoparib", "palbociclib", "abemaciclib", "ribociclib",
-        "erlotinib", "afatinib", "osimertinib",
-        "crizotinib", "ceritinib", "alectinib", "brigatinib",
-        "alpelisib", "copanlisib", "duvelisib",
-        "ibrutinib", "acalabrutinib", "zanubrutinib"
+    "photosensitizer": [
+        "BPD",
+        "Ce6",
+        "ICG",
+        "Phthalocyanine",
+        "Porphyrin",
+        "Verteporfin",
     ],
 
-    "bisphosphonates": [
-        "zoledronic acid", "ZOL",
-        "Man-LP@ZOL", "Man-NP@ZOL", "alendronate"
+    "photosensitizer_enzyme": [
+        "peroxidase",
     ],
 
-    "immune_modulators": [
-        "imiquimod", "R848", "CpG Oligodeoxynucleotide",
-        "poly I:C", "STING agonist", "cGAMP",
-        "vadimezan", "dulanermin", "TLR9 agonist"   # DMXAA→vadimezan, TRAIL→dulanermin
+    "platinum_prodrug": [
+        "Carboplatin",
+        "Cisplatin",
+        "Nedaplatin",
+        "Oxaliplatin",
     ],
 
-    "antibodies_peptides": [
-        "trastuzumab", "anti-PD-L1",
-        "RGD peptide", "iRGD",
-        "C-peptide-SLN-PTX"
+    "proteasome_inhibitor": [
+        "Bortezomib",
+        "Carfilzomib",
+        "Kyprolis",
+        "Velcade",
     ],
 
-    "checkpoint_inhibitors": [              # new category (mirrors Excel)
-        "keytruda", "opdivo", "tecentriq",
-        "yervoy", "avelumab", "durvalumab"
+    "proteinogenic_amino_acid": [
+        "L-arginine",
+        "L-glutamine",
     ],
 
-    "imaging_phototherapy": [
-        "ICG", "Ce6", "BPD", "Gd-DTPA"
+    "purine_analog": [
+        "Cladribine",
+        "Clofarabine",
+        "Fludarabine",
     ],
 
-    "natural_products": [
-        "curcumin", "resveratrol",
-        "ginsenoside", "quercetin",
-        "EGCG", "berberine", "lupeol",
+    "radioactive_element": [
+        "131I",
+        "177Lu",
+        "64Cu",
+        "89Zr",
+        "90Y",
     ],
 
-    "hematopoietic_growth_factors": [
-        "filgrastim", "pegfilgrastim",
-        "lenograstim"
-    ],   
+    "reducing_and_complexing_thiol": [
+        "DTT",
+        "Glutathione",
+        "GSH",
+        "N-acetylcysteine",
+        "NAC",
+    ],
+
+    "ribonuclease": [
+        "Onconase",
+        "Ranpirnase",
+    ],
+
+    "rna_synthesis_inhibitor": [
+        "Actinomycin D",
+        "eribulin",
+        "Halaven",
+        "α-amanitin",
+    ],
+
+    "taxane": [
+        "Abraxane",
+        "Cabazitaxel",
+        "nab-paclitaxel",
+        "PTX",
+        "Taxol",
+        "Taxotere",
+    ],
+
+    "topoisomerase_inhibitor": [
+        "Camptothecin",
+        "CPT",
+        "Etoposide",
+        "Irinotecan",
+        "Topotecan",
+    ],
+
+    "tumour_necrosis_factor": [
+        "dulanermin",
+        "hTRAIL",
+        "TNF-α",
+        "TRAIL",
+    ],
+
 })
 
 cargo_list = sorted({
@@ -134,368 +455,275 @@ def rx(term):
 
 # 3. LITERATURE-SCALE NOMENCLATURE MAP
 cargo_map = OrderedDict({
-    # mRNA / Vaccines
-    rx(r"neoantigen(?:specific)?"+SEP+r"m"+RNA): "neoantigen mRNA",
-    rx(r"personali[sz]ed"+SEP+r"tumou?r"+SEP+r"antigens?"+SEP+r"m"+RNA): "neoantigen mRNA",
-
-    rx(r"m"+RNA+SEP+r"4157"): "mRNA-4157",
-    rx(r"mrna4157"): "mRNA-4157",
-
-    rx(r"m"+RNA+SEP+r"4359"): "mRNA-4359",
-    rx(r"mrna4359"): "mRNA-4359",
-
-    rx(r"ox40l"+SEP+r"m"+RNA): "OX40L mRNA",
-    rx(r"cd134l"+SEP+r"m"+RNA): "OX40L mRNA",
-
-    rx(r"il"+SEP+r"12"+SEP+r"m"+RNA): "IL-12 mRNA",
-    rx(r"interleukin"+SEP+r"12"+SEP+r"m"+RNA): "IL-12 mRNA",
-
-    rx(r"il"+SEP+r"23"+SEP+r"m"+RNA): "IL-23 mRNA",
-    rx(r"interleukin"+SEP+r"23"+SEP+r"m"+RNA): "IL-23 mRNA",
-
-    rx(r"tgf"+SEP+r"[βb]"+SEP+r"trap"+SEP+r"m"+RNA): "TGF-β trap mRNA",
-    rx(r"transforming"+SEP+r"growth"+SEP+r"factor"+SEP+r"beta"+SEP+r"trap"): "TGF-β trap mRNA",
-
-    rx(r"ro7198457"): "WT1 antigen mRNA",
-    rx(r"wt1"+SEP+r"(antigen)?"+SEP+r"m"+RNA): "WT1 antigen mRNA",
-
-    rx(r"bnt111"): "HER2 antigen mRNA",
-    rx(r"her2"+SEP+r"(antigen)?"+SEP+r"m"+RNA): "HER2 antigen mRNA",
-    rx(r"erbb2"+SEP+r"m"+RNA): "HER2 antigen mRNA",
-
-    rx(r"muc1"+SEP+r"m"+RNA): "MUC1 mRNA",
-    rx(r"trp2"+SEP+r"m"+RNA): "TRP2 mRNA",
-    rx(r"gp100"+SEP+r"m"+RNA): "gp100 mRNA",
-    rx(r"p53"+SEP+r"m"+RNA): "p53 mRNA",
-    rx(r"tp53"+SEP+r"m"+RNA): "p53 mRNA",
-
-    rx(r"cas9"+SEP+r"m"+RNA): "Cas9 mRNA",
-    rx(r"spcas9"+SEP+r"m"+RNA): "Cas9 mRNA",
-
-    rx(r"cas12a"+SEP+r"m"+RNA): "Cas12a mRNA",
-    rx(r"cpf1"+SEP+r"m"+RNA): "Cas12a mRNA",
-
-    
-    # saRNA / circRNA
-    rx(r"muc1"+SEP+r"sa"+RNA): "MUC1 saRNA",
-    rx(r"her2"+SEP+r"sa"+RNA): "HER2 saRNA",
-    rx(r"ny"+SEP+r"eso"+SEP+r"1"+SEP+r"sa"+RNA): "NY-ESO-1 saRNA",
-    rx(r"htert"+SEP+r"circ"+RNA): "hTERT circRNA",
-    rx(r"circular"+SEP+r"rna"+SEP+r"htert"): "hTERT circRNA",
-
-    
-    # siRNA / shRNA
-    rx(r"anti"+SEP+r"egfr"+SEP+r"si"+RNA): "anti-EGFR siRNA",
-    rx(r"egfr"+SEP+r"si"+RNA): "EGFR siRNA",
-    rx(r"erbb1"+SEP+r"si"+RNA): "EGFR siRNA",
-
-    rx(r"stat3"+SEP+r"si"+RNA): "STAT3 siRNA",
-    rx(r"survivin"+SEP+r"si"+RNA): "survivin siRNA",
-    rx(r"birc5"+SEP+r"si"+RNA): "survivin siRNA",
-
-    rx(r"bcl"+SEP+r"2"+SEP+r"si"+RNA): "BCL-2 siRNA",
-    rx(r"bcl2"+SEP+r"si"+RNA): "BCL-2 siRNA",
-
-    rx(r"vegf"+SEP+r"si"+RNA): "VEGF siRNA",
-    rx(r"vegfa"+SEP+r"si"+RNA): "VEGF siRNA",
-
-    rx(r"mmp"+SEP+r"9"+SEP+r"si"+RNA): "MMP-9 siRNA",
-    rx(r"ezh2"+SEP+r"si"+RNA): "EZH2 siRNA",
-    rx(r"twist1"+SEP+r"si"+RNA): "Twist1 siRNA",
-    rx(r"pi3k"+SEP+r"si"+RNA): "PI3K siRNA",
-    rx(r"pik3ca"+SEP+r"si"+RNA): "PI3K siRNA",
-    rx(r"akt"+SEP+r"si"+RNA): "AKT siRNA",
-    rx(r"akt1"+SEP+r"si"+RNA): "AKT siRNA",
-
-    rx(r"short"+SEP+r"hairpin"+SEP+r"rna"): "shRNA",
-    rx(r"sh"+RNA): "shRNA",
-
-    rx(r"small"+SEP+r"interfering"+SEP+r"rna"): "generic siRNA",
-    rx(r"si"+RNA): "generic siRNA",
-
-    
-    # miRNA
-    rx(r"mir"+SEP+r"34a"): "miR-34a",
-    rx(r"micro"+SEP+r"rna"+SEP+r"34a"): "miR-34a",
-
-    rx(r"mir"+SEP+r"155"): "miR-155",
-    rx(r"mir"+SEP+r"21"): "miR-21",
-    rx(r"mir"+SEP+r"200"): "miR-200",
-    rx(r"mir"+SEP+r"145"): "miR-145",
-    rx(r"mir"+SEP+r"10b"): "miR-10b",
-    rx(r"mir"+SEP+r"373"): "miR-373",
-    rx(r"mir"+SEP+r"182"+SEP+r"3p"): "miR-182-3p",
-
-    rx(r"let"+SEP+r"7"): "let-7",
-
-    
-    # CRISPR / guides
-    rx(r"cas9"+SEP+r"her2"+SEP+r"sg"+RNA): "Cas9 + HER2 sgRNA",
-    rx(r"cas9"+SEP+r"esr1"+SEP+r"sg"+RNA): "Cas9 + ESR1 sgRNA",
-    rx(r"cas9"+SEP+r"pik3ca"+SEP+r"sg"+RNA): "Cas9 + PIK3CA sgRNA",
-
-    rx(r"single"+SEP+r"guide"+SEP+r"rna"): "sgRNA",
-    rx(r"sg"+RNA): "sgRNA",
-
-    rx(r"crispr"+SEP+r"rna"): "crRNA",
-    rx(r"cr"+RNA): "crRNA",
-
-    rx(r"base"+SEP+r"editor"+SEP+r"brca1"): "base editor BRCA1",
-
-    
-    # Chemotherapy
-    rx(r"paclitaxel"): "paclitaxel",
-    rx(r"taxol"): "paclitaxel",
-    rx(r"ptx"): "paclitaxel",
-    rx(r"nab-paclitaxel"): "paclitaxel",
-    rx(r"abraxane"): "paclitaxel",
-    rx(r"vinorelbine"): "vinorelbine",
-    rx(r"navelbine"): "vinorelbine", 
-    rx(r"vinorelbel"): "vinorelbine",
-    rx(r"binorel"): "vinorelbine",
-    rx(r"biovelbin"): "vinorelbine",
-    rx(r"eunades"): "vinorelbine",
-    rx(r"flonorbin"): "vinorelbine",
-    rx(r"neoben"): "vinorelbine",
-    rx(r"relbovin"): "vinorelbine",
-    rx(r"vinelbine"): "vinorelbine",
-    rx(r"vinotec"): "vinorelbine",
-
-    
-    rx(r"docetaxel"): "docetaxel",
-    rx(r"taxotere"): "docetaxel",
-
-    rx(r"dox"): "doxorubicin",
-    rx(r"doxorubicin"): "doxorubicin",
-    rx(r"adriamycin"): "doxorubicin",
-    rx(r"hydroxydaunorubicin"): "doxorubicin",
-    rx(r"doxil"): "doxorubicin",
-
-    rx(r"epirubicin"): "epirubicin",
-    rx(r"gemcitabine"): "gemcitabine",
-
-    rx(r"5"+SEP+r"fu"): "fluorouracil", 
-    rx(r"5"+SEP+r"fluorouracil"): "fluorouracil",
-    rx(r"fluorouracil"): "fluorouracil",
-
-    rx(r"eribulin"): "eribulin",
-    rx(r"halaven"): "eribulin",
-
-    rx(r"mertansine"): "mertansine",
-    rx(r"dm1"): "mertansine",
-
-    rx(r"todelvy"): "sacituzumab govitecan",
-    rx(r"trodelvy"): "sacituzumab govitecan",
-    rx(r"sacituzumab"+SEP+r"govitecan"): "sacituzumab govitecan",
-
-    
-    # Targeted / Small molecules
-    rx(r"lapatinib"): "lapatinib",
-    rx(r"tykerb"): "lapatinib",
-
-    rx(r"olaparib"): "olaparib",
-    rx(r"lynparza"): "olaparib",
-
-    rx(r"bicalutamide"): "bicalutamide",
-    rx(r"casodex"): "bicalutamide",
-
-    rx(r"rapamycin"): "rapamycin",
-    rx(r"sirolimus"): "rapamycin",
-    rx(r"rap"): "rapamycin",
-
-    rx(r"disulfiram"): "disulfiram",
-    rx(r"ds"): "disulfiram",
-    rx(r"antabuse"): "disulfiram",
-
-    rx(r"talazoparib"): "talazoparib",
-    rx(r"talzenna"): "talazoparib",
- 
-    rx(r"palbociclib"): "palbociclib",
-    rx(r"ibrance"): "palbociclib",
- 
-    rx(r"abemaciclib"): "abemaciclib",
-    rx(r"verzenio"): "abemaciclib",
- 
-    rx(r"ribociclib"): "ribociclib",
-    rx(r"kisqali"): "ribociclib",
- 
-    rx(r"erlotinib"): "erlotinib",
-    rx(r"tarceva"): "erlotinib",
- 
-    rx(r"afatinib"): "afatinib",
-    rx(r"gilotrif"): "afatinib",
- 
-    rx(r"osimertinib"): "osimertinib",
-    rx(r"tagrisso"): "osimertinib",
- 
-    rx(r"crizotinib"): "crizotinib",
-    rx(r"xalkori"): "crizotinib",
- 
-    rx(r"ceritinib"): "ceritinib",
-    rx(r"zykadia"): "ceritinib",
- 
-    rx(r"alectinib"): "alectinib",
-    rx(r"alecensa"): "alectinib",
- 
-    rx(r"brigatinib"): "brigatinib",
-    rx(r"alunbrig"): "brigatinib",
- 
-    rx(r"alpelisib"): "alpelisib",
-    rx(r"piqray"): "alpelisib",
- 
-    rx(r"copanlisib"): "copanlisib",
-    rx(r"aliqopa"): "copanlisib",
- 
-    rx(r"duvelisib"): "duvelisib",
-    rx(r"copiktra"): "duvelisib",
- 
-    rx(r"ibrutinib"): "ibrutinib",
-    rx(r"imbruvica"): "ibrutinib",
- 
-    rx(r"acalabrutinib"): "acalabrutinib",
-    rx(r"calquence"): "acalabrutinib",
- 
-    rx(r"zanubrutinib"): "zanubrutinib",
-    rx(r"brukinsa"): "zanubrutinib",
-    
-    # Bisphosphonates
-    rx(r"man"+SEP+r"lp@zol"): "zoledronic acid",
-    rx(r"mannosylated"+SEP+r"liposome"+SEP+r"zol"): "zoledronic acid",
-    rx(r"zoledronic"+SEP+r"acid"): "zoledronic acid",
-    rx(r"zoledronate"): "zoledronic acid",
-    rx(r"zometa"): "zoledronic acid",
-    rx(r"zol"): "zoledronic acid",
-
-    rx(r"alendronate"): "alendronate",
-    rx(r"fosamax"): "alendronate",
-
-    
-    # Immunomodulators
-    rx(r"imiquimod"): "imiquimod",
-    rx(r"r837"): "imiquimod",
-
-    rx(r"r848"): "R848",
-    rx(r"resiquimod"): "R848",
-
-    rx(r"cpg"+SEP+r"odn"): "CpG Oligodeoxynucleotide",
-    rx(r"cpg"+SEP+r"oligodeoxynucleotide"): "CpG Oligodeoxynucleotide",
-
-    rx(r"poly"+SEP+r"i:c"): "poly I:C",
-    rx(r"polyinosinic"+SEP+r"polycytidylic"+SEP+r"acid"): "poly I:C",
-
-    rx(r"sting"+SEP+r"agonist"): "STING agonist",
-    rx(r"stimulator"+SEP+r"of"+SEP+r"interferon"+SEP+r"genes"): "STING agonist",
-
-    rx(r"cgamp"): "cGAMP",
-    rx(r"2'?3'?"+SEP+r"cgamp"): "cGAMP",
-
-    rx(r"dmxaa"): "vadimezan",
-    rx(r"vadimezan"): "vadimezan",
-
-    rx(r"trail"): "dulanermin",             # TRAIL is the alias; canonical = dulanermin
-    rx(r"tnf"+SEP+r"related"+SEP+r"apoptosis"+SEP+r"inducing"+SEP+r"ligand"): "dulanermin",
-    rx(r"dulanermin"): "dulanermin",
-
-    rx(r"tlr9"): "TLR9 agonist",
-    rx(r"toll"+SEP+r"like"+SEP+r"receptor"+SEP+r"9"): "TLR9 agonist",
-
-    rx(r"tnf"+SEP+r"[αa]"): "TNF-α",
-    rx(r"tumor"+SEP+r"necrosis"+SEP+r"factor"+SEP+r"[αa]"): "TNF-α",
-    rx(r"tnfalpha"): "TNF-α",
-    rx(r"tnf"+SEP+r"alpha"): "TNF-α",
-
-    
-    # Antibodies / Peptides
-    rx(r"trastuzumab"): "trastuzumab",
-    rx(r"herceptin"): "trastuzumab",
-
-    rx(r"anti"+SEP+r"pd"+SEP+r"l1"): "anti-PD-L1",
-    rx(r"pd"+SEP+r"l1"+SEP+r"antibody"): "anti-PD-L1",
-
-    rx(r"rgd"+SEP+r"peptide"): "RGD peptide",
-    rx(r"arg"+SEP+r"gly"+SEP+r"asp"): "RGD peptide",
-
-    rx(r"irgd"): "iRGD",
-
-    rx(r"c"+SEP+r"peptide"+SEP+r"sln"+SEP+r"ptx"): "C-peptide-SLN-PTX",
-
-    # Checkpoint inhibitors
-    rx(r"pembrolizumab"): "keytruda",
-    rx(r"keytruda"): "keytruda",
- 
-    rx(r"nivolumab"): "opdivo",
-    rx(r"opdivo"): "opdivo",
- 
-    rx(r"atezolizumab"): "tecentriq",
-    rx(r"tecentriq"): "tecentriq",
- 
-    rx(r"ipilimumab"): "yervoy",
-    rx(r"yervoy"): "yervoy",
- 
-    rx(r"avelumab"): "avelumab",
-    rx(r"bavencio"): "avelumab",
- 
-    rx(r"durvalumab"): "durvalumab",
-    rx(r"imfinzi"): "durvalumab",  
-
-    
-    # Imaging / Phototherapy
-    rx(r"icg"): "ICG",
-    rx(r"indocyanine"+SEP+r"green"): "ICG",
-
-    rx(r"ce6"): "Ce6",
-    rx(r"chlorin"+SEP+r"e6"): "Ce6",
-
-    rx(r"bpd"): "BPD",
-    rx(r"benzoporphyrin"): "BPD",
-    rx(r"benzoporphyrin"+SEP+r"derivative"): "BPD",
-    rx(r"verteporfin"): "BPD",
-
-    rx(r"gd(?:3\+|\u00B3\+)?"+SEP+r"dtpa"): "Gd-DTPA",
-    rx(r"gadolinium"+SEP+r"dtpa"): "Gd-DTPA",
-    rx(r"magnevist"): "Gd-DTPA",
-
-    
-    # Natural products
-    rx(r"curcumin"): "curcumin",
-    rx(r"diferuloylmethane"): "curcumin",
-
-    rx(r"resveratrol"): "resveratrol",
-
-    rx(r"ginsenoside"): "ginsenoside",
-
-    rx(r"quercetin"): "quercetin",
-
-    rx(r"egcg"): "EGCG",
-    rx(r"epigallocatechin"+SEP+r"gallate"): "EGCG",
-
-    rx(r"ber"): "berberine",                # BER is the alias; canonical = berberine
-    rx(r"berberine"): "berberine",
-
-    rx(r"lupeol"): "lupeol",
-    rx(r"fagarasterol"): "lupeol",
-    rx(r"fagarsterol"): "lupeol",
-    rx(r"monogynol B"): "lupeol",
-    rx(r"clerodol"): "lupeol",
-    rx(r"farganasterol"): "lupeol",
-    rx(r"lupenol"): "lupeol",
-    rx(r"tsl-lup\d+"): "lupeol",
- 
-    # Hematopoietic growth factors
-    rx(r"gcsf"): "filgrastim",
-    rx(r"g"+SEP+r"csf"): "filgrastim",
-    rx(r"granulocyte"+SEP+r"colony"+SEP+r"stimulating"+SEP+r"factor"): "filgrastim",
-    rx(r"endogenous"+SEP+r"g"+SEP+r"csf"): "filgrastim",
-    rx(r"g"+SEP+r"csf"+SEP+r"signaling"): "filgrastim",
-    rx(r"filgrastim"): "filgrastim",
-    rx(r"neupogen"): "filgrastim",
- 
-    rx(r"pegfilgrastim"): "pegfilgrastim",
-    rx(r"peg"+SEP+r"filgrastim"): "pegfilgrastim",
-    rx(r"neulasta"): "pegfilgrastim",
- 
-    rx(r"lenograstim"): "lenograstim",
-    rx(r"granocyte"): "lenograstim",
+rx(r"her2[-_\s/]+antigen[-_\s/]+mrna"): "HER2 antigen-encoding mRNA",
+    rx(r"antabuse"): "Disulfiram",
+    rx(r"ds"): "Disulfiram",
+    rx(r"vinblastine"): "Vinblastine",
+    rx(r"vincristine"): "Vincristine",
+    rx(r"vinorelbine"): "Vinorelbine",
+    rx(r"bcnu"): "Carmustine",
+    rx(r"busulfan"): "Busulfan",
+    rx(r"carmustine"): "Carmustine",
+    rx(r"cyclophosphamide"): "Cyclophosphamide",
+    rx(r"melphalan"): "Melphalan",
+    rx(r"temozolomide"): "Temozolomide",
+    rx(r"tmz"): "Temozolomide",
+    rx(r"adriamycin"): "Doxorubicin",
+    rx(r"daunorubicin"): "Daunorubicin",
+    rx(r"dox"): "Doxorubicin",
+    rx(r"doxil"): "Doxorubicin (liposomal formulation)",
+    rx(r"epirubicin"): "Epirubicin",
+    rx(r"hydroxydaunorubicin"): "Doxorubicin",
+    rx(r"idarubicin"): "Idarubicin",
+    rx(r"chloroquine"): "Chloroquine",
+    rx(r"hydroxychloroquine"): "Hydroxychloroquine",
+    rx(r"ifn[- ]?γ"): "Interferon gamma",
+    rx(r"il[- ]?2"): "Interleukin-2",
+    rx(r"il[- ]?12[-_\s/]+mrna"): "Interleukin-12 mRNA",
+    rx(r"il[- ]?23[-_\s/]+mrna"): "Interleukin-23 mRNA",
+    rx(r"anti[- ]?pd[- ]?l1"): "Anti-Programmed Death-Ligand 1 antibody",
+    rx(r"atezolizumab"): "Atezolizumab",
+    rx(r"avelumab"): "Avelumab",
+    rx(r"bavencio"): "Avelumab",
+    rx(r"durvalumab"): "Durvalumab",
+    rx(r"herceptin"): "Trastuzumab",
+    rx(r"imfinzi"): "Durvalumab",
+    rx(r"ipilimumab"): "Ipilimumab",
+    rx(r"keytruda"): "Pembrolizumab",
+    rx(r"nivolumab"): "Nivolumab",
+    rx(r"opdivo"): "Nivolumab",
+    rx(r"pembrolizumab"): "Pembrolizumab",
+    rx(r"tecentriq"): "Atezolizumab",
+    rx(r"yervoy"): "Ipilimumab",
+    rx(r"sacituzumab[-_\s/]+govitecan"): "Sacituzumab Govitecan",
+    rx(r"trodelvy"): "Sacituzumab Govitecan",
+    rx(r"amphotericin[-_\s/]+b"): "Amphotericin B",
+    rx(r"neoantigen[-_\s/]+mrna"): "Neoantigen-encoding mRNA",
+    rx(r"ova"): "Ovalbumin",
+    rx(r"ova[-_\s/]+peptide"): "Ovalbumin peptide",
+    rx(r"tumor[-_\s/]+lysate"): "Tumour cell lysate",
+    rx(r"mebendazole"): "Mebendazole",
+    rx(r"5[- ]?fluorouracil"): "Fluorouracil",
+    rx(r"5[- ]?fu"): "Fluorouracil",
+    rx(r"cytarabine"): "Cytarabine",
+    rx(r"gem"): "Gemcitabine",
+    rx(r"mtx"): "Methotrexate",
+    rx(r"pemetrexed"): "Pemetrexed",
+    rx(r"acyclovir"): "Acyclovir",
+    rx(r"propranolol"): "Propranolol",
+    rx(r"dm1"): "Mertansine (emtansine)",
+    rx(r"filgrastim"): "Filgrastim",
+    rx(r"g[- ]?csf"): "Granulocyte Colony-Stimulating Factor",
+    rx(r"granocyte"): "Lenograstim",
+    rx(r"lenograstim"): "Lenograstim",
+    rx(r"neulasta"): "Pegfilgrastim",
+    rx(r"neupogen"): "Filgrastim",
+    rx(r"pegfilgrastim"): "Pegfilgrastim",
+    rx(r"fosamax"): "Alendronate",
+    rx(r"man[- ]?lp@zol"): "Mannosylated Liposome Zoledronic Acid",
+    rx(r"man[- ]?np@zol"): "Mannosylated Nanoparticle Zoledronic Acid",
+    rx(r"mannosylated[-_\s/]+liposome[-_\s/]+zol"): "Mannosylated Liposome Zoledronic Acid",
+    rx(r"zol"): "Zoledronic Acid",
+    rx(r"zoledronate"): "Zoledronic Acid",
+    rx(r"zometa"): "Zoledronic Acid",
+    rx(r"bpa"): "Boronophenylalanine",
+    rx(r"bsh"): "Sodium borocaptate",
+    rx(r"abemaciclib"): "Abemaciclib",
+    rx(r"ibrance"): "Palbociclib",
+    rx(r"kisqali"): "Ribociclib",
+    rx(r"palbociclib"): "Palbociclib",
+    rx(r"ribociclib"): "Ribociclib",
+    rx(r"verzenio"): "Abemaciclib",
+    rx(r"dnase"): "Deoxyribonuclease",
+    rx(r"glucose[-_\s/]+oxidase"): "Glucose oxidase",
+    rx(r"l[- ]?asparaginase"): "L-asparaginase",
+    rx(r"lynparza"): "Olaparib",
+    rx(r"talzenna"): "Talazoparib",
+    rx(r"fulvestrant"): "Fulvestrant",
+    rx(r"tamoxifen"): "Tamoxifen",
+    rx(r"goserelin"): "Goserelin",
+    rx(r"leuprolide"): "Leuprolide",
+    rx(r"lupron"): "Leuprolide",
+    rx(r"zoladex"): "Goserelin",
+    rx(r"aq4n"): "Banoxantrone",
+    rx(r"tirapazamine"): "Tirapazamine",
+    rx(r"cgamp"): "Cyclic GMP-AMP",
+    rx(r"cpg[-_\s/]+odn"): "CpG Oligodeoxynucleotide",
+    rx(r"dmxaa"): "Vadimezan (5,6-Dimethylxanthenone-4-acetic acid)",
+    rx(r"imiquimod"): "Imiquimod",
+    rx(r"poly[-_\s/]+i:c"): "Polyinosinic-polycytidylic acid",
+    rx(r"r837"): "Imiquimod",
+    rx(r"r848"): "Resiquimod",
+    rx(r"resiquimod"): "Resiquimod",
+    rx(r"sting[-_\s/]+agonist"): "STING agonist (generic)",
+    rx(r"tlr9[-_\s/]+agonist"): "TLR9 agonist (generic)",
+    rx(r"vadimezan"): "Vadimezan (DMXAA)",
+    rx(r"acalabrutinib"): "Acalabrutinib",
+    rx(r"afatinib"): "Afatinib",
+    rx(r"alecensa"): "Alectinib",
+    rx(r"alectinib"): "Alectinib",
+    rx(r"aliqopa"): "Copanlisib",
+    rx(r"alpelisib"): "Alpelisib",
+    rx(r"alunbrig"): "Brigatinib",
+    rx(r"bicalutamide"): "Bicalutamide",
+    rx(r"brigatinib"): "Brigatinib",
+    rx(r"brukinsa"): "Zanubrutinib",
+    rx(r"calquence"): "Acalabrutinib",
+    rx(r"casodex"): "Bicalutamide",
+    rx(r"ceritinib"): "Ceritinib",
+    rx(r"copanlisib"): "Copanlisib",
+    rx(r"copiktra"): "Duvelisib",
+    rx(r"crizotinib"): "Crizotinib",
+    rx(r"duvelisib"): "Duvelisib",
+    rx(r"erlotinib"): "Erlotinib",
+    rx(r"gilotrif"): "Afatinib",
+    rx(r"gleevec"): "Imatinib",
+    rx(r"ibrutinib"): "Ibrutinib",
+    rx(r"imatinib"): "Imatinib",
+    rx(r"imbruvica"): "Ibrutinib",
+    rx(r"lapatinib"): "Lapatinib",
+    rx(r"nexavar"): "Sorafenib",
+    rx(r"osimertinib"): "Osimertinib",
+    rx(r"piqray"): "Alpelisib",
+    rx(r"rap"): "Rapamycin",
+    rx(r"sirolimus"): "Rapamycin",
+    rx(r"sorafenib"): "Sorafenib",
+    rx(r"sunitinib"): "Sunitinib",
+    rx(r"sutent"): "Sunitinib",
+    rx(r"tagrisso"): "Osimertinib",
+    rx(r"tarceva"): "Erlotinib",
+    rx(r"tykerb"): "Lapatinib",
+    rx(r"xalkori"): "Crizotinib",
+    rx(r"zanubrutinib"): "Zanubrutinib",
+    rx(r"zykadia"): "Ceritinib",
+    rx(r"c[- ]?peptide[- ]?sln[- ]?ptx"): "C-peptide paclitaxel solid lipid nanoparticle",
+    rx(r"irgd"): "Internalizing RGD peptide",
+    rx(r"mmp[- ]?responsive[-_\s/]+peptide"): "MMP-responsive peptide",
+    rx(r"rgd[-_\s/]+peptide"): "Arg-Gly-Asp peptide",
+    rx(r"gd[- ]?dtpa"): "Gadolinium Diethylenetriamine Pentaacetic Acid",
+    rx(r"ber"): "Berberine",
+    rx(r"berberine"): "Berberine",
+    rx(r"curcumin"): "Curcumin",
+    rx(r"diferuloylmethane"): "Curcumin",
+    rx(r"egcg"): "Epigallocatechin Gallate",
+    rx(r"epigallocatechin[-_\s/]+gallate"): "Epigallocatechin Gallate",
+    rx(r"ginsenoside"): "Ginsenoside",
+    rx(r"quercetin"): "Quercetin",
+    rx(r"resveratrol"): "Resveratrol",
+    rx(r"4[- ]?amino[- ]?tempo"): "4-Amino-TEMPO",
+    rx(r"tempo"): "(2,2,6,6-Tetramethylpiperidin-1-yl)oxyl",
+    rx(r"aspirin"): "Acetylsalicylic acid",
+    rx(r"celecoxib"): "Celecoxib",
+    rx(r"indomethacin"): "Indomethacin",
+    rx(r"akt[-_\s/]+sirna"): "AKT-targeting siRNA",
+    rx(r"anti[- ]?egfr[-_\s/]+sirna"): "Anti-EGFR siRNA",
+    rx(r"base[-_\s/]+editor[-_\s/]+brca1"): "Base editor targeting BRCA1",
+    rx(r"bcl[- ]?2[-_\s/]+sirna"): "BCL-2-targeting siRNA",
+    rx(r"cas12a[-_\s/]+mrna"): "Cas12a nuclease mRNA",
+    rx(r"cas9[-_\s/]+\+[-_\s/]+esr1[-_\s/]+sgrna"): "Cas9 + ESR1-targeting sgRNA",
+    rx(r"cas9[-_\s/]+\+[-_\s/]+her2[-_\s/]+sgrna"): "Cas9 + HER2-targeting sgRNA",
+    rx(r"cas9[-_\s/]+\+[-_\s/]+pik3ca[-_\s/]+sgrna"): "Cas9 + PIK3CA-targeting sgRNA",
+    rx(r"cas9[-_\s/]+mrna"): "Cas9 nuclease mRNA",
+    rx(r"circrna"): "Circular RNA",
+    rx(r"crrna"): "CRISPR RNA",
+    rx(r"egfr[-_\s/]+sirna"): "EGFR-targeting siRNA",
+    rx(r"ezh2[-_\s/]+sirna"): "EZH2-targeting siRNA",
+    rx(r"generic[-_\s/]+sirna"): "Generic siRNA",
+    rx(r"gp100[-_\s/]+mrna"): "Glycoprotein 100 mRNA",
+    rx(r"her2[-_\s/]+sarna"): "HER2 self-amplifying RNA",
+    rx(r"htert[-_\s/]+circrna"): "hTERT circular RNA",
+    rx(r"let[- ]?7"): "Let-7 microRNA",
+    rx(r"mir[- ]?10b"): "MicroRNA-10b",
+    rx(r"mir[- ]?145"): "MicroRNA-145",
+    rx(r"mir[- ]?155"): "MicroRNA-155",
+    rx(r"mir[- ]?182[- ]?3p"): "MicroRNA-182-3p",
+    rx(r"mir[- ]?200"): "MicroRNA-200",
+    rx(r"mir[- ]?21"): "MicroRNA-21",
+    rx(r"mir[- ]?34a"): "MicroRNA-34a",
+    rx(r"mir[- ]?373"): "MicroRNA-373",
+    rx(r"mirna"): "MicroRNA",
+    rx(r"mmp[- ]?9[-_\s/]+sirna"): "MMP-9-targeting siRNA",
+    rx(r"mrna"): "Messenger RNA",
+    rx(r"mrna[- ]?4157"): "Personalized neoantigen mRNA (Moderna)",
+    rx(r"mrna[- ]?4359"): "Immune checkpoint mRNA (Moderna)",
+    rx(r"muc1[-_\s/]+mrna"): "Mucin-1 mRNA",
+    rx(r"muc1[-_\s/]+sarna"): "Mucin-1 self-amplifying RNA",
+    rx(r"ny[- ]?eso[- ]?1[-_\s/]+sarna"): "NY-ESO-1 self-amplifying RNA",
+    rx(r"ox40l[-_\s/]+mrna"): "OX40 Ligand mRNA",
+    rx(r"p53[-_\s/]+mrna"): "Tumour protein p53 mRNA",
+    rx(r"pi3k[-_\s/]+sirna"): "PI3K-targeting siRNA",
+    rx(r"sarna"): "Self-Amplifying RNA",
+    rx(r"sgrna"): "Single Guide RNA",
+    rx(r"shrna"): "Short Hairpin RNA",
+    rx(r"sirna"): "Small Interfering RNA",
+    rx(r"stat3[-_\s/]+sirna"): "STAT3-targeting siRNA",
+    rx(r"survivin[-_\s/]+sirna"): "Survivin-targeting siRNA",
+    rx(r"tgf[- ]?[βb][-_\s/]+trap[-_\s/]+mrna"): "TGF-β trap-encoding mRNA",
+    rx(r"trp2[-_\s/]+mrna"): "Tyrosinase-related protein 2 mRNA",
+    rx(r"twist1[-_\s/]+sirna"): "Twist1-targeting siRNA",
+    rx(r"vegf[-_\s/]+sirna"): "VEGF-targeting siRNA",
+    rx(r"wt1[-_\s/]+antigen[-_\s/]+mrna"): "Wilms Tumour 1 antigen mRNA",
+    rx(r"nitroglycerin"): "Nitroglycerin",
+    rx(r"sildenafil"): "Sildenafil",
+    rx(r"bpd"): "Benzoporphyrin Derivative",
+    rx(r"ce6"): "Chlorin e6",
+    rx(r"icg"): "Indocyanine Green",
+    rx(r"phthalocyanine"): "Phthalocyanine",
+    rx(r"porphyrin"): "Porphyrin",
+    rx(r"verteporfin"): "Benzoporphyrin Derivative (BPD)",
+    rx(r"peroxidase"): "Peroxidase",
+    rx(r"carboplatin"): "Carboplatin",
+    rx(r"cisplatin"): "Cisplatin",
+    rx(r"nedaplatin"): "Nedaplatin",
+    rx(r"oxaliplatin"): "Oxaliplatin",
+    rx(r"bortezomib"): "Bortezomib",
+    rx(r"carfilzomib"): "Carfilzomib",
+    rx(r"kyprolis"): "Carfilzomib",
+    rx(r"velcade"): "Bortezomib",
+    rx(r"l[- ]?arginine"): "L-arginine",
+    rx(r"l[- ]?glutamine"): "L-glutamine",
+    rx(r"cladribine"): "Cladribine",
+    rx(r"clofarabine"): "Clofarabine",
+    rx(r"fludarabine"): "Fludarabine",
+    rx(r"131i"): "Iodine-131",
+    rx(r"177lu"): "Lutetium-177",
+    rx(r"64cu"): "Copper-64",
+    rx(r"89zr"): "Zirconium-89",
+    rx(r"90y"): "Yttrium-90",
+    rx(r"dtt"): "Dithiothreitol",
+    rx(r"glutathione"): "Glutathione",
+    rx(r"gsh"): "Glutathione",
+    rx(r"n[- ]?acetylcysteine"): "N-acetylcysteine",
+    rx(r"nac"): "N-acetylcysteine",
+    rx(r"onconase"): "Onconase",
+    rx(r"ranpirnase"): "Ranpirnase",
+    rx(r"actinomycin[-_\s/]+d"): "Actinomycin D",
+    rx(r"eribulin"): "Eribulin mesylate",
+    rx(r"halaven"): "Eribulin",
+    rx(r"α[- ]?amanitin"): "Alpha-amanitin",
+    rx(r"abraxane"): "Paclitaxel (albumin-bound)",
+    rx(r"cabazitaxel"): "Cabazitaxel",
+    rx(r"nab[- ]?paclitaxel"): "Paclitaxel (albumin-bound)",
+    rx(r"ptx"): "Paclitaxel",
+    rx(r"taxol"): "Paclitaxel",
+    rx(r"taxotere"): "Docetaxel",
+    rx(r"camptothecin"): "Camptothecin",
+    rx(r"cpt"): "Camptothecin",
+    rx(r"etoposide"): "Etoposide",
+    rx(r"irinotecan"): "Irinotecan",
+    rx(r"topotecan"): "Topotecan",
+    rx(r"dulanermin"): "Recombinant human TRAIL",
+    rx(r"tnf[- ]?α"): "Tumour Necrosis Factor alpha",
+    rx(r"trail"): "Dulanermin (recombinant human TRAIL)",
+    rx(r"htrail"): "Dulanermin (recombinant human TRAIL)",
+    rx(r"lupeol"): "Lupeol",
+    rx(r"fagarasterol"): "Lupeol",
+    rx(r"fagarsterol"): "Lupeol",
+    rx(r"monogynol[-_\s/]+b"): "Lupeol",
+    rx(r"clerodol"): "Lupeol",
+    rx(r"farganasterol"): "Lupeol",
+    rx(r"lupenol"): "Lupeol",
+    rx(r"tsl[- ]?lup"): "Lupeol",
 })
 
 # 4. COMPILE
@@ -584,14 +812,12 @@ NEGATIVE_KEYWORDS = [
 NEUTRAL_KEYWORDS = [
     "neutral", "zwitterionic", "near-neutral", "PEGylated neutral",
 ]
-IONIZABLE_KEYWORDS = [
-    "ionizable", "ionizable lipid", "pH-ionizable", "pKa",
-]
  
 # ── shape ─────────────────────────────────────────────────────────────────────
 SPHERE_KEYWORDS = ["spherical", "sphere", "spheroid"]
 ROD_KEYWORDS    = ["rod", "rod-shaped", "elongated", "cylindrical"]
 DISK_KEYWORDS   = ["disc", "disk", "discoidal", "flat nanoparticle"]
+OTHERS_KEYWORDS  = ["star", "cube", "plate", "clusters"]
  
 # ── lamellarity ───────────────────────────────────────────────────────────────
 UNILAMELLAR_KEYWORDS   = [ "unilamellar", "small unilamellar", "large unilamellar",]
@@ -604,19 +830,23 @@ MULTILAMELLAR_ABBR = ["MLV", "MLVs"]
 LIPID_KEYWORDS = [
     # structural phospholipids
     "MSPC", "monostearoyl phosphatidylcholine", "SPC", "DPPC", "DSPC", "DOPC", "DOPE", "HSPC", "hydrogenated soy phosphatidylcholine", "DPPE", "DMPC", "POPC", "POPE",
-    "phosphatidylcholine", "sphingomyelin", "span 60", "PS", 
+    "phosphatidylcholine", "sphingomyelin", "span 60", "PS", "SM", "lyso-PC", "lyso-PE"
 
     "span", "twen"
+
     # sterols
-    "cholesterol hemisuccinate", "CHEMS", "cholesterol", "chol", "CHO", "choles-terol",
+    "cholesterol hemisuccinate", "CHEMS", "cholesterol", "chol", "CHO", "CHOL", "choles-terol", "beta-sitosterol", "ergosterol",
+
     # PEG-lipids
     "DSPE-PEG", "DSPE-PEG2000", "DSPE-MPEG2000", "DSPE- PEG2000", "DSPE-PEG_2000", "DSPE- PEG_2000", "DSPE- MPEG2000", "DSPE- MPEG" , "DSPE- PEG",
-    "C14-PEG2000","C14- PEG2000", "PEG-DMG", "PEG- DMG", "PEG2000-Cer16",
+    "C14-PEG2000","C14- PEG2000", "PEG-DMG", "PEG- DMG", "PEG2000-Cer16", "PEG-DSPE", "PEG-DMPE", "PED-DPPE", "mPEG2000-DSPE",
+
     # ionizable lipids
     "DLin-MC3-DMA", "MC3", "SM-102", "ALC-0315",
     "lipid A9", "C12-200", "OF-02", "5A2-SC8", "CKK-E12", "DLin-KC2-DMA",
-    "DODAP", "DOTAP", "DOTMA", "GenVoy-ILM", "Lipid H", "DLODAP",
+    "DODAP", "DOTAP", "DOTMA", "GenVoy-ILM", "Lipid H", "DLODAP", "DODMA", "DSDMA", "L-319"
     
+    #Imaging lipid
     "Gd.DOTA.DSA", # Gd.DOTA.DSA for MRI imagining
     "CF750.DSA", # for lipid fluorescence imagining 
 ]
@@ -624,18 +854,22 @@ LIPID_KEYWORDS = [
 
 NORMALIZATION_MAP = {
     "monostearoyl phosphatidylcholine": "MSPC",
+    "SPC": "MSPC",
     "choles-terol":"cholesterol",
     "CHO": "cholesterol",
     "chol": "cholesterol",
+    "CHOL": "cholesterol",
     "DSPE- PEG2000": "DSPE-PEG2000",
     "DSPE- MPEG2000": "DSPE-MPEG2000",
     "DSPE- PEG_2000": "DSPE-PEG2000",
     "DSPE-PEG_2000": "DSPE-PEG2000",
-    "PEG-DMG": "DMG-PEG2000",  # escolher forma dominante
+    "mPEG2000-DSPE": "DSPE-PEG2000",  # escolher forma dominante
     "hydrogenated soy phosphatidylcholine": "HSPC",
     "cholesterol hemisuccinate": "CHEMS",
     "sphingomyelin": "SM",
     "phosphatidylserine": "PS",
+    "MC3": "DLin-MC3-DMA",
+
 }
 
 PHOSPHATIDYLCHOLINES = {"SPC","DPPC", "DSPC", "DOPC", "DOPE", "HSPC", "DPPE", "DMPC", "POPC", "POPE"}
@@ -658,13 +892,16 @@ STIMULUS_MAP = {
 COVALENT_KEYWORDS     = ["covalent", "conjugated", "conjugation", "crosslinked",
                           "thioether", "amide bond", "maleimide", "click chemistry",
                           "NHS ester", "EDC coupling", "disulfide conjugation", "mannose-modified" ]
-NONCOVALENT_KEYWORDS  = ["noncovalent", "electrostatic", "adsorption",
-                          "physical adsorption", "hydrophobic interaction"]
+ELECTROSTATIC_KEYWORDS  = ["electrostatic",	"electrostatically bound", "electrostatically adsorbed", "ionic interaction", "ionic interactions", "ionic complex"
+                           	"ionic complexation", "polyelectrolyte complex", "polyelectrolyte complexation", "ion pairing", "charge interaction", "charge-mediated", 
+                            "charge-driven assembly", "self-assembly", "layer-by-layer assembly", "LbL assembly", "electrostatic self-assembly", "non-covalent interaction", 
+                            "noncovalent interaction", "physical adsorption", "adsorbed", "surface adsorption", "physisorption"]
  
 # PEG 
 PEG_KEYWORDS     = ["PEGylated", "PEG-coated", "PEG-modified", "DSPE-PEG",
                      "DSPE-MPEG2000", "PEG2000", "stealth liposome", "DMG-PEG2000",
                      "C14-PEG2000", "long-circulating"  "DMG-PEG2000", "PEG-DMG","PEG2000-Cer16",]
+
 NON_PEG_KEYWORDS = ["non-PEGylated", "without PEG", "PEG-free",
                      "PEG-alternative", "polysarcosine", "polyoxazoline", ]
  
@@ -678,6 +915,7 @@ SURFACE_MODIFIER_KEYWORDS = [
     "mannose-modified", "folate-modified", "transferrin-modified",
     "aptamer-functionalized", "antibody-conjugated", "decorated"
 ]
+
 # targeting ─────────────────────────────────────────────────────────────────
 ACTIVE_TARGETING_KEYWORDS = [
     "active targeting", "ligand-targeted", "receptor-targeted",
@@ -690,7 +928,16 @@ ACTIVE_TARGETING_KEYWORDS = [
     "PDL1-targeted", "anti-PD-L1 conjugated",
     "nucleolin-targeted", "AS1411",
 ]
- 
+
+PASSIVE_TARGETING_KEYWORDS = [
+    "passive targeting", "passive tumor targeting", "passive tumour targeting", 
+    "passive accumulation", "passive delivery",
+    #enhanced permeability and retention
+    "EPR", "enhanced permeability and retention", "enhanced permeability retention", 
+    "EPR effect", "EPR-mediated accumulation", "EPR-mediated targeting"
+]
+
+
 # drug loading ──────────────────────────────────────────────────────────────
 DRUG_LOADING_MAP = {
     "Passive entrapment": {
@@ -795,9 +1042,33 @@ IV_EXCLUDED = ["iv breast cancer", "stage iv breast cancer"]
 IT_WORDS = ["intratumoral", "intra-tumoral"]
 IT_ABBR = ["IT", "i.t."]
 
+#others
 IP_WORDS = ["intraperitoneal"]
 IP_ABBR = ["IP", "i.p."]
 
+INHALATION_WORDS = ["inhalation"]
+INHALATION_ABBR = []
+
+ID_WORDS = ["intradermal", "intradermally"]
+ID_ABBR = ["ID", "i.d."]
+
+IA_WORDS = ["intra-arterial", "intraarterial"]
+IA_ABBR = ["IA", "i.a."]
+
+PERCUTANEOUS_WORDS = ["percutaneous", "transdermal", "transcutaneous"]
+PERCUTANEOUS_ABBR = []
+
+PO_WORDS = ["oral"]
+PO_ABBR = ["PO", "p.o."]
+
+INTRATRACHEAL_INSTILLATION_WORDS = ["intratracheal instillation"]
+INTRATRACHEAL_INSTILLATION_ABBR = []
+
+INTRAMAMMARY_WORDS = ["intramammary"]
+INTRAMAMMARY_ABBR = []
+
+SC_WORDS = ["subcutaneous"]
+SC_ABBR = ["SC", "s.c."]
 
 
 # therapy types ─────────────────────────────────────────────────────────────
@@ -815,14 +1086,14 @@ THERAPY_MAP = {
                                   "abbr": ["ASO","CRISPR", "cas9"]},   
 
     "Immunotherapy":             {"keywords": ["immunotherapy", "immune checkpoint",
-                                  "PD-L1", "anti-PD1", "anti-PD-L1",
+                                  "anti-PD1", "anti-PD-L1",
                                   "checkpoint inhibitor", "atezolizumab",
                                   "pembrolizumab", "nivolumab", "ipilimumab",
                                   "tumor microenvironment reprogramming",
                                   "macrophage polarization", "M1 polarization",
                                   "innate immune activation", "STING agonist",
                                   "toll-like receptor", "TLR agonist"], 
-                                  "abbr": ["CTLA-4", "TIM-3", "LAG-3"]},
+                                  "abbr": ["CTLA-4", "TIM-3", "LAG-3", "PD-L1"]},
 
     "Photodynamic therapy":      {"keywords": ["photodynamic",  "photosensitizer",
                                   "ROS generation", "singlet oxygen",
@@ -832,7 +1103,7 @@ THERAPY_MAP = {
     "Photothermal therapy":      {"keywords": ["photothermal", "NIR irradiation",
                                   "laser irradiation", "indocyanine green",
                                   "gold nanorod", "copper sulfide"],
-                                  "abbr": ["PTT"]},
+                                  "abbr": ["PTT", "ICG"]},
 
     "Radiotherapy":              {"keywords": ["radiotherapy", "radiation therapy",
                                   "radiosensitization", "radiodynamic"], 
@@ -842,28 +1113,26 @@ THERAPY_MAP = {
                                   "focused ultrasound"], 
                                   "abbr": ["HIFU"]},
 
-    "Photoacoustic therapy":     {"keywords": ["photoacoustic therapy", "photoacoustic"], 
-                                  "abbr": []},
+    "Magnetic Hyperthermia":     {"keywords": ["magnetic hyperthermia", "magnetically induced hyperthermia", "magnetic fluid hyperthermia",
+                                "magnetic nanoparticle hyperthermia", "MNP hyperthermia", "magnetic heating", "magnetically induced heating",
+                                "magnetothermal therapy", "magnetothermal treatment", "magnetothermal"], 
+                                  "abbr": ["MFH"]},    
 
-    "Targeted therapy":          {"keywords": ["targeted therapy", "PARP inhibitor", "olaparib",
-                                  "talazoparib", "CDK4/6 inhibitor", "palbociclib",
-                                  "PI3K inhibitor", "mTOR inhibitor",
-                                  "EGFR inhibitor", "erlotinib",
-                                  "androgen receptor inhibitor", "bicalutamide"], 
-                                  "abbr": []},
+    "Radiofrequency":                {"keywords": ["radiofrequency", "radio frequency"], 
+                                  "abbr": ["RF"]},
 
-    "CAR-T / cell therapy":      {"keywords": ["CAR-T", "CAR T cell", "adoptive cell therapy",
-                                  "NK cell therapy", "TIL therapy"], 
-                                  "abbr": []},
-
-    "Combination therapy":       {"keywords": ["combination therapy", "combined therapy", "synergistic", "co-delivery", "dual drug", "chemo-immunotherapy",
-                                  "chemo-photothermal"],
-                                  "abbr": []},
+    "Others":                {"keywords": ["ultrasound", "sonodynamic", "HIFU",
+                                  "focused ultrasound"], 
+                                  "abbr": ["HIFU"]},   
 }
  
 # study strategy ────────────────────────────────────────────────────────────
-DIAGNOSIS_KEYWORDS    = ["diagnosis", "diagnostic", "imaging only",
-                          "detection", "contrast agent"]
+DIAGNOSIS_KEYWORDS    = ["diagnosis", "diagnostic", "imaging only", 
+                         "detection", "contrast agent"]
+
+THERAPY_KEYWORDS    = ["therapy", "treatment", "therapeutic", "therapeutics", "drug delivery",
+                    "drug release", "therapy only"]
+
 THERANOSTICS_KEYWORDS = ["theranostic", "theragnosis",
                           "combined imaging and therapy", "dual-function",
                           "image-guided therapy"]
@@ -890,11 +1159,14 @@ ALLOGRAFT_KEYWORDS    = ["allograft", "syngeneic", "syngeneic model",
 ORTHOTOPIC_KEYWORDS   = ["orthotopic"]
 HETEROTOPIC_KEYWORDS  = ["heterotopic", "subcutaneous", "flank"]
 
-PDX_KEYWORDS          = ["PDX", "patient-derived xenograft",
-                          "patient-derived tumor"]
-METASTATIC_MODEL_KEYWORDS = ["metastatic model", "lung metastasis",
-                              "brain metastasis", "tail vein metastasis model",
-                              "experimental metastasis"]
+CHEMICALLY_INDUCED_WORDS = [
+    "chemically induced", "chemically-induced", "chemical carcinogenesis",
+    "carcinogen-induced", "carcinogen induced", "induced tumor model",
+    "induced tumour model", "urethane-induced"]
+
+VIRUS_INDUCED_WORDS = [
+    "virus induced", "virus-induced", "viral-induced", "viral carcinogenesis",
+    "oncogenic virus", "viral tumor model", "viral tumour model"]
  
 # immune status ─────────────────────────────────────────────────────────────
 IMMUNOCOMPROMISED_KEYWORDS = [
@@ -992,14 +1264,21 @@ IMAGING_MAP = {
         "keywords": ["luminescence", "bioluminescence", "chemiluminescence"]
     },
 
-    "SPECT": {
+    "Others": {
         "abbrs": ["SPECT", "99mTc", "111In"],
         "keywords": ["single-photon emission"]
     },
-    "Cytometry":{
+    "Others":{
         "abbrs": [],
         "keywords": ["cytometry"]
     },
+    "Others":{
+        "abbrs": [],
+        "keywords": ["single-photon emission", "magnetic particle imaging", "magnetoacoustic tomography",
+        "optical imaging", "thermoacoustic", "x-ray imaging", "infrared",
+        "near-infrared", "raman", "optoacoustic tomography", "mammography"]
+    },
+
 }
  
 # off-target organs note: hepatic accumulation = liver acc., 
@@ -1303,7 +1582,7 @@ class NanoparticleExtractor(BaseModel):
             return "negative"
         if _first_keyword_match(text, NEUTRAL_KEYWORDS):
             return "neutral"
-
+        
         return None
      
     def _extract_zeta_potential(self, text: str) -> Optional[bool]:
@@ -1330,6 +1609,9 @@ class NanoparticleExtractor(BaseModel):
             return "Sphere"
         if _match_abbreviation(text, DISK_KEYWORDS):
             return "Disk"
+        if _match_abbreviation(text, OTHERS_KEYWORDS):
+            return "Other"
+        
         return None
     
     # SURFACE ENGINEERING
@@ -1348,6 +1630,8 @@ class NanoparticleExtractor(BaseModel):
     def _extract_bioconjugation(self, text: str) -> Optional[str]:
         if _first_keyword_match(text, COVALENT_KEYWORDS):
             return "covalent"
+        if _first_keyword_match(text, ELECTROSTATIC_KEYWORDS):
+            return "electrostatic"
         return None
 
     def _extract_peg_coat(self, text: str) -> Optional[str]:
@@ -1454,6 +1738,8 @@ class NanoparticleExtractor(BaseModel):
             return "Theranostics"
         if _first_keyword_match(text, DIAGNOSIS_KEYWORDS):
             return "Diagnosis"
+        if _first_keyword_match(text, THERAPY_KEYWORDS):
+            return "THERAPY"
         return None
         
 
@@ -1493,9 +1779,41 @@ class NanoparticleExtractor(BaseModel):
                 "keywords": IT_WORDS,
                 "abbr": IT_ABBR
             },
-            "Intraperitoneal": {
+            "Other": {
                 "keywords": IP_WORDS,
                 "abbr": IP_ABBR
+            },
+            "Other": {
+                "keywords": INHALATION_WORDS,
+                "abbr": INHALATION_ABBR
+            },
+            "Other": {
+                "keywords": ID_WORDS,
+                "abbr": ID_ABBR
+            },
+            "Other": {
+                "keywords": IA_WORDS,
+                "abbr": IA_ABBR
+            },
+            "Other": {
+                "keywords": PERCUTANEOUS_WORDS,
+                "abbr": PERCUTANEOUS_ABBR
+            },
+            "Other": {
+                "keywords": PO_WORDS,
+                "abbr": PO_ABBR
+            },
+            "Other": {
+                "keywords": INTRATRACHEAL_INSTILLATION_WORDS,
+                "abbr": INTRATRACHEAL_INSTILLATION_ABBR
+            },
+            "Other": {
+                "keywords": INTRAMAMMARY_WORDS,
+                "abbr": INTRAMAMMARY_ABBR
+            },
+            "Other": {
+                "keywords": SC_WORDS,
+                "abbr": SC_ABBR
             }
         }
 
@@ -1557,13 +1875,17 @@ class NanoparticleExtractor(BaseModel):
         is_ortho = _first_keyword_match(text, ORTHOTOPIC_KEYWORDS)
         is_heter = _first_keyword_match(text, HETEROTOPIC_KEYWORDS)
         base = "Xenograft" if is_xeno else ("Allograft" if is_allo else None)
-        loc  = "orthotopic" if is_ortho else ("heterotopic" if is_heter else None)
+        loc  = "Orthotopic" if is_ortho else ("Heterotopic" if is_heter else None)
         if base and loc:
             return f"{base} {loc}"
         elif base:
             return f"{base}"
         elif loc:
             return f"{loc}"
+        elif _first_keyword_match(text, CHEMICALLY_INDUCED_WORDS):
+                return "Other"
+        elif _first_keyword_match(text, VIRUS_INDUCED_WORDS):
+                return "Other"
         elif _first_keyword_match(text, INVIVO_GENERIC_KEYWORDS):
                 return "In vivo generic keyword"
         else: 
