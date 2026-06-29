@@ -1943,8 +1943,8 @@ class TableExtractor(BaseModel):
         #extractor.parse()
         #table = extractor.return_list()
         #print(table)
-        pattern = r'_\{\text\{([^}]+)\}\}'
-        parsed_output = [[re.sub(pattern, r'\1', cell).replace(' \\)', '').replace('\\( ', '') for cell in row] for row in table]
+        #pattern = r'_\{\text\{([^}]+)\}\}'
+        #parsed_output = [[re.sub(pattern, r'\1', cell).replace(' \\)', '').replace('\\( ', '') for cell in row] for row in table]
         print(parsed_output)
         return image_path,  parsed_output
 
