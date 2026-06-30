@@ -31,14 +31,14 @@ PARAM_META: dict[str, dict] = {
             "<unit>": "Unit exactly as written in text.",
             "<drug_name>": (
                 "Identify the drug name associated to the reported size."
-                "If no cargo or drug is specified, leave empty."
+                "If no cargo or drug is specified, write 'not extractable'."
             ),
             "<size_type>": (
                 "Type of particle size measurement reported. "
                 "Indicate the method used to determine size, such as 'DLS', "
                 "'hydrodynamic diameter', 'TEM', 'z-average' "
                 "or other explicitly stated measurement type. "
-                "Use only values explicitly mentioned in the text; if not specified, leave empty."
+                "Use only values explicitly mentioned in the text; if not specified, write 'not extractable."
             )
     },
         "exclude": [
@@ -271,7 +271,7 @@ class PromptCreation(BaseModel):
         schema_lines.append(GLOBAL_NULL_RULE)
 
         answer_schema: dict[str, str] = {
-            "Format": "\n".join(schema_lines),
+            "Format answer (include always all fields)": "\n".join(schema_lines),
         }
 
         # Conclusions
