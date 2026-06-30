@@ -25,7 +25,7 @@ PARAM_META: dict[str, dict] = {
     "size_nm": {
         "description": "Nanoparticle diameter or size explicitly measured in the study",
         "unit_hint": "nm",
-        "specific_format": "size_nm | <value> | <unit> | <drug_name> | <load> | <size_type>",
+        "specific_format": "size_nm | <value> | <unit> | <drug_name> | <size_type>",
         "field_rules": {
             "<value>": "Numeric size exactly as reported (include ranges , intervals and deviations).",
             "<unit>": "Unit exactly as written in text.",
