@@ -242,11 +242,11 @@ class PromptCreation(BaseModel):
             if "specific_format" in PARAM_META.get(param, {})
         ]
         if override_lines:
-            schema_lines.append("Format answers:")
+            schema_lines.append("Format answer:")
             schema_lines.extend(override_lines)
 
         schema_lines.append("Rules:")
-        schema_lines.append("- One line per extracted value.")
+        schema_lines.append("- One line per extracted value, no NOT omit any field of the 'Format answer' given, ALWAYS include the parameter name.")
         schema_lines.append(
             "- For each numerical candidate found in the text, apply these two steps:\n"
             "  STEP 1 \u2014 Is it introduced by 'X et al.', 'reported', 'showed', 'found', "
