@@ -900,7 +900,7 @@ PARAM_META = {
 
     "size_nm": {
         "fields": [
-            "parameter_name", "value", "unit", "condition"
+            "parameter_name", "value", "unit", "drug_name", "size_type", 
         ],
     },
 
@@ -1206,6 +1206,7 @@ class ParserNanoparticle(BaseModel):
 
             "dose_group":
                 self.postprocess_dose_group,
+            
         }
 
         for key, fn in postprocessors.items():
@@ -1355,3 +1356,40 @@ class ParserNanoparticle(BaseModel):
 
         T_and_F_list["lipid_composition"] = merged if merged else None
         return T_and_F_list
+    
+    def parse_load_status_response(self, response: str) -> dict[tuple, str]:
+        results = {}
+        for raw_line in response.strip().splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+            parts = [p.strip() for p in line.split("|")]
+            if len(parts) < 3:
+                continue
+            value, unit, status = parts[0], parts[1], parts[2]
+            key = self._make_size_key(value, unit)
+            results[key] = status if status in ("loaded", "unloaded") else None
+        return results
+
+    def update_load_status(self, T_and_F_list: dict, load_raw: str) -> list[dict]:
+        size_entries = T_and_F_list.get("size_nm")
+        if not size_entries:
+            return size_entries
+
+        parsed = self.parse_load_status_response(load_raw)
+
+        for entry in size_entries:
+            key = self._make_size_key(entry.get("value"), entry.get("unit"))
+            entry["load"] = parsed.get(key)  # None if not matched/unknown
+
+        return size_entries
+
+    @staticmethod
+    def _make_size_key(value, unit) -> tuple:
+        """Normalize value/unit pairs so float vs string vs whitespace doesn't break matching."""
+        try:
+            v = round(float(str(value).strip()), 4)
+        except (TypeError, ValueError):
+            v = str(value).strip() if value is not None else None
+        u = str(unit).strip().lower() if unit is not None else None
+        return (v, u)

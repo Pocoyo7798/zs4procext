@@ -549,7 +549,7 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
     "Qwen3.5-9B": str(
         importlib_resources.files("xlmexlab")
         / "resources/template"
-        / "qwen_vl_template.json"
+        / "qwen1.5_default_chat_template.json"
     ),
     #qwen1.5_default_chat_template.json"
     #"qwen_vl_template.json"

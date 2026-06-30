@@ -33,20 +33,12 @@ PARAM_META: dict[str, dict] = {
                 "Identify the drug name associated to the reported size."
                 "If no cargo or drug is specified, leave empty."
             ),
-            "<load>": (
-                "Loading status of the nanoparticle. "
-                "Use 'loaded' only when the text explicitly states that a drug, "
-                "cargo, or active compound is refered as encapsulated, incorporated, "
-                "or loaded. Use 'unloaded' only when the particle is explicitly "
-                "described as unloaded. "
-                "Leave empty if the loading status is not explicitly stated or cannot be unambiguously determined."
-            ),
             "<size_type>": (
                 "Type of particle size measurement reported. "
                 "Indicate the method used to determine size, such as 'DLS', "
                 "'hydrodynamic diameter', 'TEM', 'z-average' "
                 "or other explicitly stated measurement type. "
-                "Use only values that are explicitly mentioned in the text; do not infer the method if it is not clearly specified if not specified, leave empty."
+                "Use only values explicitly mentioned in the text; if not specified, leave empty."
             )
     },
         "exclude": [
@@ -385,4 +377,47 @@ class PromptCreationLipidComposition(BaseModel):
             "objective": objective,
             "answer_schema": {"Format": "\n".join(schema_lines)},
             "conclusion": "Return ONLY the missing lipid names (or 'none'). No explanations, headers, or comments.",
+        }
+    
+class PromptCreationLoadStatus(BaseModel):
+
+    def build_extraction_prompt_json(self, size_entries: list[dict]) -> dict:
+        expertise = (
+            "You are an expert assistant for determining the loading status of "
+            "nanoparticle formulations described in scientific text."
+        )
+        initialization = (
+            "Read the paragraph carefully."
+        )
+        objective = "Only define each formulation as loaded, unloaded, or unknown using the rules below."
+
+        entries_str = "\n".join(
+            f"- size={e.get('value')} {e.get('unit')}, drug={e.get('drug_name') or '(none)'}"
+            for e in size_entries
+        )
+
+        schema_lines = [
+            "Rules:",
+            "- Use 'loaded' ONLY if the same sentence (or its immediate clause) explicitly "
+            "states the particle is loaded/encapsulated/incorporated with a drug or cargo.",
+            "- Use 'unloaded' ONLY if the same sentence (or its immediate clause) explicitly "
+            "states the particle is 'blank', 'empty', 'unloaded', or 'control'.",
+            "- Do NOT infer loading status from formulation codes "
+            "mentioned earlier in the text unless that code or its explicit label is used "
+            "in the same sentence as this size value.",
+            "- Do NOT assume a value belongs to a different formulation just because a "
+            "different preparation method (e.g. a different technique) is mentioned.",
+            "- If unsure, answer 'unknown'.",
+            "Format: <size_value> | <unit> | <status>",
+            "Size values to classify:",
+            entries_str,
+        ]
+
+        return {
+            "expertise": expertise,
+            "initialization": initialization,
+            "definitions": {},
+            "objective": objective,
+            "answer_schema": {"Format": "\n".join(schema_lines)},
+            "conclusion": "Return ONLY the classification lines. No explanations, headers, or comments.",
         }

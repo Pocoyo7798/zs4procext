@@ -165,7 +165,15 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
                             import traceback
                             traceback.print_exc()
 
-
+                    if llm_values and llm_values.get("size_nm"):
+                        print("\n  [STEP 6] Running load-status confirmation...")
+                        try:
+                            updated_sizes = llm_extractor.extract_load_status_info(text=content, data_response=llm_values)
+                            llm_values["size_nm"] = updated_sizes
+                        except Exception as e:
+                            print(f"  [STEP 6] !! LOAD STATUS ERROR: {type(e).__name__}: {e}")
+                            traceback.print_exc()
+                            
 
                 except Exception as e:
                     print(f"  [STEP 3] !! LLM ERROR: {type(e).__name__}: {e}")

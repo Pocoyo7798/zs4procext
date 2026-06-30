@@ -14,7 +14,7 @@ from pydantic import BaseModel, PrivateAttr, validator
 from xlmexlab import parser
 from xlmexlab.llm import ModelLLM, ModelVLM
 from xlmexlab.prompt import PromptFormatter
-from xlmexlab.prompt_creation import PromptCreation, PromptCreationSchedule, PromptCreationLipidComposition
+from xlmexlab.prompt_creation import PromptCreation, PromptCreationSchedule, PromptCreationLipidComposition, PromptCreationLoadStatus
 from xlmexlab.parser_nanoparticles import ParserNanoparticle
 from xlmexlab.nanoparticle_paragraph import NORMALIZATION_MAP, GENERIC_TERMS
 
@@ -203,4 +203,19 @@ class NanoparticlesExtractorParagraph(BaseModel):
         )
 
         return updated.get("lipid_composition")
+    
+    def extract_load_status_info(self, text: str, data_response: dict):
+        size_entries = data_response.get("size_nm")
+        if not size_entries:
+            return None
+
+        prompt_dict = PromptCreationLoadStatus().build_extraction_prompt_json(size_entries)
+        self._prompt = PromptFormatter(**prompt_dict)
+        self._prompt.model_post_init(self.prompt_template_path)
+
+        prompt = self._prompt.format_prompt(f"'{text}'")
+        data_response_load = self._llm_model.run_single_prompt(prompt).strip()
+
+        updated_sizes = self._nanoparticles_parser.update_load_status(data_response, data_response_load)
+        return updated_sizes
 
