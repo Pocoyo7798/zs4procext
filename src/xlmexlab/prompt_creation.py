@@ -451,3 +451,77 @@ class PromptCreationLipidRatioUnits(BaseModel):
             "answer_schema": {"Format": "\n".join(schema_lines)},
             "conclusion": "Return ONLY the extraction lines. No explanations, headers, or comments.",
         }
+    
+class PromptCreationFormulationRegistry(BaseModel):
+
+    def build_extraction_prompt_json(self, candidate_codes: list[str]) -> dict:
+        expertise = (
+            "You are an expert assistant for identifying what nanoparticle "
+            "formulation codes or abbreviations refer to in scientific text."
+        )
+        initialization = (
+            "A first-pass scan found these candidate formulation codes/abbreviations "
+            "in the text below:\n" + ", ".join(candidate_codes)
+        )
+        objective = (
+            "For each REAL formulation code (i.e. one that genuinely refers to a "
+            "specific nanoparticle/liposome formulation in this text), determine: "
+            "(1) the drug or cargo it contains, if any, and "
+            "(2) whether it is explicitly described as loaded or unloaded/blank. "
+            "Only use information explicitly stated in the text. Do not infer drug "
+            "identity or load status from the code's letters/name alone "
+            "(e.g. do not assume 'BLK' means blank just because of the abbreviation; "
+            "only conclude this if the text itself states it)."
+        )
+        schema_lines = [
+            "Format: <code> | <drug_name_or_none> | <loaded/unloaded/unknown>",
+            "Rules:",
+            "- If a candidate is NOT actually a formulation identifier (e.g. it's a "
+            "method name, unit, or unrelated abbreviation), SKIP it — do not output a line for it.",
+            "- Use 'none' for drug_name if no cargo is stated for that code.",
+            "- Use 'unknown' for load status only if the text genuinely does not state it.",
+            "- One line per valid formulation code.",
+        ]
+        return {
+            "expertise": expertise,
+            "initialization": initialization,
+            "definitions": {},
+            "objective": objective,
+            "answer_schema": {"Format": "\n".join(schema_lines)},
+            "conclusion": "Return ONLY the extraction lines. No explanations, headers, or comments.",
+        }
+    
+class PromptCreationCargoCategoryCheck(BaseModel):
+
+    def build_extraction_prompt_json(self, unmatched_cargos: list[str], known_categories: list[str]) -> dict:
+        expertise = (
+            "You are an expert pharmacology assistant classifying therapeutic "
+            "compounds into drug class categories."
+        )
+        initialization = (
+            "The following candidate drug/cargo names were found in the text but "
+            "are NOT present in our reference database:\n"
+            + ", ".join(unmatched_cargos)
+        )
+        objective = (
+            "For each name, determine if it is a real therapeutic compound, drug, "
+            "or biologically active cargo (not a lipid, buffer, or excipient). "
+            "If so, assign the closest matching category from the list below, or "
+            "'new_category' if none fit well. If it is NOT a real drug/cargo, mark it 'not_a_drug'."
+        )
+        schema_lines = [
+            "Known categories: " + ", ".join(known_categories),
+            "Format: <name> | <is_drug: yes/no> | <category_or_new_category_or_not_applicable>",
+            "Rules:",
+            "- One line per name, in the same order given.",
+            "- Do not invent a name not in the input list.",
+        ]
+        return {
+            "expertise": expertise,
+            "initialization": initialization,
+            "definitions": {},
+            "objective": objective,
+            "answer_schema": {"Format": "\n".join(schema_lines)},
+            "conclusion": "Return ONLY the extraction lines. No explanations, headers, or comments.",
+        }
+

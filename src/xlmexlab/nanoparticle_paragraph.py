@@ -1383,6 +1383,46 @@ particl(?:e|es)\s+size
 )
 """
 
+FORMULATION_CODE_PATTERN = re.compile(
+    r"\b("
+    r"[A-Z]{2,6}[-_@][A-Za-z0-9]{1,8}(?:[-_][A-Za-z0-9]{1,4})?"   # TSL-LUP, Lip-DOX, NP@PTX01
+    r"|[A-Z][a-z]{1,4}[-_]?\d{1,3}"                                 # F1, Lip2, Form12
+    r")\b"
+)
+
+# common false-positive tokens to discard outright (units, methods, etc.)
+FORMULATION_CODE_STOPLIST = {
+    "DLS", "PDI", "REV", "TEM", "SEM", "EE", "PBS", "NaCl", "DMSO",
+}
+
+def harvest_formulation_candidates(text: str) -> list[str]:
+    """Cheap, high-recall scan for possible formulation codes/abbreviations."""
+    found = FORMULATION_CODE_PATTERN.findall(text)
+    candidates = []
+    seen = set()
+    for tok in found:
+        key = tok.upper()
+        if key in FORMULATION_CODE_STOPLIST:
+            continue
+        if key in seen:
+            continue
+        seen.add(key)
+        candidates.append(tok)
+    return candidates
+
+def lookup_cargo_category(cargo_name: str, cargo_db: dict = CARGO_DB) -> str | None:
+    """Deterministic lookup: which CARGO_DB category does this drug belong to?"""
+    name_norm = cargo_name.strip().lower()
+    for category, members in cargo_db.items():
+        for m in members:
+            if m.strip().lower() == name_norm:
+                return category
+    return None
+
+
+
+
+
 # HELPER FUNCTIONS
 def _match_abbreviation(text: str, abbrs: List[str]) -> bool:
     for a in abbrs:
@@ -2040,7 +2080,6 @@ class NanoparticleExtractor(BaseModel):
             coating_number          = self._extract_coating_number(text),
             lipid_composition       = self._extract_lipid_composition(text),
             lipid_composition_ratio = self._extract_lipid_ratio(text),
-            lipid_composition_ratio_units = self._extract_lipid_ratio_units(text),
             stimulus_responsive     = self._extract_stimulus_responsive(text),
             bioconjugation_nature   = self._extract_bioconjugation(text),
             peg_coat                = self._extract_peg_coat(text),

@@ -14,9 +14,11 @@ from pydantic import BaseModel, PrivateAttr, validator
 from xlmexlab import parser
 from xlmexlab.llm import ModelLLM, ModelVLM
 from xlmexlab.prompt import PromptFormatter
-from xlmexlab.prompt_creation import PromptCreation, PromptCreationSchedule, PromptCreationLipidComposition, PromptCreationLoadStatus, PromptCreationLipidRatioUnits
+from xlmexlab.prompt_creation import PromptCreation, PromptCreationSchedule, PromptCreationLipidComposition, PromptCreationLoadStatus, PromptCreationLipidRatioUnits, PromptCreationFormulationRegistry, PromptCreationCargoCategoryCheck
 from xlmexlab.parser_nanoparticles import ParserNanoparticle
 from xlmexlab.nanoparticle_paragraph import NORMALIZATION_MAP, GENERIC_TERMS
+from xlmexlab.nanoparticle_paragraph import harvest_formulation_candidates
+from xlmexlab.nanoparticle_paragraph import CARGO_DB, lookup_cargo_category
 
 class NanoparticlesExtractorParagraph(BaseModel):
 
@@ -258,4 +260,70 @@ class NanoparticlesExtractorParagraph(BaseModel):
         updated = dict(ratio_data)  # preserva 'ratios' e qualquer outra key existente
         updated["quantification_type"] = quantification_type
         return updated
+    
+    def extract_formulation_registry(self, full_text: str) -> dict:
+        """Run once per document (not per paragraph) to build a code -> {drug, load} map."""
 
+
+        candidates = harvest_formulation_candidates(full_text)
+        print(f"  [EXTRACTOR.extract_formulation_registry] candidates: {candidates}")
+
+        if not candidates:
+            return {}
+
+        prompt_dict = PromptCreationFormulationRegistry().build_extraction_prompt_json(candidates)
+        self._prompt = PromptFormatter(**prompt_dict)
+        self._prompt.model_post_init(self.prompt_template_path)
+
+        prompt = self._prompt.format_prompt(f"'{full_text}'")
+        print(f"\n  [EXTRACTOR.extract_formulation_registry] PROMPT SENT TO LLM")
+        print(prompt)
+
+        response = self._llm_model.run_single_prompt(prompt).strip()
+        print(f"\n  [EXTRACTOR.extract_formulation_registry] LLM RAW RESPONSE")
+        print(response)
+
+        registry = self._nanoparticles_parser.parse_formulation_registry(response)
+        print(f"  [EXTRACTOR.extract_formulation_registry] Registry: {registry}")
+        return registry
+
+    def check_cargo(self, cargo_candidates: list[str]) -> dict:
+        """For each candidate cargo name: try CARGO_DB first, fall back to LLM classification."""
+
+        resolved = {}
+        unmatched = []
+
+        for name in cargo_candidates:
+            category = lookup_cargo_category(name)
+            if category:
+                resolved[name] = {"is_drug": True, "category": category, "source": "CARGO_DB"}
+            else:
+                unmatched.append(name)
+
+        if not unmatched:
+            return resolved
+
+        print(f"  [EXTRACTOR.check_cargo] Unmatched cargos needing LLM check: {unmatched}")
+
+        known_categories = list(CARGO_DB.keys())
+        prompt_dict = PromptCreationCargoCategoryCheck().build_extraction_prompt_json(
+            unmatched, known_categories
+        )
+        self._prompt = PromptFormatter(**prompt_dict)
+        self._prompt.model_post_init(self.prompt_template_path)
+
+        prompt = self._prompt.format_prompt("'" + ", ".join(unmatched) + "'")
+        print(f"\n  [EXTRACTOR.check_cargo] PROMPT SENT TO LLM")
+        print(prompt)
+
+        response = self._llm_model.run_single_prompt(prompt).strip()
+        print(f"\n  [EXTRACTOR.check_cargo] LLM RAW RESPONSE")
+        print(response)
+
+        llm_results = self._nanoparticles_parser.parse_cargo_category_check(response)
+
+        for name, info in llm_results.items():
+            resolved[name] = {**info, "source": "LLM"}
+
+        print(f"  [EXTRACTOR.check_cargo] Resolved: {resolved}")
+        return resolved

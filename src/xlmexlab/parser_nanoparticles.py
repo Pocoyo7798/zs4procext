@@ -1406,3 +1406,43 @@ class ParserNanoparticle(BaseModel):
             return value
 
         return None
+    
+    def parse_formulation_registry(self, response: str) -> dict[str, dict]:
+        registry = {}
+        for raw_line in response.strip().splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+            parts = [p.strip() for p in line.split("|")]
+            if len(parts) < 3:
+                continue
+            code, drug, load = parts[0], parts[1], parts[2]
+            registry[code.upper()] = {
+                "drug_name": None if drug.lower() in ("none", "", "-") else drug,
+                "load": load if load in ("loaded", "unloaded") else None,
+            }
+        return registry
+
+    def resolve_formulation_code(self, text: str, registry: dict) -> dict | None:
+        """Find a known formulation code mentioned in `text` and return its registry entry."""
+        for code, info in registry.items():
+            if re.search(r"\b" + re.escape(code) + r"\b", text, re.IGNORECASE):
+                return {"formulation_code": code, **info}
+        return None
+    
+    def parse_cargo_category_check(self, response: str) -> dict[str, dict]:
+        response = self.strip_think_blocks(response)
+        results = {}
+        for raw_line in response.strip().splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+            parts = [p.strip() for p in line.split("|")]
+            if len(parts) < 3:
+                continue
+            name, is_drug, category = parts[0], parts[1], parts[2]
+            results[name] = {
+                "is_drug": is_drug.lower() == "yes",
+                "category": category,
+            }
+        return results
