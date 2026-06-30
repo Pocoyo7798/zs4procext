@@ -1276,4 +1276,82 @@ class ParserNanoparticle(BaseModel):
 
         return T_and_F_list
 
+    def parse_missing_lipids(self, response: str) -> list[str]:
+        response = response.strip()
+        if not response or response.lower() in ("none", "n/a", "-"):
+            return []
 
+        items = []
+        for raw_line in response.splitlines():
+            line = raw_line.strip(" -•\t")
+            if not line or line.lower() == "none":
+                continue
+            items.append(line)
+        return items
+
+    @staticmethod
+    def _norm_key(s: str) -> str:
+        """Lowercase + collapse whitespace, for case/space-insensitive comparisons."""
+        return " ".join(s.strip().lower().split())
+
+    def update_lipid_composition(
+        self,
+        T_and_F_list: dict,
+        missing_raw: str,
+        normalization_map: dict,
+        generic_terms: dict,
+    ) -> dict:
+        if "lipid_composition" not in T_and_F_list:
+            return T_and_F_list
+
+        existing = T_and_F_list.get("lipid_composition") or []
+        missing_items = self.parse_missing_lipids(missing_raw)
+        print(f"  [PARSER.update_lipid_composition] LLM reported missing: {missing_items}")
+
+        # normalized lookup: norm_key -> canonical form already present
+        existing_norm = {self._norm_key(e): e for e in existing}
+
+        # normalized lookup for the normalization map (handles e.g. "Mc3" vs "MC3")
+        norm_map_lookup = {self._norm_key(k): v for k, v in normalization_map.items()}
+
+        normalized_new = []
+        for item in missing_items:
+            item_key = self._norm_key(item)
+
+            # resolve to canonical form via normalization_map (case-insensitive)
+            canonical = norm_map_lookup.get(item_key, item)
+            canonical_key = self._norm_key(canonical)
+
+            # skip if it already exists (case/space-insensitive) in regex result or in this batch
+            if canonical_key in existing_norm:
+                print(f"  [PARSER.update_lipid_composition] Skipping '{item}' -> already present as '{existing_norm[canonical_key]}'")
+                continue
+
+            already_added = any(self._norm_key(n) == canonical_key for n in normalized_new)
+            if already_added:
+                continue
+
+            normalized_new.append(canonical)
+
+        merged = list(existing) + normalized_new
+        # final de-dup pass, case/space-insensitive, keeps first occurrence
+        seen = {}
+        deduped = []
+        for item in merged:
+            key = self._norm_key(item)
+            if key not in seen:
+                seen[key] = True
+                deduped.append(item)
+        merged = deduped
+
+        # re-apply generic-term suppression (e.g. drop "phosphatidylcholine" if a specific PC is present)
+        for generic, specific_set in generic_terms.items():
+            generic_key = self._norm_key(generic)
+            specific_keys = {self._norm_key(s) for s in specific_set}
+            merged_keys = {self._norm_key(m) for m in merged}
+
+            if generic_key in merged_keys and merged_keys & specific_keys:
+                merged = [m for m in merged if self._norm_key(m) != generic_key]
+
+        T_and_F_list["lipid_composition"] = merged if merged else None
+        return T_and_F_list

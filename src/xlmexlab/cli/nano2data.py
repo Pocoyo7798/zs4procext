@@ -149,6 +149,22 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
                             print(f"  [STEP 4] !! SCHEDULE ERROR: {type(e).__name__}: {e}")
                             import traceback
                             traceback.print_exc()
+                        
+                    if llm_values and llm_values.get("lipid_composition"):
+                        print("\n  [STEP 5] Running lipid composition confirmation...")
+                        
+                        try:
+                            updated_lipids = llm_extractor.confirm_lipid_composition_info(
+                                text=content,
+                                data_response=llm_values
+                            )
+                            llm_values["lipid_composition"] = updated_lipids
+                            print(f"  [STEP 5] Lipid composition returned: {updated_lipids}")
+                        except Exception as e:
+                            print(f"  [STEP 5] !! LIPID ERROR: {type(e).__name__}: {e}")
+                            import traceback
+                            traceback.print_exc()
+
 
 
                 except Exception as e:

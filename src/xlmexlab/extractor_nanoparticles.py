@@ -14,9 +14,9 @@ from pydantic import BaseModel, PrivateAttr, validator
 from xlmexlab import parser
 from xlmexlab.llm import ModelLLM, ModelVLM
 from xlmexlab.prompt import PromptFormatter
-from xlmexlab.prompt_creation import PromptCreation, PromptCreationSchedule
+from xlmexlab.prompt_creation import PromptCreation, PromptCreationSchedule, PromptCreationLipidComposition
 from xlmexlab.parser_nanoparticles import ParserNanoparticle
-
+from xlmexlab.nanoparticle_paragraph import NORMALIZATION_MAP, GENERIC_TERMS
 
 class NanoparticlesExtractorParagraph(BaseModel):
 
@@ -173,3 +173,34 @@ class NanoparticlesExtractorParagraph(BaseModel):
                 updated_dose_group = self._nanoparticles_parser.update_schedule(data_response, data_response_s)
 
                 return updated_dose_group
+            
+    def confirm_lipid_composition_info(self, text: str, data_response: dict):
+        lipid_composition = data_response.get("lipid_composition")
+
+        if not lipid_composition:
+            print("  [EXTRACTOR.confirm_lipid_composition_info] No lipid_composition found, skipping.")
+            return data_response.get("lipid_composition")
+
+        print(f"\n  [EXTRACTOR.confirm_lipid_composition_info] existing lipids: {lipid_composition}")
+
+        prompt_dict = PromptCreationLipidComposition().build_extraction_prompt_json(lipid_composition)
+        self._prompt = PromptFormatter(**prompt_dict)
+        self._prompt.model_post_init(self.prompt_template_path)
+
+        prompt = self._prompt.format_prompt(f"'{text}'")
+        print(f"\n  [EXTRACTOR.confirm_lipid_composition_info] PROMPT SENT TO LLM")
+        print(prompt)
+
+        data_response_lipid = self._llm_model.run_single_prompt(prompt).strip()
+        print(f"\n  [EXTRACTOR.confirm_lipid_composition_info] LLM RAW RESPONSE")
+        print(data_response_lipid)
+
+        updated = self._nanoparticles_parser.update_lipid_composition(
+            data_response,
+            data_response_lipid,
+            NORMALIZATION_MAP,
+            GENERIC_TERMS,
+        )
+
+        return updated.get("lipid_composition")
+

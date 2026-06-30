@@ -31,7 +31,7 @@ PARAM_META: dict[str, dict] = {
             "<unit>": "Unit exactly as written in text.",
             "<drug_name>": (
                 "Identify the drug name associated to the reported size."
-                "If no cargo or drug is specified, leave empty"
+                "If no cargo or drug is specified, leave empty."
             ),
             "<load>": (
                 "Loading status of the nanoparticle. "
@@ -345,3 +345,44 @@ class PromptCreationSchedule(BaseModel):
         }
 
         return prompt_json
+    
+
+class PromptCreationLipidComposition(BaseModel):
+
+    def build_extraction_prompt_json(self, lipids_found: list[str]) -> dict:
+
+        expertise = (
+            "You are an expert assistant for identifying lipid components in "
+            "nanoparticle formulations described in scientific text."
+        )
+
+        initialization = (
+            "A first-pass scan already identified the following lipids/lipid-like "
+            "components in the text below:\n"
+            + (", ".join(lipids_found) if lipids_found else "(none)")
+        )
+
+        objective = (
+            "Re-read the text and check whether any OTHER lipid, lipid derivative, "
+            "sterol, PEG-lipid, or ionizable lipid is mentioned that is NOT already "
+            "in the list above. Only consider compounds that are part of the "
+            "nanoparticle's own lipid composition (used to formulate the particle), "
+            "not unrelated excipients, drugs, or buffers."
+        )
+
+        schema_lines = [
+            "Rules:",
+            "- List ONLY lipids that are missing from the list above.",
+            "- One lipid name per line, exactly as written in the text.",
+            "- Do NOT repeat lipids already in the list above.",
+            "- If nothing is missing, answer exactly: none",
+        ]
+
+        return {
+            "expertise": expertise,
+            "initialization": initialization,
+            "definitions": {},
+            "objective": objective,
+            "answer_schema": {"Format": "\n".join(schema_lines)},
+            "conclusion": "Return ONLY the missing lipid names (or 'none'). No explanations, headers, or comments.",
+        }

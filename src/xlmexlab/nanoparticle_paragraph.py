@@ -830,7 +830,7 @@ MULTILAMELLAR_ABBR = ["MLV", "MLVs"]
 LIPID_KEYWORDS = [
     # structural phospholipids
     "MSPC", "monostearoyl phosphatidylcholine", "SPC", "DPPC", "DSPC", "DOPC", "DOPE", "HSPC", "hydrogenated soy phosphatidylcholine", "DPPE", "DMPC", "POPC", "POPE",
-    "phosphatidylcholine", "sphingomyelin", "span 60", "PS", "SM", "lyso-PC", "lyso-PE"
+    "phosphatidylcholine", "sphingomyelin", "span 60", "PS", "SM", "lyso-PC", "lyso-PE",
 
     "span", "twen"
 
@@ -844,7 +844,7 @@ LIPID_KEYWORDS = [
     # ionizable lipids
     "DLin-MC3-DMA", "MC3", "SM-102", "ALC-0315",
     "lipid A9", "C12-200", "OF-02", "5A2-SC8", "CKK-E12", "DLin-KC2-DMA",
-    "DODAP", "DOTAP", "DOTMA", "GenVoy-ILM", "Lipid H", "DLODAP", "DODMA", "DSDMA", "L-319"
+    "DODAP", "DOTAP", "DOTMA", "GenVoy-ILM", "Lipid H", "DLODAP", "DODMA", "DSDMA", "L-319",
     
     #Imaging lipid
     "Gd.DOTA.DSA", # Gd.DOTA.DSA for MRI imagining

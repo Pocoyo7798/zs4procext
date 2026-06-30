@@ -558,7 +558,7 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         / "resources/template"
         / "deepseek_ocr_default_template.json"
     ),
-    "InternVL3_5-8B-Instruct": str(
+    "InternVL3-8B-Instruct": str(
         importlib_resources.files("xlmexlab")
         / "resources/template"
         / "internvl_default_instruct_template.json"
