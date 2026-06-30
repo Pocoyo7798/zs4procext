@@ -963,12 +963,6 @@ PARAM_META = {
             "parameter_name", "value", "unit", "condition"
         ],
     },
-
-    "lipid_composition_ratio_units": {
-        "fields": [
-            "parameter_name", "dimension"
-        ]
-    },
 }
 
 
@@ -1393,3 +1387,22 @@ class ParserNanoparticle(BaseModel):
             v = str(value).strip() if value is not None else None
         u = str(unit).strip().lower() if unit is not None else None
         return (v, u)
+    
+    def parse_lipid_ratio_units_response(self, response: str) -> str | None:
+        response = self.strip_think_blocks(response)  # se já tiveres este helper, reaproveita
+
+        for raw_line in response.strip().splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+            parts = [p.strip() for p in line.split("|")]
+            if len(parts) < 2:
+                continue
+            param_name, value = parts[0], parts[1]
+            if param_name != "lipid_composition_ratio_units":
+                continue
+            if value.lower() in ("not_extractable", "not extractable", "", "-", "none"):
+                return None
+            return value
+
+        return None

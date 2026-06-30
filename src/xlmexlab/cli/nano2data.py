@@ -173,7 +173,16 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
                         except Exception as e:
                             print(f"  [STEP 6] !! LOAD STATUS ERROR: {type(e).__name__}: {e}")
                             traceback.print_exc()
-                            
+
+                    if llm_values and llm_values.get("lipid_composition_ratio"):
+                        print("\n  [STEP 7] Running lipid ratio units classification...")
+                        try:
+                            updated_ratios = llm_extractor.extract_lipid_ratio_units_info(text=content, data_response=llm_values)
+                            llm_values["lipid_composition_ratio"] = updated_ratios
+                        except Exception as e:
+                            print(f"  [STEP 7] !! RATIO UNITS ERROR: {type(e).__name__}: {e}")
+                            traceback.print_exc()
+
 
                 except Exception as e:
                     print(f"  [STEP 3] !! LLM ERROR: {type(e).__name__}: {e}")

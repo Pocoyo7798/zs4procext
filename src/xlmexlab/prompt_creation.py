@@ -50,16 +50,6 @@ PARAM_META: dict[str, dict] = {
         ],
     },
 
-    "lipid_composition_ratio_units": {
-        "description": "Quantification type used for lipid composition ratios",
-        "unit_hint": "dimensionless (molar ratio, weight ratio, etc.)",
-        "specific_format": "lipid_composition_ratio_units | <quantification_type>",
-        "field_rules": {
-            "<quantification_type>": "Type of ratio exactly as stated (e.g., mol%, molar ratio).",
-        },
-        "exclude": [],
-    },
-
     "zeta_potential_mv": {
         "description": "Zeta potential (surface charge)",
         "unit_hint": "mV",
@@ -420,4 +410,44 @@ class PromptCreationLoadStatus(BaseModel):
             "objective": objective,
             "answer_schema": {"Format": "\n".join(schema_lines)},
             "conclusion": "Return ONLY the classification lines. No explanations, headers, or comments.",
+        }
+    
+class PromptCreationLipidRatioUnits(BaseModel):
+
+    def build_extraction_prompt_json(self, ratio_entries: list[dict]) -> dict:
+        expertise = (
+            "You are an expert assistant for identifying the quantification type "
+            "of lipid composition ratios in nanoparticle formulations."
+        )
+
+        entries_str = "\n".join(
+            f"- {e.get('lipid')}: {e.get('ratio')}"
+            for e in ratio_entries
+        )
+
+        initialization = (
+            "The following lipid:ratio pairs were already identified in the text below:\n"
+            + entries_str
+        )
+
+        objective = (
+            "For the lipids ratio listed above, determine the quantification type "
+            "explicitly used in the text (e.g. molar ratio, mol%, weight ratio, w/w, v/v)."
+        )
+
+        schema_lines = [
+            "Format: lipid_composition_ratio_units | <quantification_type>",
+            "Rules:",
+            "- Use the quantification type EXACTLY as stated in the text near that ratio "
+            "(e.g. 'mol%', 'molar ratio', 'w/w', 'weight ratio').",
+            "- Do NOT infer or guess a unit; only use what is explicitly written.",
+        ]
+
+        return {
+            "expertise": expertise,
+            "initialization": initialization,
+            "definitions": {},
+            "objective": objective,
+            "answer_schema": {"Format": "\n".join(schema_lines)},
+            "conclusion": "Return ONLY the extraction lines. No explanations, headers, or comments.",
         }

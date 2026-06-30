@@ -14,7 +14,7 @@ from pydantic import BaseModel, PrivateAttr, validator
 from xlmexlab import parser
 from xlmexlab.llm import ModelLLM, ModelVLM
 from xlmexlab.prompt import PromptFormatter
-from xlmexlab.prompt_creation import PromptCreation, PromptCreationSchedule, PromptCreationLipidComposition, PromptCreationLoadStatus
+from xlmexlab.prompt_creation import PromptCreation, PromptCreationSchedule, PromptCreationLipidComposition, PromptCreationLoadStatus, PromptCreationLipidRatioUnits
 from xlmexlab.parser_nanoparticles import ParserNanoparticle
 from xlmexlab.nanoparticle_paragraph import NORMALIZATION_MAP, GENERIC_TERMS
 
@@ -207,15 +207,55 @@ class NanoparticlesExtractorParagraph(BaseModel):
     def extract_load_status_info(self, text: str, data_response: dict):
         size_entries = data_response.get("size_nm")
         if not size_entries:
+            print("  [EXTRACTOR.extract_load_status_info] No size_nm entries, skipping.")
             return None
+
+        print(f"\n  [EXTRACTOR.extract_load_status_info] size_entries: {size_entries}")
 
         prompt_dict = PromptCreationLoadStatus().build_extraction_prompt_json(size_entries)
         self._prompt = PromptFormatter(**prompt_dict)
         self._prompt.model_post_init(self.prompt_template_path)
 
         prompt = self._prompt.format_prompt(f"'{text}'")
+        print(f"\n  [EXTRACTOR.extract_load_status_info] PROMPT SENT TO LLM")
+        print(prompt)
+
         data_response_load = self._llm_model.run_single_prompt(prompt).strip()
+        print(f"\n  [EXTRACTOR.extract_load_status_info] LLM RAW RESPONSE")
+        print(data_response_load)
 
         updated_sizes = self._nanoparticles_parser.update_load_status(data_response, data_response_load)
+        print(f"  [EXTRACTOR.extract_load_status_info] Updated sizes: {updated_sizes}")
         return updated_sizes
+    
+    def extract_lipid_ratio_units_info(self, text: str, data_response: dict):
+        lipids = data_response.get("lipid_composition")
+        ratio_data = data_response.get("lipid_composition_ratio")
+        ratios = ratio_data.get("ratios") if isinstance(ratio_data, dict) else None
+
+        if not lipids or not ratios or len(lipids) != len(ratios):
+            print("  [EXTRACTOR.extract_lipid_ratio_units_info] Mismatched or missing lipids/ratios, skipping.")
+            return data_response.get("lipid_composition_ratio")
+
+        ratio_entries = [{"lipid": l, "ratio": r} for l, r in zip(lipids, ratios)]
+
+        print(f"\n  [EXTRACTOR.extract_load_status_info] size_entries: {ratio_entries}")
+
+        prompt_dict = PromptCreationLipidRatioUnits().build_extraction_prompt_json(ratio_entries)
+        self._prompt = PromptFormatter(**prompt_dict)
+        self._prompt.model_post_init(self.prompt_template_path)
+
+        prompt = self._prompt.format_prompt(f"'{text}'")
+        print(f"\n  [EXTRACTOR.extract_load_status_info] PROMPT SENT TO LLM")
+        print(prompt)
+        response = self._llm_model.run_single_prompt(prompt).strip()
+        print(f"\n  [EXTRACTOR.extract_load_status_info] PROMPT SENT TO LLM")
+        print(prompt)
+
+        quantification_type = self._nanoparticles_parser.parse_lipid_ratio_units_response(response)
+        print(f"  [EXTRACTOR.extract_lipid_ratio_units_info] quantification_type: {quantification_type}")
+
+        updated = dict(ratio_data)  # preserva 'ratios' e qualquer outra key existente
+        updated["quantification_type"] = quantification_type
+        return updated
 
