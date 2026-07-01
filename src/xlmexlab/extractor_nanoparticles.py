@@ -263,7 +263,7 @@ class NanoparticlesExtractorParagraph(BaseModel):
     def extract_formulation_registry(self, text: str, data_response: dict) -> dict:
         """Run once per document (not per paragraph) to build a code -> {drug, load} map."""
         candidates = data_response.get("formulations")
-
+        
         print(f"  [EXTRACTOR.extract_formulation_registry] candidates: {candidates}")
 
         if not candidates:
