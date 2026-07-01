@@ -104,12 +104,51 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
             print(f"\n  [STEP 1] Running REGEX extractor...")
             regex_flags = to_dict(regex_extractor.extract(content))
 
+            if not llm_extractor:
+                print(f"  [STEP 2] LLM extractor not loaded, skipping.")
+            elif skip_llm:
+                print(f"  [STEP 2] --skip_llm flag is set, skipping LLM.")
             
+            else: 
+                
+                print(regex_flags.get("lipid_composition"))  
+                if regex_flags.get("lipid_composition"):
+                    print("\n  [STEP LIPID COMPOSITION] Running lipid composition confirmation...")
+                    
+                    try:
+                        updated_lipids = llm_extractor.confirm_lipid_composition_info(text=content, data_response=regex_flags)
+                        regex_flags["lipid_composition"] = updated_lipids
+                        print(f"  [STEP LIPID COMPOSITION] Lipid composition returned: {updated_lipids}")
+                    except Exception as e:
+                        print(f"  [STEP LIPID COMPOSITION] !! LIPID ERROR: {type(e).__name__}: {e}")
+                        import traceback
+                        traceback.print_exc()
+                
+                print(regex_flags.get("lipid_composition_ratio"))
+                if regex_flags.get("lipid_composition_ratio"):
+                    print("\n  [STEP LIPID COMPOSITION RATIO] Running lipid ratio units classification...")
+                    try:
+                        updated_ratios = llm_extractor.extract_lipid_ratio_units_info(text=content, data_response=regex_flags)
+                        regex_flags["lipid_composition_ratio"] = updated_ratios
+                    except Exception as e:
+                        print(f"  [STEP LIPID COMPOSITION RATIO] !! RATIO UNITS ERROR: {type(e).__name__}: {e}")
+                        traceback.print_exc()
+
+                print(regex_flags.get("formulations"))
+                if regex_flags.get("formulations"):
+                    print("\n  [STEP FORMULATION] Running fornulations detection...")
+                    try:
+                        updated_formulations = llm_extractor.extract_formulation_registry(text=content, data_response=regex_flags)
+                        regex_flags["formulations"] = updated_formulations
+                    except Exception as e:
+                        print(f"  [STEP FORMULATION] !! ERROR FORMULATIONS: {type(e).__name__}: {e}")
+                        traceback.print_exc()
             
+
             true_flags = {k: v for k, v in regex_flags.items() if v is True}
             print(f"  [STEP 1] Done. TRUE flags: {true_flags if true_flags else 'NONE'}")
 
-            # --- Step 2: Decide if LLM should run ---
+            # Step 2: Decide if LLM should run
             has_findings = has_relevant_findings(regex_flags)
             print(f"\n  [STEP 2] has_findings={has_findings} | skip_llm={skip_llm} | llm_extractor={'LOADED' if llm_extractor else 'NOT LOADED'}")
 
@@ -151,49 +190,15 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
                             print(f"  [STEP 4] !! SCHEDULE ERROR: {type(e).__name__}: {e}")
                             import traceback
                             traceback.print_exc()
-                    print("AQUI")
-                    print(regex_flags.get("lipid_composition"))
-                    if regex_flags.get("lipid_composition"):
-                        print("\n  [STEP 5] Running lipid composition confirmation...")
-                        
-                        try:
-                            updated_lipids = llm_extractor.confirm_lipid_composition_info(text=content, data_response=regex_flags)
-                            regex_flags["lipid_composition"] = updated_lipids
-                            print(f"  [STEP 5] Lipid composition returned: {updated_lipids}")
-                        except Exception as e:
-                            print(f"  [STEP 5] !! LIPID ERROR: {type(e).__name__}: {e}")
-                            import traceback
-                            traceback.print_exc()
 
                     if llm_values and llm_values.get("size_nm"):
-                        print("\n  [STEP 6] Running load-status confirmation...")
+                        print("\n  [STEP 5] Running load-status confirmation...")
                         try:
                             updated_sizes = llm_extractor.extract_load_status_info(text=content, data_response=llm_values)
                             llm_values["size_nm"] = updated_sizes
                         except Exception as e:
-                            print(f"  [STEP 6] !! LOAD STATUS ERROR: {type(e).__name__}: {e}")
+                            print(f"  [STEP 5] !! LOAD STATUS ERROR: {type(e).__name__}: {e}")
                             traceback.print_exc()
-                    print("AQUI")
-                    print(regex_flags.get("lipid_composition_ratio"))
-                    if regex_flags.get("lipid_composition_ratio"):
-                        print("\n  [STEP 7] Running lipid ratio units classification...")
-                        try:
-                            updated_ratios = llm_extractor.extract_lipid_ratio_units_info(text=content, data_response=regex_flags)
-                            regex_flags["lipid_composition_ratio"] = updated_ratios
-                        except Exception as e:
-                            print(f"  [STEP 7] !! RATIO UNITS ERROR: {type(e).__name__}: {e}")
-                            traceback.print_exc()
-
-                    print(regex_flags.get("formulations"))
-                    if regex_flags.get("formulations"):
-                        print("\n  [STEP 8] Running fornulations detection...")
-                        try:
-                            updated_formulations = llm_extractor.extract_formulation_registry(text=content, data_response=regex_flags)
-                            regex_flags["formulations"] = updated_formulations
-                        except Exception as e:
-                            print(f"  [STEP 8] !! ERROR FORMULATIONS: {type(e).__name__}: {e}")
-                            traceback.print_exc()
-                    
 
 
                 except Exception as e:

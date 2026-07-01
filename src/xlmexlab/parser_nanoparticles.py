@@ -1380,13 +1380,36 @@ class ParserNanoparticle(BaseModel):
 
     @staticmethod
     def _make_size_key(value, unit) -> tuple:
-        """Normalize value/unit pairs so float vs string vs whitespace doesn't break matching."""
-        try:
-            v = round(float(str(value).strip()), 4)
-        except (TypeError, ValueError):
-            v = str(value).strip() if value is not None else None
-        u = str(unit).strip().lower() if unit is not None else None
-        return (v, u)
+        """
+        Normalize size values so that:
+        100 == 100.0
+        >50 == > 50
+        >50 nm == >50
+        <100 == < 100.0
+        >=25 == >= 25
+        """
+        u = str(unit).strip().lower() if unit else None
+
+        if value is None:
+            normalized = None
+        else:
+            s = str(value).strip()
+
+            # Remove unit if it appears at the end of the value
+            if u and s.lower().endswith(u):
+                s = s[:-len(u)].strip()
+
+            # match optional operator + number
+            m = re.match(r'^\s*(>=|<=|>|<)?\s*(-?\d+(?:\.\d+)?)\s*$', s)
+            if m:
+                op = m.group(1) or "="
+                num = round(float(m.group(2)), 4)
+                normalized = (op, num)
+            else:
+                # fallback for non-numeric expressions
+                normalized = re.sub(r'\s+', '', s).lower()
+
+        return (normalized, u)
     
     def parse_lipid_ratio_units_response(self, response: str) -> str | None:
         response = self.strip_think_blocks(response)  # se já tiveres este helper, reaproveita
