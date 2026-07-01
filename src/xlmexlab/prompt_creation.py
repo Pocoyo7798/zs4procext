@@ -436,12 +436,12 @@ class PromptCreationLipidRatioUnits(BaseModel):
         )
 
         schema_lines = [
-            "Format: lipid_composition_ratio_units | <quantification_type>",
+            "Format answer: lipid_composition_ratio_units | <quantification_type>",
             "Rules:",
             "- Use the quantification type EXACTLY as stated in the text near that ratio "
             "(e.g. 'mol%', 'molar ratio', 'w/w', 'weight ratio').",
             "- Do NOT infer or guess a unit; only use what is explicitly written.",
-            "- If no quantification type is not written just replace by 'unknown'."
+            "- If no quantification type is not explicit just write 'lipid_composition_ratio_units | unknown'."
         ]
 
         return {
@@ -450,7 +450,7 @@ class PromptCreationLipidRatioUnits(BaseModel):
             "definitions": {},
             "objective": objective,
             "answer_schema": {"Format": "\n".join(schema_lines)},
-            "conclusion": "Return ONLY the extraction line. No explanations, headers, or comments.",
+            "conclusion": "Return ONLY the extraction line using the given format. No explanations, headers, or comments.",
         }
     
 class PromptCreationFormulationRegistry(BaseModel):
