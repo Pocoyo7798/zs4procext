@@ -292,3 +292,39 @@ def nanoparticles2data(
             logger.warning(f"LLM disabled: {e}")
 
     # --- Process ---
+    print("\nSTARTING BLOCK PROCESSING...")
+    results, error_count = process_blocks(
+        blocks=remove_introduction_content(blocks),
+        regex_extractor=regex_extractor,
+        llm_extractor=llm_extractor,
+        min_text_length=min_text_length,
+        skip_llm=skip_llm,
+    )
+
+    # --- Save ---
+    output = {
+        "source": {
+            "file": os.path.abspath(paragraph_json),
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "total_paragraphs": sum(1 for r in results if r["type"] == "paragraph"),
+        },
+        "results": results,
+    }
+
+    print(f"\nSAVING OUTPUT to {output_file_path}...")
+    os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
+    with open(output_file_path, "w", encoding="utf-8") as f:
+        json.dump(output, f, indent=2, ensure_ascii=False)
+
+    print(f"\nDONE")
+    print(f"  Paragraphs processed: {output['source']['total_paragraphs']}")
+    print(f"  Errors:               {error_count}")
+    print(f"  Time (min):           {(time.time() - start) / 60:.2f}")
+
+
+def main():
+    nanoparticles2data()
+
+
+if __name__ == "__main__":
+    main()
