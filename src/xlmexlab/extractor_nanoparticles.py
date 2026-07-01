@@ -287,11 +287,9 @@ class NanoparticlesExtractorParagraph(BaseModel):
 
     def check_cargo(self, data_response: dict) -> dict:
         """For each candidate cargo name: try CARGO_DB first, fall back to LLM classification."""
-        print(data_response)
         cargo_candidates = [
         formulation.get("drug_name")
-        for formulation in data_response]
-
+        for formulation in data_response["formulations"].values()]
 
         resolved = {}
         unmatched = []

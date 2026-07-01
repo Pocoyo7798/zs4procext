@@ -144,12 +144,11 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
                         print(f"  [STEP FORMULATION] !! ERROR FORMULATIONS: {type(e).__name__}: {e}")
                         traceback.print_exc()
 
-                print(updated_formulations)
-                if updated_formulations:
+                if regex_flags.get("formulations"):
                     print("\n  [STEP CARGOS] Running fornulations detection...")
                     try:
-                        add_cargos_by_llm = llm_extractor.check_cargo(data_response=updated_formulations)
-                        regex_flags["formulations"] = add_cargos_by_llm
+                        add_cargos_by_llm = llm_extractor.check_cargo(data_response=regex_flags)
+                        regex_flags["cargos LLM"] = add_cargos_by_llm
                     except Exception as e:
                         print(f"  [STEP FORMULATION] !! ERROR FORMULATIONS: {type(e).__name__}: {e}")
                         traceback.print_exc()
