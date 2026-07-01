@@ -27,9 +27,9 @@ def to_dict(result) -> dict:
 
 
 def has_relevant_findings(flags: dict) -> bool:
+    """Returns True if any flag is exactly True (boolean)."""
     found = any(v is True for v in flags.values())
     return found
-
 
 def remove_introduction_content(blocks):
     filtered_blocks = []
@@ -39,13 +39,17 @@ def remove_introduction_content(blocks):
         block_type = block.get("type")
         content = block.get("content", "").strip()
 
+        # Section headers
         if block_type == "section_header":
+
+            # Enter Introduction section
             if "introduction" in content.lower():
                 print(f"ENTERING INTRODUCTION")
                 inside_introduction = True
-                filtered_blocks.append(block)
+                filtered_blocks.append(block)  # keep header if desired
                 continue
 
+            # Any other header after Introduction ends the skip
             if inside_introduction:
                 print(f"LEAVING INTRODUCTION -> '{content}'")
                 inside_introduction = False
@@ -53,6 +57,7 @@ def remove_introduction_content(blocks):
             filtered_blocks.append(block)
             continue
 
+        # Skip paragraphs inside Introduction
         if inside_introduction:
             print(f"SKIPPING: {content[:80]}...")
             continue
@@ -62,11 +67,7 @@ def remove_introduction_content(blocks):
     return filtered_blocks
 
 
-# >>> NOVO: aceita formulation_registry como parâmetro extra (default vazio)
-def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip_llm, formulation_registry=None):
-    if formulation_registry is None:
-        formulation_registry = {}
-
+def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip_llm):
     results = []
     errors = 0
     paragraph_index = 0
@@ -75,6 +76,7 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
         block_type = block.get("type")
         content = block.get("content", "").strip()
 
+        # --- Headers ---
         if block_type == "section_header":
             print(f"\n[BLOCK {block_index}] HEADER: '{content[:80]}...'")
             results.append({
@@ -98,12 +100,14 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
         print(f"  TEXT PREVIEW: '{content[:120]}...'")
 
         try:
+            # --- Step 1: Regex extraction ---
             print(f"\n  [STEP 1] Running REGEX extractor...")
             regex_flags = to_dict(regex_extractor.extract(content))
-
+            
             true_flags = {k: v for k, v in regex_flags.items() if v is True}
             print(f"  [STEP 1] Done. TRUE flags: {true_flags if true_flags else 'NONE'}")
 
+            # --- Step 2: Decide if LLM should run ---
             has_findings = has_relevant_findings(regex_flags)
             print(f"\n  [STEP 2] has_findings={has_findings} | skip_llm={skip_llm} | llm_extractor={'LOADED' if llm_extractor else 'NOT LOADED'}")
 
@@ -121,26 +125,35 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
                 llm_extractor._extracted_flags = regex_flags
 
                 try:
+                    # --- First extraction ---
                     llm_values = llm_extractor.extract_text_info(content)
+
                     print(f"  [STEP 3] LLM returned: {llm_values}")
 
+                    # --- Second extraction: schedule info ---
                     schedule_values = None
 
                     if llm_values and llm_values.get("dose_group"):
+
                         print("\n  [STEP 4] Running schedule extractor...")
+
                         try:
                             schedule_values = llm_extractor.extract_schedule_info(
                                 text=content,
                                 data_response=llm_values
                             )
+
                             print(f"  [STEP 4] Schedule returned: {schedule_values}")
+
                         except Exception as e:
                             print(f"  [STEP 4] !! SCHEDULE ERROR: {type(e).__name__}: {e}")
                             import traceback
                             traceback.print_exc()
-
+                    print("AQUI")
+                    print(llm_values.get("lipid_composition"))
                     if llm_values and llm_values.get("lipid_composition"):
                         print("\n  [STEP 5] Running lipid composition confirmation...")
+                        
                         try:
                             updated_lipids = llm_extractor.confirm_lipid_composition_info(
                                 text=content,
@@ -153,50 +166,16 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
                             import traceback
                             traceback.print_exc()
 
-                    # >>> NOVO: STEP 6 reescrito — tenta registry primeiro, LLM só para o que sobra
                     if llm_values and llm_values.get("size_nm"):
-                        print("\n  [STEP 6] Resolving load-status...")
+                        print("\n  [STEP 6] Running load-status confirmation...")
                         try:
-                            size_entries = llm_values["size_nm"]
-                            unresolved_entries = []
-
-                            for entry in size_entries:
-                                match = None
-                                if formulation_registry:
-                                    match = llm_extractor._nanoparticles_parser.resolve_formulation_code(
-                                        content, formulation_registry
-                                    )
-                                if match:
-                                    entry["drug_name"] = match.get("drug_name") or entry.get("drug_name")
-                                    entry["load"] = match.get("load")
-                                    print(f"  [STEP 6] Resolved via registry: {entry}")
-                                else:
-                                    unresolved_entries.append(entry)
-
-                            if unresolved_entries:
-                                print(f"  [STEP 6] {len(unresolved_entries)} entries unresolved by registry, falling back to LLM...")
-                                temp_data = {**llm_values, "size_nm": unresolved_entries}
-                                updated_unresolved = llm_extractor.extract_load_status_info(
-                                    text=content, data_response=temp_data
-                                )
-
-                                resolved_keys = {
-                                    (e.get("value"), e.get("unit"))
-                                    for e in size_entries if e not in unresolved_entries
-                                }
-                                merged = [e for e in size_entries if (e.get("value"), e.get("unit")) in resolved_keys]
-                                for updated_entry in (updated_unresolved or []):
-                                    merged.append(updated_entry)
-
-                                llm_values["size_nm"] = merged
-                            else:
-                                print("  [STEP 6] All entries resolved via registry, no LLM call needed.")
-
+                            updated_sizes = llm_extractor.extract_load_status_info(text=content, data_response=llm_values)
+                            llm_values["size_nm"] = updated_sizes
                         except Exception as e:
                             print(f"  [STEP 6] !! LOAD STATUS ERROR: {type(e).__name__}: {e}")
-                            import traceback
                             traceback.print_exc()
-
+                    print("AQUI")
+                    print(llm_values.get("lipid_composition_ratio"))
                     if llm_values and llm_values.get("lipid_composition_ratio"):
                         print("\n  [STEP 7] Running lipid ratio units classification...")
                         try:
@@ -204,8 +183,19 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
                             llm_values["lipid_composition_ratio"] = updated_ratios
                         except Exception as e:
                             print(f"  [STEP 7] !! RATIO UNITS ERROR: {type(e).__name__}: {e}")
-                            import traceback
                             traceback.print_exc()
+
+                    print(llm_values.get("formulations"))
+                    if llm_values and llm_values.get("formulations"):
+                        print("\n  [STEP 8] Running fornulations detection...")
+                        try:
+                            updated_formulations = llm_extractor.extract_formulation_registry(text=content, data_response=llm_values)
+                            llm_values["lipid_composition_ratio"] = updated_formulations
+                        except Exception as e:
+                            print(f"  [STEP 8] !! ERROR FORMULATIONS: {type(e).__name__}: {e}")
+                            traceback.print_exc()
+                    
+
 
                 except Exception as e:
                     print(f"  [STEP 3] !! LLM ERROR: {type(e).__name__}: {e}")
@@ -213,6 +203,7 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
                     traceback.print_exc()
                     llm_values = None
 
+            # --- Step 3: Merge ---
             extraction = {**regex_flags, **(llm_values or {})}
             print(f"\n  [MERGE] Final extraction keys with non-null values: "
                   f"{[k for k, v in extraction.items() if v is not None and v is not False and v != []]}")
@@ -270,10 +261,12 @@ def nanoparticles2data(
     blocks = load_blocks(paragraph_json)
     print(f"  Loaded {len(blocks)} blocks total.")
 
+    # --- Regex extractor ---
     print("\nLOADING REGEX EXTRACTOR...")
     regex_extractor = NanoparticleExtractor()
     print("  Regex extractor ready.")
 
+    # --- LLM extractor ---
     llm_extractor = None
     if skip_llm:
         print("\nLLM EXTRACTOR: skipped (--skip_llm flag)")
@@ -282,7 +275,8 @@ def nanoparticles2data(
         try:
             name = llm_model_name.split("/")[-1]
             prompt_template_path = TEMPLATE_REGISTRY[name]
-            print(f'template used: {prompt_template_path}')
+
+            print(f'template used: {prompt_template_path}')           
 
             llm_extractor = NanoparticlesExtractorParagraph(
                 prompt_template_path=prompt_template_path,
@@ -297,79 +291,4 @@ def nanoparticles2data(
             traceback.print_exc()
             logger.warning(f"LLM disabled: {e}")
 
-    filtered_blocks = remove_introduction_content(blocks)
-
-    # >>> NOVO: construir formulation_registry uma vez, antes de process_blocks
-    formulation_registry = {}
-    if llm_extractor:
-        print("\nBUILDING FORMULATION REGISTRY...")
-        all_text = "\n".join(
-            b.get("content", "") for b in filtered_blocks if b.get("type") == "paragraph"
-        )
-        try:
-            formulation_registry = llm_extractor.extract_formulation_registry(all_text)
-            print(f"  Formulation registry: {formulation_registry}")
-        except Exception as e:
-            print(f"  !! FORMULATION REGISTRY ERROR: {type(e).__name__}: {e}")
-            import traceback
-            traceback.print_exc()
-            formulation_registry = {}
-
-    print("\nSTARTING BLOCK PROCESSING...")
-    results, error_count = process_blocks(
-        blocks=filtered_blocks,
-        regex_extractor=regex_extractor,
-        llm_extractor=llm_extractor,
-        min_text_length=min_text_length,
-        skip_llm=skip_llm,
-        formulation_registry=formulation_registry,   # >>> NOVO
-    )
-
-    # >>> NOVO: check_cargo, uma vez por documento, depois de process_blocks
-    cargo_check_results = {}
-    if llm_extractor:
-        all_cargo_candidates = set()
-        for r in results:
-            if r["type"] == "paragraph":
-                cargos = r["extraction"].get("cargos")
-                if cargos:
-                    all_cargo_candidates.update(cargos)
-
-        if all_cargo_candidates:
-            print(f"\nCHECKING CARGO CATEGORIES for {len(all_cargo_candidates)} candidates...")
-            try:
-                cargo_check_results = llm_extractor.check_cargo(list(all_cargo_candidates))
-                print(f"  Cargo check results: {cargo_check_results}")
-            except Exception as e:
-                print(f"  !! CARGO CHECK ERROR: {type(e).__name__}: {e}")
-                import traceback
-                traceback.print_exc()
-
-    output = {
-        "source": {
-            "file": os.path.abspath(paragraph_json),
-            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "total_paragraphs": sum(1 for r in results if r["type"] == "paragraph"),
-        },
-        "results": results,
-        "formulation_registry": formulation_registry,   # >>> NOVO
-        "cargo_category_check": cargo_check_results,     # >>> NOVO
-    }
-
-    print(f"\nSAVING OUTPUT to {output_file_path}...")
-    os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
-    with open(output_file_path, "w", encoding="utf-8") as f:
-        json.dump(output, f, indent=2, ensure_ascii=False)
-
-    print(f"\nDONE")
-    print(f"  Paragraphs processed: {output['source']['total_paragraphs']}")
-    print(f"  Errors:               {error_count}")
-    print(f"  Time (min):           {(time.time() - start) / 60:.2f}")
-
-
-def main():
-    nanoparticles2data()
-
-
-if __name__ == "__main__":
-    main()
+    # --- Process ---

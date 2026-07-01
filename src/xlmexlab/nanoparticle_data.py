@@ -158,6 +158,8 @@ class NanoparticleData(BaseModel):
     biodistribution: Optional[bool] = None
     cargos: Optional[List] = None
     categories_cargos:Optional[List] = None
+    
+    formulations: Optional[List]= None
 
     # ── Outcome ──────────────────────────────────────────────────────────────
 

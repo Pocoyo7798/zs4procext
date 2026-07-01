@@ -1395,21 +1395,6 @@ FORMULATION_CODE_STOPLIST = {
     "DLS", "PDI", "REV", "TEM", "SEM", "EE", "PBS", "NaCl", "DMSO",
 }
 
-def harvest_formulation_candidates(text: str) -> list[str]:
-    """Cheap, high-recall scan for possible formulation codes/abbreviations."""
-    found = FORMULATION_CODE_PATTERN.findall(text)
-    candidates = []
-    seen = set()
-    for tok in found:
-        key = tok.upper()
-        if key in FORMULATION_CODE_STOPLIST:
-            continue
-        if key in seen:
-            continue
-        seen.add(key)
-        candidates.append(tok)
-    return candidates
-
 def lookup_cargo_category(cargo_name: str, cargo_db: dict = CARGO_DB) -> str | None:
     """Deterministic lookup: which CARGO_DB category does this drug belong to?"""
     name_norm = cargo_name.strip().lower()
@@ -2048,6 +2033,21 @@ class NanoparticleExtractor(BaseModel):
             return categories
 
         return None
+    
+    def harvest_formulation_candidates(self, text: str) -> list[str]:
+        """Cheap, high-recall scan for possible formulation codes/abbreviations."""
+        found = FORMULATION_CODE_PATTERN.findall(text)
+        candidates = []
+        seen = set()
+        for tok in found:
+            key = tok.upper()
+            if key in FORMULATION_CODE_STOPLIST:
+                continue
+            if key in seen:
+                continue
+            seen.add(key)
+            candidates.append(tok)
+        return candidates
 
 
     def extract(self, text: str) -> NanoparticleData:
@@ -2114,7 +2114,8 @@ class NanoparticleExtractor(BaseModel):
             tumor_vol_reduction_pct = self._extract_tumor_vol_reduction(text),
             biodistribution = self._extract_biodistribution(text),
             cargos = self.extract_cargos(text),
-            categories_cargos = self. extract_cargo_categories(text),
+            categories_cargos = self.extract_cargo_categories(text),
+            formulations = self.harvest_formulation_candidates(text)
 
         )
 
