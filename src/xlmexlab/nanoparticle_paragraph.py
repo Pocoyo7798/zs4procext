@@ -1996,7 +1996,7 @@ class NanoparticleExtractor(BaseModel):
             
             return True if match else False 
 
-    def _extract_tumor_vol_reduction(self, text: str) -> Optional[bool]:
+    def _extract_tumor_reduction(self, text: str) -> Optional[bool]:
         TVL = _extract_value_unit_closest_to_keyword(
             text,
             TUMOR_PATTERNS,
@@ -2111,7 +2111,7 @@ class NanoparticleExtractor(BaseModel):
             encapsulation_efficiency_pct = self._extract_encapsulation_efficiency(text),
             distribution_half_life_h = self._extract_distribution_half_life(text),
             circulation_half_life_h = self._extract_circulation_half_life(text),
-            tumor_vol_reduction_pct = self._extract_tumor_vol_reduction(text),
+            tumor_reduction = self._extract_tumor_reduction(text),
             biodistribution = self._extract_biodistribution(text),
             cargos = self.extract_cargos(text),
             categories_cargos = self.extract_cargo_categories(text),

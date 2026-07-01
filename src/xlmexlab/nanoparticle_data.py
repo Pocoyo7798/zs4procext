@@ -164,5 +164,5 @@ class NanoparticleData(BaseModel):
     # ── Outcome ──────────────────────────────────────────────────────────────
 
     # [regex] number near "tumor volume reduction" or "tumor growth inhibition" + %
-    tumor_vol_reduction_pct: Optional[bool] = None
+    tumor_reduction: Optional[bool] = None
 

@@ -285,8 +285,13 @@ class NanoparticlesExtractorParagraph(BaseModel):
         print(f"  [EXTRACTOR.extract_formulation_registry] Registry: {registry}")
         return registry
 
-    def check_cargo(self, cargo_candidates: list[str]) -> dict:
+    def check_cargo(self, data_response: dict) -> dict:
         """For each candidate cargo name: try CARGO_DB first, fall back to LLM classification."""
+        print(data_response)
+        cargo_candidates = [
+        formulation.get("drug_name")
+        for formulation in data_response]
+
 
         resolved = {}
         unmatched = []

@@ -30,8 +30,8 @@ PARAM_META: dict[str, dict] = {
             "<value>": "Numeric size exactly as reported (include ranges , intervals and deviations).",
             "<unit>": "Unit exactly as written in text.",
             "<drug_name>": (
-                "Identify the drug name associated to the reported size."
-                "If no cargo or drug is specified, write 'not extractable'."
+                "Identify the formulation associated to the reported size."
+                "If no formulation name is specified, write 'not extractable'."
             ),
             "<size_type>": (
                 "Type of particle size measurement reported. "
@@ -96,7 +96,7 @@ PARAM_META: dict[str, dict] = {
         "field_rules": {
             "<value>": "Numeric IC50 exactly as reported.",
             "<unit>": "Unit exactly as written.",
-            "<drug_name>": "Drug or condition tested.",
+            "<drug_name>": " Formulation code/ drug name.",
         },
         "exclude": [],
     },
@@ -108,7 +108,7 @@ PARAM_META: dict[str, dict] = {
         "field_rules": {
             "<value>": "Numeric half-life exactly as reported.",
             "<unit>": "Unit in hours or as stated.",
-            "<drug_name>": "Drug studied.",
+            "<drug_name>": "Formulation code associated to the nanoparticle.",
         },
         "exclude": [],
     },
@@ -139,10 +139,10 @@ PARAM_META: dict[str, dict] = {
         ],
     },
 
-    "tumor_vol_reduction_pct": {
-        "description": "Tumour volume reduction vs control",
-        "unit_hint": "%",
-        "specific_format": "tumor_vol_reduction_pct | <value> | <unit> | <drug_name>",
+    "tumor_reduction": {
+        "description": "Tumor size reduction/ tumor reduction  vs control",
+        "unit_hint": "%, mm^3, or as reported",
+        "specific_format": "tumor_reduction | <value> | <unit> | <drug_name>",
         "field_rules": {
             "<value>": "Numeric reduction exactly as reported.",
             "<unit>": "Percentage.",
@@ -441,6 +441,7 @@ class PromptCreationLipidRatioUnits(BaseModel):
             "- Use the quantification type EXACTLY as stated in the text near that ratio "
             "(e.g. 'mol%', 'molar ratio', 'w/w', 'weight ratio').",
             "- Do NOT infer or guess a unit; only use what is explicitly written.",
+            "- If no quantification type is not written just replace by 'unknown'."
         ]
 
         return {
@@ -449,7 +450,7 @@ class PromptCreationLipidRatioUnits(BaseModel):
             "definitions": {},
             "objective": objective,
             "answer_schema": {"Format": "\n".join(schema_lines)},
-            "conclusion": "Return ONLY the extraction lines. No explanations, headers, or comments.",
+            "conclusion": "Return ONLY the extraction line. No explanations, headers, or comments.",
         }
     
 class PromptCreationFormulationRegistry(BaseModel):
@@ -488,7 +489,7 @@ class PromptCreationFormulationRegistry(BaseModel):
             "definitions": {},
             "objective": objective,
             "answer_schema": {"Format": "\n".join(schema_lines)},
-            "conclusion": "Return ONLY the extraction lines. No explanations, headers, or comments.",
+            "conclusion": "Return ONLY the extraction lines. Do not add any explanations, headers, or comments.",
         }
     
 class PromptCreationCargoCategoryCheck(BaseModel):
