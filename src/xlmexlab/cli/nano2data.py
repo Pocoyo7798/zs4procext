@@ -104,7 +104,7 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
             print(f"\n  [STEP 1] Running REGEX extractor...")
             regex_flags = to_dict(regex_extractor.extract(content))
 
-            print(regex_flags.get("formulations"))
+            
             
             true_flags = {k: v for k, v in regex_flags.items() if v is True}
             print(f"  [STEP 1] Done. TRUE flags: {true_flags if true_flags else 'NONE'}")
@@ -152,8 +152,8 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
                             import traceback
                             traceback.print_exc()
                     print("AQUI")
-                    print(llm_values.get("lipid_composition"))
-                    if llm_values and llm_values.get("lipid_composition"):
+                    print(regex_flags.get("lipid_composition"))
+                    if regex_flags.get("lipid_composition"):
                         print("\n  [STEP 5] Running lipid composition confirmation...")
                         
                         try:
@@ -177,8 +177,8 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
                             print(f"  [STEP 6] !! LOAD STATUS ERROR: {type(e).__name__}: {e}")
                             traceback.print_exc()
                     print("AQUI")
-                    print(llm_values.get("lipid_composition_ratio"))
-                    if llm_values and llm_values.get("lipid_composition_ratio"):
+                    print(regex_flags.get("lipid_composition_ratio"))
+                    if regex_flags.get("lipid_composition_ratio"):
                         print("\n  [STEP 7] Running lipid ratio units classification...")
                         try:
                             updated_ratios = llm_extractor.extract_lipid_ratio_units_info(text=content, data_response=llm_values)
@@ -187,8 +187,8 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
                             print(f"  [STEP 7] !! RATIO UNITS ERROR: {type(e).__name__}: {e}")
                             traceback.print_exc()
 
-                    print(llm_values.get("formulations"))
-                    if llm_values and llm_values.get("formulations"):
+                    print(regex_flags.get("formulations"))
+                    if regex_flags.get("formulations"):
                         print("\n  [STEP 8] Running fornulations detection...")
                         try:
                             updated_formulations = llm_extractor.extract_formulation_registry(text=content, data_response=llm_values)
