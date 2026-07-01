@@ -17,7 +17,6 @@ from xlmexlab.prompt import PromptFormatter
 from xlmexlab.prompt_creation import PromptCreation, PromptCreationSchedule, PromptCreationLipidComposition, PromptCreationLoadStatus, PromptCreationLipidRatioUnits, PromptCreationFormulationRegistry, PromptCreationCargoCategoryCheck
 from xlmexlab.parser_nanoparticles import ParserNanoparticle
 from xlmexlab.nanoparticle_paragraph import NORMALIZATION_MAP, GENERIC_TERMS
-from xlmexlab.nanoparticle_paragraph import harvest_formulation_candidates
 from xlmexlab.nanoparticle_paragraph import CARGO_DB, lookup_cargo_category
 
 class NanoparticlesExtractorParagraph(BaseModel):
@@ -261,11 +260,10 @@ class NanoparticlesExtractorParagraph(BaseModel):
         updated["quantification_type"] = quantification_type
         return updated
     
-    def extract_formulation_registry(self, full_text: str) -> dict:
+    def extract_formulation_registry(self, text: str, data_response: dict) -> dict:
         """Run once per document (not per paragraph) to build a code -> {drug, load} map."""
+        candidates = data_response.get("formulations")
 
-
-        candidates = harvest_formulation_candidates(full_text)
         print(f"  [EXTRACTOR.extract_formulation_registry] candidates: {candidates}")
 
         if not candidates:
@@ -275,7 +273,7 @@ class NanoparticlesExtractorParagraph(BaseModel):
         self._prompt = PromptFormatter(**prompt_dict)
         self._prompt.model_post_init(self.prompt_template_path)
 
-        prompt = self._prompt.format_prompt(f"'{full_text}'")
+        prompt = self._prompt.format_prompt(f"'{text}'")
         print(f"\n  [EXTRACTOR.extract_formulation_registry] PROMPT SENT TO LLM")
         print(prompt)
 
