@@ -103,6 +103,8 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
             # --- Step 1: Regex extraction ---
             print(f"\n  [STEP 1] Running REGEX extractor...")
             regex_flags = to_dict(regex_extractor.extract(content))
+
+            print(regex_flags.get("formulations"))
             
             true_flags = {k: v for k, v in regex_flags.items() if v is True}
             print(f"  [STEP 1] Done. TRUE flags: {true_flags if true_flags else 'NONE'}")
