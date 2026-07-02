@@ -96,7 +96,7 @@ PARAM_META: dict[str, dict] = {
         "field_rules": {
             "<value>": "Numeric IC50 exactly as reported.",
             "<unit>": "Unit exactly as written.",
-            "<drug_name>": " Formulation code/ drug name.",
+            "<drug_name>": " Formulation code/ drug name only.",
         },
         "exclude": [],
     },

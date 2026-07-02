@@ -1113,12 +1113,12 @@ class ParserNanoparticle(BaseModel):
         for item in entries:
 
             cond = item.get("condition") or ""
-            cargo = self.extract_cargos(cond) or "unknown"
+            #cargo = self.extract_cargos(cond) or "unknown"
 
             processed.append({
                 "value": item.get("value"),
                 "unit": item.get("unit"),
-                "cargo": cargo,
+                "cargo/formulation": cond,
             })
         return processed
     
@@ -1142,16 +1142,38 @@ class ParserNanoparticle(BaseModel):
     def postprocess_dose_group(self, entries: list[dict]) -> list[dict]:
         processed = []
 
+        # unidades a ignorar
+        skip_units = {"", "l", "/l", "/ml"}
+
         for item in entries:
             unit = item.get("unit")
             value = item.get("value")
 
-            if unit == "mg/kg":
+            if unit == "µg":
                 try:
-                    value = str(float(value) * 30)
-                    unit = "µg"
+                    value = str(float(value)/ 30)
+                    unit = "mg/kg"
                 except (TypeError, ValueError):
                     pass
+            
+            if unit == "g":
+                try:
+                    value = str(float(value) / 0.03)
+                    unit = "mg/kg"
+                except (TypeError, ValueError):
+                    pass
+
+            if unit == "kg":
+                try:
+                    value = str(float(value) / 0.000030)
+                    unit = "mg/kg"
+                except (TypeError, ValueError):
+                    pass
+
+            # remover entradas com unidades inválidas/associadas a volume
+            normalized_unit = str(unit).strip().lower() if unit is not None else ""
+            if normalized_unit in skip_units:
+                continue
 
             processed.append({
                 "value": value,
@@ -1160,7 +1182,7 @@ class ParserNanoparticle(BaseModel):
             })
 
         return processed
-    
+        
     def compute_charge_group(self, entries: list[dict]) -> str | None:
         if not entries:
             return None
