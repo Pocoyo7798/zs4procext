@@ -2041,9 +2041,8 @@ class NanoparticleExtractor(BaseModel):
         return True if TVL else False
     
     def _extract_tumor_size_volume(self, text: str) -> Optional[bool]:
-        for pattern in TUMOR_PATTERNS_SIZE_VOLUME:
-            if re.search(pattern, text):
-                return True
+        if re.search(TUMOR_PATTERNS_SIZE_VOLUME, text, re.IGNORECASE | re.VERBOSE):
+            return True
         return False
     
     # CARGO

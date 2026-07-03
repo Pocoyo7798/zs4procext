@@ -265,7 +265,7 @@ PARAM_META = {
         ],
     },
 
-    "tumor_reduction": {
+    "tumor_size_or_volume": {
         "fields": [
             "parameter_name", "value", "unit", "drug_name", "state",
         ],
