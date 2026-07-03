@@ -265,6 +265,12 @@ PARAM_META = {
         ],
     },
 
+    "tumor_reduction": {
+        "fields": [
+            "parameter_name", "value", "unit", "drug_name", "state",
+        ],
+    },
+
     "delivery_efficiency": {
         "fields": [
             "parameter_name", "value", "unit", "condition"

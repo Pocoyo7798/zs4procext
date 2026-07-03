@@ -1410,7 +1410,7 @@ particl(?:e|es)\s+size
 
 FORMULATION_CODE_PATTERN = re.compile(
     r"\b("
-    r"[A-Z]{2,6}[-_@][A-Za-z0-9]{1,8}(?:[-_][A-Za-z0-9]{1,4})?"   # TSL-LUP, Lip-DOX, NP@PTX01
+    r"[A-Za-z0-9]{2,6}[-_@][A-Za-z0-9]{1,8}(?:[-_][A-Za-z0-9]{1,4})?"   # TSL-LUP, Lip-DOX, NP@PTX01
     r"|[A-Z][a-z]{1,4}[-_]?\d{1,3}"                                 # F1, Lip2, Form12
     r")\b"
 )
@@ -2015,13 +2015,21 @@ class NanoparticleExtractor(BaseModel):
         """
         for organ in ORGAN_KEYWORDS:
             # pattern: organ name near a percentage value
-            pattern = rf"(?:{organ}).{{0,80}}?([\d\.]+)\s*%|" \
-                      rf"([\d\.]+)\s*%.{{0,80}}?(?:{organ})" \
-                      rf"%\s*ID\s*/?\s*g" \
-                      rf"%\s*ID"
-            match = re.search(pattern, text, re.IGNORECASE)
-            
-            return True if match else False 
+            pattern = (
+                rf"(?:{organ}).{{0,80}}?(\d+(?:\.\d+)?)\s*%"
+                rf"|"
+                rf"(\d+(?:\.\d+)?)\s*%.{{0,80}}?(?:{organ})"
+            )
+
+            if re.search(pattern, text, re.IGNORECASE):
+                return True
+
+        pattern = r"%\s*ID(?:\s*/\s*g)?"
+
+        if re.search(pattern, text, re.IGNORECASE):
+            return True
+
+        return False
 
     def _extract_tumor_reduction(self, text: str) -> Optional[bool]:
         TVL = _extract_value_unit_closest_to_keyword(
@@ -2032,12 +2040,10 @@ class NanoparticleExtractor(BaseModel):
         return True if TVL else False
     
     def _extract_tumor_size_volume(self, text: str) -> Optional[bool]:
-        TVL = _extract_value_unit_closest_to_keyword(
-            text,
-            TUMOR_PATTERNS_SIZE_VOLUME,
-            ["%"])
-        #print (TVL)
-        return True if TVL else False
+        for pattern in TUMOR_PATTERNS_SIZE_VOLUME:
+            if re.search(pattern, text):
+                return True
+        return False
     
     # CARGO
 

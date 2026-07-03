@@ -35,7 +35,7 @@ def remove_sections(blocks):
     sections_to_remove = {
         "introduction",
         "background",
-        "ackoledgements",
+        "acknowledgments",
         "authors contribution",
         "citation",
         "competing interests"
@@ -133,14 +133,13 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
                         traceback.print_exc()
                 
                 print(regex_flags.get("lipid_composition_ratio"))
-                if regex_flags.get("lipid_composition_ratio"):
-                    print("\n  [STEP LIPID COMPOSITION RATIO] Running lipid ratio units classification...")
-                    try:
-                        updated_ratios = llm_extractor.extract_lipid_ratio_units_info(text=content, data_response=regex_flags)
-                        regex_flags["lipid_composition_ratio"] = updated_ratios
-                    except Exception as e:
-                        print(f"  [STEP LIPID COMPOSITION RATIO] !! RATIO UNITS ERROR: {type(e).__name__}: {e}")
-                        traceback.print_exc()
+
+                lipids = regex_flags.get("lipid_composition", [])
+                ratios = regex_flags.get("lipid_composition_ratio", {}).get("ratios", [])
+
+                if len(lipids) != len(ratios):
+                    regex_flags.pop("lipid_composition_ratio", None)
+                    
 
                 if (regex_flags.get("lipid_composition") and not regex_flags.get("lipid_composition_ratio")):
                     print("\n  [STEP 5b] Lipid composition found but no ratios — running ratio extractor...")
@@ -155,6 +154,17 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
                         print(f"  [STEP 5b] !! RATIO EXTRACTION ERROR: {type(e).__name__}: {e}")
                         import traceback
                         traceback.print_exc()
+
+                if regex_flags.get("lipid_composition_ratio"):
+                    print("\n  [STEP LIPID COMPOSITION RATIO] Running lipid ratio units classification...")
+                    try:
+                        updated_ratios = llm_extractor.extract_lipid_ratio_units_info(text=content, data_response=regex_flags)
+                        regex_flags["lipid_composition_ratio"] = updated_ratios
+                    except Exception as e:
+                        print(f"  [STEP LIPID COMPOSITION RATIO] !! RATIO UNITS ERROR: {type(e).__name__}: {e}")
+                        traceback.print_exc()
+
+
 
                 print(regex_flags.get("formulations"))
                 if regex_flags.get("formulations"):
