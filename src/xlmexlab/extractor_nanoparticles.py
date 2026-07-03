@@ -14,7 +14,7 @@ from pydantic import BaseModel, PrivateAttr, validator
 from xlmexlab import parser
 from xlmexlab.llm import ModelLLM, ModelVLM
 from xlmexlab.prompt import PromptFormatter
-from xlmexlab.prompt_creation import PromptCreation, PromptCreationSchedule, PromptCreationLipidComposition, PromptCreationLoadStatus, PromptCreationLipidRatioUnits, PromptCreationFormulationRegistry, PromptCreationCargoCategoryCheck
+from xlmexlab.prompt_creation import PromptCreation, PromptCreationSchedule, PromptCreationLipidComposition, PromptCreationLoadStatus, PromptCreationLipidRatioUnits, PromptCreationFormulationRegistry, PromptCreationCargoCategoryCheck, PromptCreationLipidRatio
 from xlmexlab.parser_nanoparticles import ParserNanoparticle
 from xlmexlab.nanoparticle_paragraph import NORMALIZATION_MAP, GENERIC_TERMS
 from xlmexlab.nanoparticle_paragraph import CARGO_DB, lookup_cargo_category
@@ -328,3 +328,28 @@ class NanoparticlesExtractorParagraph(BaseModel):
 
         print(f"  [EXTRACTOR.check_cargo] Resolved: {resolved}")
         return resolved
+    
+    def extract_lipid_ratio_info(self, text: str, data_response: dict):
+        lipids = data_response.get("lipid_composition")
+
+        if not lipids:
+            print("  [EXTRACTOR.extract_lipid_ratio_info] No lipid_composition found, skipping.")
+            return None
+
+        print(f"\n  [EXTRACTOR.extract_lipid_ratio_info] Extracting ratios for: {lipids}")
+
+        prompt_dict = PromptCreationLipidRatio().build_extraction_prompt_json(lipids)
+        self._prompt = PromptFormatter(**prompt_dict)
+        self._prompt.model_post_init(self.prompt_template_path)
+
+        prompt = self._prompt.format_prompt(f"'{text}'")
+        print(f"\n  [EXTRACTOR.extract_lipid_ratio_info] PROMPT SENT TO LLM")
+        print(prompt)
+
+        response = self._llm_model.run_single_prompt(prompt).strip()
+        print(f"\n  [EXTRACTOR.extract_lipid_ratio_info] LLM RAW RESPONSE")
+        print(response)
+
+        result = self._nanoparticles_parser.parse_lipid_ratio_response(response, lipids)
+        print(f"  [EXTRACTOR.extract_lipid_ratio_info] Parsed ratios: {result}")
+        return result

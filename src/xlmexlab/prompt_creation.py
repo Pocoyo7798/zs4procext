@@ -139,14 +139,29 @@ PARAM_META: dict[str, dict] = {
         ],
     },
 
+    "tumor_size_or_volume": {
+        "description": "Tumor size or volume",
+        "unit_hint": "mm, cm, mm³, mL or as reported",
+        "specific_format": "tumor_ size_or_volume | <value> | <unit> | <drug_name> | <state>",
+        "field_rules": {
+            "<value>": "Numeric reduction exactly as reported.",
+            "<unit>": "Percentage.",
+            "<drug_name>": "Drug/formulation or control, if not stated left it 'unknown'.",
+            "<state>": "Time associated to the volume or if its control, if not stated left it 'unknown'.",
+        },
+        "exclude": [
+            "predicted inhibition",
+        ],
+    },
+
     "tumor_reduction": {
-        "description": "Tumor size reduction/ tumor reduction  vs control",
-        "unit_hint": "%, mm^3, or as reported",
+        "description": "Tumor size reduction/ regression",
+        "unit_hint": "%",
         "specific_format": "tumor_reduction | <value> | <unit> | <drug_name>",
         "field_rules": {
             "<value>": "Numeric reduction exactly as reported.",
             "<unit>": "Percentage.",
-            "<drug_name>": "Drug or treatment used.",
+            "<drug_name>": "Drug or formulation associated to the reduction if explicitly written, if not just left it 'unknown'.",
         },
         "exclude": [
             "predicted inhibition",
@@ -169,7 +184,7 @@ PARAM_META: dict[str, dict] = {
 
     "biodistribution": {
         "description": "Organ accumulation/ biodistribution",
-        "unit_hint": "% ID, %ID/g, etc.",
+        "unit_hint": "%ID, %ID/g, etc.",
         "specific_format": "biodistribution | <value> | <unit> | <organ>",
         "field_rules": {
             "<value>": "Numeric accumulation exactly as reported.",
@@ -345,11 +360,9 @@ class PromptCreationLipidComposition(BaseModel):
         )
 
         objective = (
-            "Re-read the text and check whether any OTHER lipid, lipid derivative, "
+            "Read the text and check whether any other lipid, lipid derivative, "
             "sterol, PEG-lipid, or ionizable lipid is mentioned that is NOT already "
-            "in the list above. Only consider compounds that are part of the "
-            "nanoparticle's own lipid composition (used to formulate the particle), "
-            "not unrelated excipients, drugs, or buffers."
+            "in the list above."
         )
 
         schema_lines = [
@@ -526,3 +539,44 @@ class PromptCreationCargoCategoryCheck(BaseModel):
             "conclusion": "Return ONLY the extraction lines. No explanations, headers, or comments.",
         }
 
+
+class PromptCreationLipidRatio(BaseModel):
+
+    def build_extraction_prompt_json(self, lipids_found: list[str]) -> dict:
+        expertise = (
+            "You are an expert assistant for extracting lipid composition ratios "
+            "from nanoparticle formulation descriptions in scientific text."
+        )
+
+        initialization = (
+            "The following lipids were already identified in the text below:\n"
+            + ", ".join(lipids_found)
+        )
+
+        objective = (
+            "For each lipid listed above, extract the numeric ratio or percentage "
+            "explicitly stated in the text for that lipid in the formulation composition. "
+            "Only extract ratios that are explicitly written — do not calculate or infer."
+        )
+
+        schema_lines = [
+            "Format: lipid_composition_ratio | <lipid_name> | <ratio_value>",
+            "Rules:",
+            "- One line per lipid.",
+            "- <lipid_name>: exactly as given in the list above.",
+            "- <ratio_value>: numeric value only, exactly as written in text "
+            "(e.g. 75, 20.5, 5). Do not include units or symbols.",
+            "- If no ratio is explicitly stated for a given lipid, write: "
+            "lipid_composition_ratio | <lipid_name> | not_extractable",
+            "- If NO ratios at all are stated for any lipid in the text, answer exactly: "
+            "lipid_composition_ratio | not_extractable",
+        ]
+
+        return {
+            "expertise": expertise,
+            "initialization": initialization,
+            "definitions": {},
+            "objective": objective,
+            "answer_schema": {"Format": "\n".join(schema_lines)},
+            "conclusion": "Return ONLY the extraction lines. No explanations, headers, or comments.",
+        }

@@ -278,6 +278,7 @@ CARGO_DB = OrderedDict({
         "Quercetin",
         "Resveratrol",
         "tsl-lup",
+        "Betulin"
     ],
 
     "nitroxide_radical": [
@@ -456,6 +457,8 @@ def rx(term):
 # 3. LITERATURE-SCALE NOMENCLATURE MAP
 cargo_map = OrderedDict({
 rx(r"her2[-_\s/]+antigen[-_\s/]+mrna"): "HER2 antigen-encoding mRNA",
+    rx(r"betulin"): "Betulin",
+    rx(r"BN"): "Betulin",
     rx(r"antabuse"): "Disulfiram",
     rx(r"ds"): "Disulfiram",
     rx(r"vinblastine"): "Vinblastine",
@@ -468,6 +471,7 @@ rx(r"her2[-_\s/]+antigen[-_\s/]+mrna"): "HER2 antigen-encoding mRNA",
     rx(r"melphalan"): "Melphalan",
     rx(r"temozolomide"): "Temozolomide",
     rx(r"tmz"): "Temozolomide",
+    rx(r"doxorubicin"): "Doxorubicin",
     rx(r"adriamycin"): "Doxorubicin",
     rx(r"daunorubicin"): "Daunorubicin",
     rx(r"dox"): "Doxorubicin",
@@ -506,6 +510,7 @@ rx(r"her2[-_\s/]+antigen[-_\s/]+mrna"): "HER2 antigen-encoding mRNA",
     rx(r"5[- ]?fluorouracil"): "Fluorouracil",
     rx(r"5[- ]?fu"): "Fluorouracil",
     rx(r"cytarabine"): "Cytarabine",
+    rx(r"gemcitabine"): "Gemcitabine",
     rx(r"gem"): "Gemcitabine",
     rx(r"mtx"): "Methotrexate",
     rx(r"pemetrexed"): "Pemetrexed",
@@ -839,7 +844,7 @@ LIPID_KEYWORDS = [
 
     # PEG-lipids
     "DSPE-PEG", "DSPE-PEG2000", "DSPE-MPEG2000", "DSPE- PEG2000", "DSPE-PEG_2000", "DSPE- PEG_2000", "DSPE- MPEG2000", "DSPE- MPEG" , "DSPE- PEG",
-    "C14-PEG2000","C14- PEG2000", "PEG-DMG", "PEG- DMG", "PEG2000-Cer16", "PEG-DSPE", "PEG-DMPE", "PED-DPPE", "mPEG2000-DSPE",
+    "C14-PEG2000","C14- PEG2000", "PEG-DMG", "PEG- DMG", "PEG2000-Cer16", "PEG-DSPE", "PEG-DMPE", "PED-DPPE", "mPEG2000-DSPE", "mPEG2000 DSPE"
 
     # ionizable lipids
     "DLin-MC3-DMA", "MC3", "SM-102", "ALC-0315",
@@ -864,6 +869,9 @@ NORMALIZATION_MAP = {
     "DSPE- PEG_2000": "DSPE-PEG2000",
     "DSPE-PEG_2000": "DSPE-PEG2000",
     "mPEG2000-DSPE": "DSPE-PEG2000",  # escolher forma dominante
+    "mPEG2000 DSPE": "DSPE-PEG2000",
+    "mPEG_2000-DSPE": "DSPE-PEG2000",  # escolher forma dominante
+    "mPEG_2000 DSPE": "DSPE-PEG2000",
     "hydrogenated soy phosphatidylcholine": "HSPC",
     "cholesterol hemisuccinate": "CHEMS",
     "sphingomyelin": "SM",
@@ -1131,7 +1139,7 @@ DIAGNOSIS_KEYWORDS    = ["diagnosis", "diagnostic", "imaging only",
                          "detection", "contrast agent"]
 
 THERAPY_KEYWORDS    = ["therapy", "treatment", "therapeutic", "therapeutics", "drug delivery",
-                    "drug release", "therapy only"]
+                    "drug release"]
 
 THERANOSTICS_KEYWORDS = ["theranostic", "theragnosis",
                           "combined imaging and therapy", "dual-function",
@@ -1187,19 +1195,17 @@ CANCER_TYPE_MAP = {
     "Breast":   ["breast", "4T1", "MCF-7", "MDA-MB", "T47D", "BT-474", "SKBR3",
                   "ZR-75", "SUM149", "SUM159", "HCC1806", "HCC1937", "HCC70",
                   "MDA-MB-231", "MDA-MB-468", "MDA-MB-436", "Hs578T",
-                  "BT549", "CAL-51", "TNBC"],
-    "Lung":     ["lung", "A549", "H460", "LLC", "Lewis lung", "H1299",
-                  "H1975", "PC9"],
-    "Liver":    ["liver", "hepatocellular", "HCC", "HepG2", "Huh7"],
-    "Brain":    ["brain", "glioma", "glioblastoma", "GBM", "U87", "U251",
-                  "T98G", "LN229"],
-    "Pancreas": ["pancreas", "pancreatic", "PANC-1", "BxPC-3", "MIA PaCa"],
-    "Ovary":    ["ovary", "ovarian", "SKOV3", "A2780", "ID8", "OVCAR"],
-    "Skin":     ["melanoma", "B16", "A375", "skin", "B16F10"],
-    "Cervix":   ["cervix", "cervical", "HeLa"],
-    "Colon":    ["colon", "colorectal", "HCT116", "SW480", "CT26", "HT-29"],
-    "Prostate": ["prostate", "PC3", "LNCaP", "DU145", "22Rv1"],
-}
+                  "BT549", "CAL-51", "TNBC"],}
+    #"Lung":     ["lung", "A549", "H460", "LLC", "Lewis lung", "H1299","H1975", "PC9"],
+    #"Liver":    ["liver", "hepatocellular", "HCC", "HepG2", "Huh7"],
+    #"Brain":    ["brain", "glioma", "glioblastoma", "GBM", "U87", "U251","T98G", "LN229"],
+    #"Pancreas": ["pancreas", "pancreatic", "PANC-1", "BxPC-3", "MIA PaCa"],
+    #"Ovary":    ["ovary", "ovarian", "SKOV3", "A2780", "ID8", "OVCAR"],
+    #"Skin":     ["melanoma", "B16", "A375", "skin", "B16F10"],
+    #"Cervix":   ["cervix", "cervical", "HeLa"],
+    #"Colon":    ["colon", "colorectal", "HCT116", "SW480", "CT26", "HT-29"],
+    #"Prostate": ["prostate", "PC3", "LNCaP", "DU145", "22Rv1"],
+
  
 # breast cancer subtype ─────────────────────────────────────────────────────
 BREAST_SUBTYPE_MAP = {
@@ -1332,19 +1338,38 @@ ORGAN_KEYWORDS = [
  
 TUMOR_PATTERNS = r"""
 (?:
-    tumor\s*volume\s*(?:reduction|decrease|shrinkage)
-  | (?:reduc(?:e|ed|tion|es)|decreas(?:e|ed|es)|shrink(?:age|ing|es)?)\s+(?:in\s+)?tumou?r\s*volume
-  | (?:reduc(?:e|ed|tion|es)|decreas(?:e|ed|es)|shrink(?:age|ing|es)?)\s+(?:in\s+)?tumo?r\s*volume
-  | (?:reduc(?:e|ed|tion|es)|decreas(?:e|ed|es)|shrink(?:age|ing|es)?)\s+(?:in\s+)?tumou?r\s*size
-  | (?:reduc(?:e|ed|tion|es)|decreas(?:e|ed|es)|shrink(?:age|ing|es)?)\s+(?:in\s+)?tumou?r\s*size
-  | tumou?r\s*volume.*?(?:reduc(?:e|ed|tion|es)|decreas(?:e|ed|es)|shrink(?:age|ing|es)?|inhibit(?:ed|ing|s)?)
+    (?:reduc(?:e|ed|tion|es)|decreas(?:e|ed|es)|shrink(?:age|ing|es)?)
+        \s+(?:in\s+)?tumou?r\s*(?:volume|size)
+  | tumou?r\s*(?:volume|size).*?
+        (?:reduc(?:e|ed|tion|es)|decreas(?:e|ed|es)|shrink(?:age|ing|es)?)
+  | tumou?r.*?(?:shrinkage|regression)
   | tumou?r\s*growth\s*(?:inhibition|inhibited)
   | (?:inhibition|suppression)\s+of\s+tumou?r\s*growth
   | \bTGI\b
-  | tumou?r.*?(?:shrinkage|regression)
-  | reduc(?:e|ed|tion|es)
   | tumor\s*size\s*(?:reduction|decrease|shrinkage)
   | tumour\s*size\s*(?:reduction|decrease|shrinkage)
+  | tumor\s*volume\s*(?:reduction|decrease|shrinkage)
+  | tumour\s*volume\s*(?:reduction|decrease|shrinkage)
+)
+"""
+
+
+TUMOR_PATTERNS_SIZE_VOLUME = r"""
+(?:
+    tumou?r\s*size
+  | tumou?r\s*volume
+  | tumour\s*burden
+  | lesion\s*size
+  | lesion\s*volume
+  | mass\s*size
+  | mass\s*volume
+  | tumour\s*diameter
+  | tumor\s*diameter
+  | longest\s*diameter
+  | mean\s*tumou?r\s*volume
+  | average\s*tumou?r\s*volume
+  | final\s*tumou?r\s*volume
+  | initial\s*tumou?r\s*volume
 )
 """
 
@@ -1769,7 +1794,7 @@ class NanoparticleExtractor(BaseModel):
         if _first_keyword_match(text, DIAGNOSIS_KEYWORDS):
             return "Diagnosis"
         if _first_keyword_match(text, THERAPY_KEYWORDS):
-            return "THERAPY"
+            return "Therapy"
         return None
         
 
@@ -1991,7 +2016,9 @@ class NanoparticleExtractor(BaseModel):
         for organ in ORGAN_KEYWORDS:
             # pattern: organ name near a percentage value
             pattern = rf"(?:{organ}).{{0,80}}?([\d\.]+)\s*%|" \
-                      rf"([\d\.]+)\s*%.{{0,80}}?(?:{organ})"
+                      rf"([\d\.]+)\s*%.{{0,80}}?(?:{organ})" \
+                      rf"%\s*ID\s*/?\s*g" \
+                      rf"%\s*ID"
             match = re.search(pattern, text, re.IGNORECASE)
             
             return True if match else False 
@@ -2000,6 +2027,14 @@ class NanoparticleExtractor(BaseModel):
         TVL = _extract_value_unit_closest_to_keyword(
             text,
             TUMOR_PATTERNS,
+            ["%"])
+        #print (TVL)
+        return True if TVL else False
+    
+    def _extract_tumor_size_volume(self, text: str) -> Optional[bool]:
+        TVL = _extract_value_unit_closest_to_keyword(
+            text,
+            TUMOR_PATTERNS_SIZE_VOLUME,
             ["%"])
         #print (TVL)
         return True if TVL else False
@@ -2112,6 +2147,7 @@ class NanoparticleExtractor(BaseModel):
             distribution_half_life_h = self._extract_distribution_half_life(text),
             circulation_half_life_h = self._extract_circulation_half_life(text),
             tumor_reduction = self._extract_tumor_reduction(text),
+            tumor_size_or_volume = self._extract_tumor_size_volume(text),
             biodistribution = self._extract_biodistribution(text),
             cargos = self.extract_cargos(text),
             categories_cargos = self.extract_cargo_categories(text),

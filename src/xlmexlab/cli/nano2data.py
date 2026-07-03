@@ -31,34 +31,42 @@ def has_relevant_findings(flags: dict) -> bool:
     found = any(v is True for v in flags.values())
     return found
 
-def remove_introduction_content(blocks):
+def remove_sections(blocks):
+    sections_to_remove = {
+        "introduction",
+        "background",
+        "ackoledgements",
+        "authors contribution",
+        "citation",
+        "competing interests"
+    }
+
     filtered_blocks = []
-    inside_introduction = False
+    inside_removed_section = False
 
     for block in blocks:
         block_type = block.get("type")
         content = block.get("content", "").strip()
+        content_lower = content.lower()
 
-        # Section headers
         if block_type == "section_header":
 
-            # Enter Introduction section
-            if "introduction" in content.lower():
-                print(f"ENTERING INTRODUCTION")
-                inside_introduction = True
-                filtered_blocks.append(block)  # keep header if desired
-                continue
+            # Enter a section to remove
+            if any(section in content_lower for section in sections_to_remove):
+                print(f"ENTERING REMOVED SECTION: {content}")
+                inside_removed_section = True
+                continue  # don't keep the header
 
-            # Any other header after Introduction ends the skip
-            if inside_introduction:
-                print(f"LEAVING INTRODUCTION -> '{content}'")
-                inside_introduction = False
+            # Any new section header ends the removed section
+            if inside_removed_section:
+                print(f"LEAVING REMOVED SECTION -> {content}")
+                inside_removed_section = False
 
             filtered_blocks.append(block)
             continue
 
-        # Skip paragraphs inside Introduction
-        if inside_introduction:
+        # Skip everything inside the removed section
+        if inside_removed_section:
             print(f"SKIPPING: {content[:80]}...")
             continue
 
@@ -132,6 +140,20 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
                         regex_flags["lipid_composition_ratio"] = updated_ratios
                     except Exception as e:
                         print(f"  [STEP LIPID COMPOSITION RATIO] !! RATIO UNITS ERROR: {type(e).__name__}: {e}")
+                        traceback.print_exc()
+
+                if (regex_flags.get("lipid_composition") and not regex_flags.get("lipid_composition_ratio")):
+                    print("\n  [STEP 5b] Lipid composition found but no ratios — running ratio extractor...")
+                    try:
+                        extracted_ratios = llm_extractor.extract_lipid_ratio_info(text=content, data_response=regex_flags)
+                        if extracted_ratios:
+                            regex_flags["lipid_composition_ratio"] = extracted_ratios
+                            print(f"  [STEP 5b] Ratios extracted: {extracted_ratios}")
+                        else:
+                            print("  [STEP 5b] No ratios found in text.")
+                    except Exception as e:
+                        print(f"  [STEP 5b] !! RATIO EXTRACTION ERROR: {type(e).__name__}: {e}")
+                        import traceback
                         traceback.print_exc()
 
                 print(regex_flags.get("formulations"))
@@ -307,7 +329,7 @@ def nanoparticles2data(
     # --- Process ---
     print("\nSTARTING BLOCK PROCESSING...")
     results, error_count = process_blocks(
-        blocks=remove_introduction_content(blocks),
+        blocks=remove_sections(blocks),
         regex_extractor=regex_extractor,
         llm_extractor=llm_extractor,
         min_text_length=min_text_length,
