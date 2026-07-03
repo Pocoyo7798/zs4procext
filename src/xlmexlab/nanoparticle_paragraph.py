@@ -121,6 +121,7 @@ CARGO_DB = OrderedDict({
         "GEM",
         "MTX",
         "Pemetrexed",
+        "Gemcitabine",
     ],
 
     "antiviral_nucleic_acid": [
