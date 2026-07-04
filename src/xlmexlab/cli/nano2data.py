@@ -133,13 +133,10 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
                         traceback.print_exc()
                 
                 print(regex_flags.get("lipid_composition_ratio"))
+                lipids = regex_flags.get("lipid_composition") or []
 
-                lipids = regex_flags.get("lipid_composition", [])
-                ratio_info = regex_flags.get("lipid_composition_ratio")
-                if ratio_info is None:
-                    ratios = []
-                else:
-                    ratios = ratio_info.get("ratios", [])
+                ratio_info = regex_flags.get("lipid_composition_ratio") or {}
+                ratios = ratio_info.get("ratios") or []
 
                 if len(lipids) != len(ratios):
                     regex_flags.pop("lipid_composition_ratio", None)
