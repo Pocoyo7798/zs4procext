@@ -50,6 +50,26 @@ PARAM_META: dict[str, dict] = {
         ],
     },
 
+    "bioconjugation_nature": {
+        "description": "Bioconjugation nature",
+        "unit_hint": "-",
+        "specific_format": "bioconjugation_nature | <nature> | <drug_name>",
+        "field_rules": {
+            "<nature>": "If its refered if the bioconjagation nature is elestrostatic or covalent. ",
+            "<drug_name>": (
+                "Identify the formulation associated to the reported nature."
+                "If no formulation name is specified, write 'not extractable'."
+            ),
+    },
+        "exclude": [
+            "theoretical sizes",
+            "expected sizes",
+            "pore sizes",
+            "filter sizes",
+            "instrument limits",
+        ],
+    },
+
     "zeta_potential_mv": {
         "description": "Zeta potential (surface charge)",
         "unit_hint": "mV",
@@ -142,12 +162,13 @@ PARAM_META: dict[str, dict] = {
     "tumor_size_or_volume": {
         "description": "Tumor size or volume",
         "unit_hint": "mm, cm, mm³, mL or as reported",
-        "specific_format": "tumor_ size_or_volume | <value> | <unit> | <drug_name> | <state>",
+        "specific_format": "tumor_ size_or_volume | <value> | <unit> | <drug_name> | <state> | <comparasion>",
         "field_rules": {
             "<value>": "Numeric reduction exactly as reported.",
             "<unit>": "Percentage.",
             "<drug_name>": "Drug/formulation or control, if not stated left it 'unknown'.",
             "<state>": "Time associated to the volume or if its control, if not stated left it 'unknown'.",
+            "<comparison>": "One of: 'absolute', 'increase', 'decrease'. Use 'absolute' when the reported value is the measured tumor size or volume. Use 'increase' or 'decrease' when the value represents a relative change.",
         },
         "exclude": [
             "predicted inhibition",

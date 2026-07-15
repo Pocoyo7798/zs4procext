@@ -287,15 +287,18 @@ class NanoparticlesExtractorParagraph(BaseModel):
 
     def check_cargo(self, data_response: dict) -> dict:
         """For each candidate cargo name: try CARGO_DB first, fall back to LLM classification."""
-        cargo_candidates = [
-        formulation.get("drug_name")
-        for formulation in data_response["formulations"].values()]
+        cargo_candidates = []
+
+        for formulation in data_response["formulations"].values():
+            cargo_candidates.extend(formulation.get("drug_name", []))
+
+        cargo_candidates = list(dict.fromkeys(cargo_candidates)) #remover duplicados
 
         resolved = {}
         unmatched = []
 
         for name in cargo_candidates:
-            category = lookup_cargo_category(name)
+            category = lookup_cargo_category(name) #procurar a categoria no meu dicionario
             if category:
                 resolved[name] = {"is_drug": True, "category": category, "source": "CARGO_DB"}
             else:

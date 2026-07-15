@@ -810,10 +810,10 @@ SUBTYPE_MAP = {
  
 # ── charge ────────────────────────────────────────────────────────────────────
 POSITIVE_KEYWORDS = [
-    "cationic", "positively charged", "positive charge", "positive zeta",
+    "positive zeta",
 ]
 NEGATIVE_KEYWORDS = [
-    "anionic", "negatively charged", "negative charge", "negative zeta",
+    "negative zeta",
 ]
 NEUTRAL_KEYWORDS = [
     "neutral", "zwitterionic", "near-neutral", "PEGylated neutral",
@@ -1386,6 +1386,7 @@ EE_PATTERNS = r"""
   |encapsulation\s*(?:rate|ratio)
   |(?:encapsulation|loading).{0,40}?(?:efficienc(?:y|ies))
   | (?:encapsulated).{0,40}?(?:efficienc(?:y|ies))
+  |entrapment\s*efficienc(?:y|ies)
 )
 """
 
@@ -1406,6 +1407,9 @@ PART_SIZE = r"""
 particl(?:e|es)\s+size
 |diamete(?:r|rs)
 |size(?:s)?
+|Dh
+|D_h
+|Dₕ
 )
 """
 
@@ -1683,12 +1687,13 @@ class NanoparticleExtractor(BaseModel):
         result = _map_keywords(text, STIMULUS_MAP)
         return result if result else None
 
-    def _extract_bioconjugation(self, text: str) -> Optional[str]:
+    def _extract_bioconjugation(self, text: str) -> Optional[bool]:
         if _first_keyword_match(text, COVALENT_KEYWORDS):
-            return "covalent"
+            return True
         if _first_keyword_match(text, ELECTROSTATIC_KEYWORDS):
-            return "electrostatic"
-        return None
+            return True
+        return False
+    
 
     def _extract_peg_coat(self, text: str) -> Optional[str]:
         if _first_keyword_match(text, NON_PEG_KEYWORDS):
@@ -2043,6 +2048,7 @@ class NanoparticleExtractor(BaseModel):
     def _extract_tumor_size_volume(self, text: str) -> Optional[bool]:
         if re.search(TUMOR_PATTERNS_SIZE_VOLUME, text, re.IGNORECASE | re.VERBOSE):
             return True
+        
         return False
     
     # CARGO

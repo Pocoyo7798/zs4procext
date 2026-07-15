@@ -61,7 +61,7 @@ class NanoparticleData(BaseModel):
     stimulus_responsive: Optional[str] = None
 
     # [keyword] None / covalent
-    bioconjugation_nature: Optional[str] = None
+    bioconjugation_nature: Optional[bool] = None
 
     # [keyword] PEGylated / non-PEGylated  (from "PEGylated","DSPE-PEG","PEG-modified")
     peg_coat: Optional[str] = None

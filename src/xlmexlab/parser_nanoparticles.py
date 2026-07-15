@@ -412,19 +412,35 @@ class ParserNanoparticle(BaseModel):
 
         return final
 
-    def extract_cargos(self, text: str)-> str:
-        """Return all unique cargos in order found."""
-        for pat, name in COMPILED_MAP:
-            if pat.search(text):
-                if "free" in text:
-                    condition = f'free {name}'
-                    return condition
-                else:
-                    condition = name
-                    return condition
-            else: 
-                    None
-        return "unknown"
+    def extract_cargos(self, text: str) -> list[str]:
+        """Return all cargos, normalizing known ones and keeping unknown ones."""
+
+        # Remove text inside parentheses
+        text = re.sub(r"\([^)]*\)", "", text)
+
+        # Split on common separators
+        parts = re.split(r"\s*(?:,|;|/|\+|\band\b|\bor\b)\s*", text)
+
+        cargos = []
+
+        for part in parts:
+            part = part.strip()
+            if not part:
+                continue
+
+            matched = False
+
+            for pat, name in COMPILED_MAP:
+                if pat.fullmatch(part) or pat.search(part):
+                    cargos.append(name)
+                    matched = True
+                    break
+
+            if not matched:
+                cargos.append(part)
+
+        # Remove duplicates while preserving order
+        return list(dict.fromkeys(cargos))
 
 
     def postprocess_IC50(self, entries: list[dict]) -> dict:
@@ -783,12 +799,20 @@ class ParserNanoparticle(BaseModel):
 
             code, drug, load = parts[0], parts[1], parts[2]
 
+            if code == "<CODE>":
+                continue
+
             drug_name = None if drug.lower() in ("none", "", "-") else drug
             if drug_name is None:
                 continue  # Skip formulations without a drug name
 
+            drug_names = self.extract_cargos(drug_name)
+
+            if not drug_names:
+                drug_names=[drug_name]
+
             registry[code.upper()] = {
-                "drug_name": drug_name,
+                "drug_name": drug_names,
                 "load": load if load in ("loaded", "unloaded") else None,
             }
 
