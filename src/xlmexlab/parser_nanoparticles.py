@@ -223,15 +223,21 @@ PARAM_META = {
         ],
     },
 
+    "bioconjugation_nature": {
+        "fields": [
+            "bioconjugation_nature", "nature", "drug_name>"
+        ],
+    },
+
     "pdi": {
         "fields": [
-            "parameter_name", "value", "unit", "condition"
+            "parameter_name", "value", "methodology"
         ],
     },
 
     "encapsulation_efficiency_pct": {
         "fields": [
-            "parameter_name", "value", "unit", "condition"
+            "parameter_name", "value", "unit", "drug_name"
         ],
     },
 
@@ -267,7 +273,7 @@ PARAM_META = {
 
     "tumor_size_or_volume": {
         "fields": [
-            "parameter_name", "value", "unit", "drug_name", "state",
+            "parameter_name", "value", "unit", "drug_name", "state", "comparasion",
         ],
     },
 

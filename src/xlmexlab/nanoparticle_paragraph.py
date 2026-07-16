@@ -1947,10 +1947,10 @@ class NanoparticleExtractor(BaseModel):
                 return "Other"
         elif _first_keyword_match(text, VIRUS_INDUCED_WORDS):
                 return "Other"
-        elif _first_keyword_match(text, INVIVO_GENERIC_KEYWORDS):
-                return "In vivo generic keyword"
-        else: 
-            if _first_keyword_match(text, INVITRO_GENERIC_KEYWORDS):
+        #elif _first_keyword_match(text, INVIVO_GENERIC_KEYWORDS):
+         #       return "In vivo generic keyword"
+        #else: 
+        #    if _first_keyword_match(text, INVITRO_GENERIC_KEYWORDS):
                 return "In vitro generic keyword"
 
     def _extract_immune_status(self, text: str) -> Optional[str]:

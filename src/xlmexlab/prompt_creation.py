@@ -102,7 +102,7 @@ PARAM_META: dict[str, dict] = {
         "field_rules": {
             "<value>": "Numeric EE (Encapsulation Efficiency) exactly as reported (include the standard deviation if available).",
             "<unit>": "Percentage or unit as written.",
-            "<drug_name>": "Drug explicitly mentioned in experiment.",
+            "<drug_name>": "Drug or formulation if explicitly mentioned.",
         },
         "exclude": [
             "theoretical efficiency",
