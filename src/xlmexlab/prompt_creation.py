@@ -340,7 +340,7 @@ class PromptCreationSchedule(BaseModel):
 
         schema_lines.append(
             "Rules:"
-            "Use ONLY explicit frequency words ('every X days', 'twice', 'q.d.', 'BID', 'once', 'single dose').\n"        
+            "Use ONLY explicit frequency words ('every X days', 'twice', 'q.d.', 'BID', 'once', 'single dose', 'every week', etc).\n"        
             "Do NOT use timing words ('prior to', '15 min before', 'day 0', 'for X days') as evidence.\n"
             "Format: <drug_name> | <schedule>\n"
             "Drug names: " + ", ".join(drug_names)
