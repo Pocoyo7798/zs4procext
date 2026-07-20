@@ -306,6 +306,11 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         / "resources/template"
         / "qwen1.5_default_chat_template.json"
     ),
+    "Qwen2.5-7B-Instruct": str(
+        importlib_resources.files("xlmexlab")
+        / "resources/template"
+        / "qwen1.5_default_chat_template_lnp.json"
+    ),
     "Starling-LM-7B-alpha": str(
         importlib_resources.files("xlmexlab")
         / "resources/template"
@@ -540,5 +545,23 @@ TEMPLATE_REGISTRY: Dict[str, str] = {
         importlib_resources.files("xlmexlab")
         / "resources/template"
         / "blank_template.json"
-    )
+    ),
+    "Qwen3.5-9B": str(
+        importlib_resources.files("xlmexlab")
+        / "resources/template"
+        / "qwen1.5_default_chat_template.json"
+    ),
+    #qwen1.5_default_chat_template.json"
+    #"qwen_vl_template.json"
+    "DeepSeek-OCR-2": str(
+        importlib_resources.files("xlmexlab")
+        / "resources/template"
+        / "deepseek_ocr_default_template.json"
+    ),
+    "InternVL3-8B-Instruct": str(
+        importlib_resources.files("xlmexlab")
+        / "resources/template"
+        / "internvl_default_instruct_template.json"
+    ),
+
 }

@@ -201,6 +201,7 @@ class ModelVLM(BaseModel):
                 n=self.model_parameters["n"],
                 presence_penalty=self.model_parameters["presence_penalty"],
                 stop=self.model_parameters["stop"],
+                stop_token_ids=self.model_parameters["stop_token_ids"],
                 tags=self.model_parameters["tags"],
                 temperature=self.model_parameters["temperature"],
                 tensor_parallel_size=self.model_parameters["tensor_parallel_size"],
