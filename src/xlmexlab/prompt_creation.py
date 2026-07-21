@@ -165,10 +165,10 @@ PARAM_META: dict[str, dict] = {
         "specific_format": "tumor_ size_or_volume | <value> | <unit> | <drug_name> | <state> | <comparasion>",
         "field_rules": {
             "<value>": "Numeric reduction exactly as reported.",
-            "<unit>": "Percentage.",
+            "<unit>": "mm, cm, mm³, mL or as reported.",
             "<drug_name>": "Drug/formulation or control, if not stated left it 'unknown'.",
             "<state>": "Time associated to the volume or if its control, if not stated left it 'unknown'.",
-            "<comparison>": "One of: 'absolute', 'increase', 'decrease'. Use 'absolute' when the reported value is the measured tumor size or volume. Use 'increase' or 'decrease' when the value represents a relative change.",
+            "<comparison>": "One of: 'absolute', 'increase', 'decrease'. Use 'increase' or 'decrease' when the value represents a relative change. Use 'absolute' when the reported value is the measured tumor size or volume.",
         },
         "exclude": [
             "predicted inhibition",
@@ -375,21 +375,30 @@ class PromptCreationLipidComposition(BaseModel):
         )
 
         initialization = (
-            "A first-pass scan already identified the following lipids/lipid-like "
-            "components in the text below:\n"
+            "A first-pass scan already identified:\n"
             + (", ".join(lipids_found) if lipids_found else "(none)")
         )
 
         objective = (
-            "Read the text and check whether any other lipid, lipid derivative, "
-            "sterol, PEG-lipid, or ionizable lipid is mentioned that is NOT already "
-            "in the list above."
+            "Task: Find any OTHER lipid, lipid derivative, sterol, PEG-lipid, "
+            "or ionizable lipid mentioned in the text that is NOT in the list above."
+
         )
 
         schema_lines = [
+            "Notes:\n"
+                "- The text may contain OCR artifacts (odd spacing, broken characters like ġ, ̇, ȯ). "
+                "Do not skip a term just because it looks malformed."
+                "- Look especially for PEG-lipids (e.g., DSPE-PEG2000, mPEG-DSPE, m2000PEG DSPE),"
+                "ionizable lipids (e.g., DLin-MC3-DMA), phospholipids (e.g., DSPC, DOPC), and lipid conjugates."
+                "- Normalize obviously malformed names to their standard form if recognizable."
+
+                "Process (do this internally, do not show your work):"
+                "1. First, list every chemical/lipid-sounding term found in the text."
+                "2. Then filter out those already in the list above."
+                "3. Then output only the remaining ones, following the rules below."
             "Rules:",
-            "- List ONLY lipids that are missing from the list above.",
-            "- One lipid name per line, exactly as written in the text.",
+            "- List ONLY the remaining filtered lipids",
             "- Do NOT repeat lipids already in the list above.",
             "- If nothing is missing, answer exactly: none",
         ]

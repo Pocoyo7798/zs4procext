@@ -1449,7 +1449,13 @@ def _match_abbreviation(text: str, abbrs: List[str]) -> bool:
 def _first_keyword_match(text: str, keywords: List[str]) -> bool:
     """Return True if any keyword from the list is found in text (case-insensitive)."""
     text_lower = text.lower()
-    return any(kw.lower() in text_lower for kw in keywords)
+
+    for kw in keywords:
+        if kw.lower() in text_lower:
+            print(f"Keyword encontrada: {kw}")
+            return True
+
+    return False
 
 def _abr_first_keyword_match(text: str, words: List[str], abbrs: List[str]) -> bool:
     return _first_keyword_match(text, words) or _match_abbreviation(text, abbrs)
@@ -1652,6 +1658,7 @@ class NanoparticleExtractor(BaseModel):
         return True if match else False
         
     def _extract_size(self, text: str) -> Optional[bool]:
+        text = text.replace(':nm','nm')
         result = _extract_value_unit_closest_to_keyword(text, PART_SIZE, ["nm"])
         #result = _extract_value_near_keyword(text, PART_SIZE, ["nm"])
         #print (result)
@@ -1906,6 +1913,13 @@ class NanoparticleExtractor(BaseModel):
         ):
             return True
 
+        if re.search(
+            r"\b\d+(?:\.\d+)?\s*(?:mgkg|µgkg|μgkg|ugkg|gkg)",
+            text,
+            re.IGNORECASE,
+        ):
+            return True
+        
         # Massa simples, mas NÃO seguida de mL ou L
         if re.search(
             r"\b\d+(?:\.\d+)?\s*(?:mg|µg|μg|ug|g|kg)\b(?!\s*(?:/|\b(?:mL|L)\b))",

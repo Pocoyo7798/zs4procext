@@ -225,7 +225,7 @@ PARAM_META = {
 
     "bioconjugation_nature": {
         "fields": [
-            "bioconjugation_nature", "nature", "drug_name>"
+            "bioconjugation_nature", "nature", "drug_name"
         ],
     },
 
@@ -848,8 +848,7 @@ class ParserNanoparticle(BaseModel):
         Returns {"ratios": [float|None, ...]} aligned by position with lipids list,
         or None if not extractable at all.
         """
-        response = self.strip_think_blocks(response)
-
+        
         # check for global not_extractable
         lines = [l.strip() for l in response.strip().splitlines() if l.strip() and not l.startswith("#")]
         if len(lines) == 1 and "not_extractable" in lines[0].lower() and "|" in lines[0]:
