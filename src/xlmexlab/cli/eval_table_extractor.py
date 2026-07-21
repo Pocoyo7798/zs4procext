@@ -14,7 +14,7 @@ from xlmexlab.parser import KeywordSearching
 @click.argument("output_file_path", type=str)
 @click.option(
     "--threshold",
-    default=0.7,
+    default=0.77,
     help="Minimum threshold value to consider two string similar",
 )
 def eval_classifier(

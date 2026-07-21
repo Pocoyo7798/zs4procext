@@ -8,6 +8,7 @@ from Levenshtein import ratio
 from pydantic import BaseModel
 
 from xlmexlab.parser import KeywordSearching
+from rapidfuzz import fuzz
 
 
 class Evaluator(BaseModel):
@@ -55,7 +56,7 @@ class Evaluator(BaseModel):
             i = 0
             for ref_string in ref_list:
                 ref_string = ref_string.replace(" ", "").lower()
-                if SequenceMatcher(None, test_string, ref_string).ratio() > threshold:
+                if fuzz.ratio(ref_string, test_string) / 100 > threshold:
                     tp = tp + 1
                     fp = fp - 1
                     fn = fn - 1
