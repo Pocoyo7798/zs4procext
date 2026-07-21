@@ -290,7 +290,6 @@ PARAM_META = {
     },
 }
 
-
 class ParserNanoparticle(BaseModel):
     _parameters: List[str] = PrivateAttr(default_factory=list)
 
@@ -311,8 +310,10 @@ class ParserNanoparticle(BaseModel):
             return best_match  # substitui pelo mais próximo
         
     def normalize_value(self, field: str, value):
-
-        if value in ("", "-", "none", "not_extractable", None):
+        if value is None:
+            return None
+        
+        if value in ("", "-", "none", "not_extractable"):
             return None
 
         value = value.strip()
@@ -326,7 +327,19 @@ class ParserNanoparticle(BaseModel):
 
         return value
     
-    def parse_response(self, response: str) -> dict[str, list[dict]]:
+   
+
+    def _is_param_label(self, token: str, known_param: str) -> bool:
+        """Heuristic: does this token look like it's naming known_param,
+        rather than being a real data value?"""
+        if not token:
+            return False
+
+        score = Levenshtein.ratio(token.strip().lower(), known_param.strip().lower())
+        return score >= 0.6
+
+
+    def parse_response(self, response: str, known_param: str | None = None) -> dict[str, list[dict]]:
 
         results = {}
 
@@ -334,10 +347,7 @@ class ParserNanoparticle(BaseModel):
 
             line = raw_line.strip()
 
-            if not line:
-                continue
-
-            if line.startswith("#"):
+            if not line or line.startswith("#"):
                 continue
 
             parts = [p.strip() for p in line.split("|")]
@@ -345,28 +355,30 @@ class ParserNanoparticle(BaseModel):
             if len(parts) < 1:
                 continue
 
-            raw_param = parts[0]
+            if known_param is not None:
+                param = known_param
+                meta = PARAM_META.get(param, {})
+                fields = meta.get("fields", DEFAULT_FIELDS)
+                data_fields = fields[1:]
 
-            param = self.correct_param(
-                raw_param,
-                self._parameters
-            )
-
-            meta = PARAM_META.get(param, {})
-
-            fields = meta.get("fields", DEFAULT_FIELDS)
-
-            # remove parameter_name
-            data_fields = fields[1:]
+                # decide per-line whether parts[0] is the label or real data
+                if self._is_param_label(parts[0], known_param):
+                    start_idx = 1
+                else:
+                    start_idx = 0
+            else:
+                raw_param = parts[0]
+                param = self.correct_param(raw_param, self._parameters)
+                meta = PARAM_META.get(param, {})
+                fields = meta.get("fields", DEFAULT_FIELDS)
+                data_fields = fields[1:]
+                start_idx = 1
 
             entry = {}
-
-            for idx, field in enumerate(data_fields, start=1):
-
+            for offset, field in enumerate(data_fields):
+                idx = start_idx + offset
                 value = parts[idx] if idx < len(parts) else None
-
                 value = self.normalize_value(field, value)
-
                 entry[field] = value
 
             results.setdefault(param, []).append(entry)
