@@ -392,20 +392,10 @@ class PromptCreationLipidComposition(BaseModel):
             "- Do not exclude any lipid during extraction.",
             "- Normalize obvious OCR artifacts.",
             "- Normalize synonymous names when possible.",
-            "",
-            "Phase 2 – Filtering",
-            "Already identified:",
-            *(lipids_found if lipids_found else ["(none)"]),
-            "",
-            "- Remove every lipid that appears in the list above.",
-            "- Return only the remaining lipid names.",
-            "- If none remain, return exactly:",
-            "none",
-
             "Paragraph:",
         ]
 
-        conclusions = [
+        conclusions = "\n".join([
             "Phase 2 – Filtering",
             "Already identified:",
             *(lipids_found if lipids_found else ["(none)"]),
@@ -416,7 +406,7 @@ class PromptCreationLipidComposition(BaseModel):
             "none",
             "Phase 3:"
             "Return ONLY the missing lipid names (or 'none'). No explanations, headers, or comments.",
-        ]
+        ])
 
         return {
             "expertise": expertise,
