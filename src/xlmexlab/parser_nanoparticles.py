@@ -563,8 +563,8 @@ class ParserNanoparticle(BaseModel):
         return None
 
     def replace(self, T_and_F_list: dict, simulated_llm_response: str) -> dict:
-
-        parsed = self.parse_response(simulated_llm_response)
+        known_param = next(k for k, v in T_and_F_list.items() if v)
+        parsed = self.parse_response(simulated_llm_response, known_param)
 
         postprocessors = {
             "biodistribution":

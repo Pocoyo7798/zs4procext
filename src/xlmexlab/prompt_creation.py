@@ -374,33 +374,48 @@ class PromptCreationLipidComposition(BaseModel):
             "nanoparticle formulations described in scientific text."
         )
 
-        initialization = (
-            "A first-pass scan already identified:\n"
-            + (", ".join(lipids_found) if lipids_found else "(none)")
+        initialization = (""
         )
 
         objective = (
-            "Task: Find any OTHER lipid, lipid derivative, sterol, PEG-lipid, "
-            "or ionizable lipid mentioned in the text that is NOT in the list above."
+            " Find all lipid, lipid derivative, sterol, PEG-lipid, "
+            "or ionizable lipid mentioned in the text."
 
         )
 
-        schema_lines = [
-            "Notes:\n"
-                "- The text may contain OCR artifacts (odd spacing, broken characters like ġ, ̇, ȯ). "
-                "Do not skip a term just because it looks malformed."
-                "- Look especially for PEG-lipids (e.g., DSPE-PEG2000, mPEG-DSPE, m2000PEG DSPE),"
-                "ionizable lipids (e.g., DLin-MC3-DMA), phospholipids (e.g., DSPC, DOPC), and lipid conjugates."
-                "- Normalize obviously malformed names to their standard form if recognizable."
 
-                "Process (do this internally, do not show your work):"
-                "1. First, list every chemical/lipid-sounding term found in the text."
-                "2. Then filter out those already in the list above."
-                "3. Then output only the remaining ones, following the rules below."
-            "Rules:",
-            "- List ONLY the remaining filtered lipids",
-            "- Do NOT repeat lipids already in the list above.",
-            "- If nothing is missing, answer exactly: none",
+        schema_lines = [
+            "Task:",
+            "",
+            "Phase 1 – Extraction",
+            "- Extract every lipid, phospholipid, sterol, PEG-lipid, ionizable lipid, or lipid derivative mentioned in the text.",
+            "- Do not exclude any lipid during extraction.",
+            "- Normalize obvious OCR artifacts.",
+            "- Normalize synonymous names when possible.",
+            "",
+            "Phase 2 – Filtering",
+            "Already identified:",
+            *(lipids_found if lipids_found else ["(none)"]),
+            "",
+            "- Remove every lipid that appears in the list above.",
+            "- Return only the remaining lipid names.",
+            "- If none remain, return exactly:",
+            "none",
+
+            "Paragraph:",
+        ]
+
+        conclusions = [
+            "Phase 2 – Filtering",
+            "Already identified:",
+            *(lipids_found if lipids_found else ["(none)"]),
+            "",
+            "- Remove every lipid that appears in the list above.",
+            "- Return only the remaining lipid names.",
+            "- If none remain, return exactly:",
+            "none",
+            "Phase 3:"
+            "Return ONLY the missing lipid names (or 'none'). No explanations, headers, or comments.",
         ]
 
         return {
@@ -409,7 +424,7 @@ class PromptCreationLipidComposition(BaseModel):
             "definitions": {},
             "objective": objective,
             "answer_schema": {"Format": "\n".join(schema_lines)},
-            "conclusion": "Return ONLY the missing lipid names (or 'none'). No explanations, headers, or comments.",
+            "conclusion": conclusions,
         }
     
 class PromptCreationLoadStatus(BaseModel):

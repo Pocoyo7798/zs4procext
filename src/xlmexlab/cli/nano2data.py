@@ -6,6 +6,7 @@ from dataclasses import asdict, is_dataclass
 
 import click
 import torch
+import traceback
 
 from xlmexlab.extractor_nanoparticles import NanoparticlesExtractorParagraph
 from xlmexlab.nanoparticle_paragraph import NanoparticleExtractor
@@ -129,7 +130,6 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
                         print(f"  [STEP LIPID COMPOSITION] Lipid composition returned: {updated_lipids}")
                     except Exception as e:
                         print(f"  [STEP LIPID COMPOSITION] !! LIPID ERROR: {type(e).__name__}: {e}")
-                        import traceback
                         traceback.print_exc()
                 
                 print(regex_flags.get("lipid_composition_ratio"))
@@ -153,7 +153,6 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
                             print("  [STEP 5b] No ratios found in text.")
                     except Exception as e:
                         print(f"  [STEP 5b] !! RATIO EXTRACTION ERROR: {type(e).__name__}: {e}")
-                        import traceback
                         traceback.print_exc()
 
                 if regex_flags.get("lipid_composition_ratio"):
@@ -230,7 +229,6 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
 
                         except Exception as e:
                             print(f"  [STEP 4] !! SCHEDULE ERROR: {type(e).__name__}: {e}")
-                            import traceback
                             traceback.print_exc()
 
                     if llm_values and llm_values.get("size_nm"):
@@ -245,7 +243,6 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
 
                 except Exception as e:
                     print(f"  [STEP 3] !! LLM ERROR: {type(e).__name__}: {e}")
-                    import traceback
                     traceback.print_exc()
                     llm_values = None
 
@@ -264,7 +261,6 @@ def process_blocks(blocks, regex_extractor, llm_extractor, min_text_length, skip
         except Exception as e:
             errors += 1
             print(f"  !! OUTER ERROR on paragraph #{paragraph_index}: {type(e).__name__}: {e}")
-            import traceback
             traceback.print_exc()
             logger.error(f"Failed to process paragraph: {e}")
 
@@ -333,7 +329,6 @@ def nanoparticles2data(
             print("  LLM extractor ready.")
         except Exception as e:
             print(f"  !! LLM extractor FAILED to load: {type(e).__name__}: {e}")
-            import traceback
             traceback.print_exc()
             logger.warning(f"LLM disabled: {e}")
 
