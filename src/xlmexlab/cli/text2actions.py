@@ -78,6 +78,11 @@ from xlmexlab.randomization import seed_everything
     default=None,
     help="Example file for in-context learning",
 )
+@click.option(
+    "--inference_system",
+    default="vllm",
+    help="Inference system to use. Options: vllm, openai, iaedu",
+)
 def text2actions(
     text_file_path: str,
     output_file_path: str,
@@ -94,6 +99,7 @@ def text2actions(
     llm_model_parameters_path: Optional[str],
     elementar_actions: bool,
     examples_path: Optional[str],
+    inference_system: str,
 ):
     torch.cuda.empty_cache()
     start_time = time.time()
@@ -119,7 +125,8 @@ def text2actions(
         llm_model_name=llm_model_name,
         llm_model_parameters_path=llm_model_parameters_path,
         elementar_actions=elementar_actions,
-        examples_path = examples_path
+        examples_path=examples_path,
+        inference_system=inference_system,
     )
     # extractor.model_post_init(None)
     with open(text_file_path, "r") as f:

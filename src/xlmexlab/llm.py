@@ -11,7 +11,105 @@ from vllm import LLM, RequestOutput, SamplingParams, TextPrompt
 from vllm.sampling_params import BeamSearchParams
 import time
 
+from openai import OpenAI, RateLimitError
 from xlmexlab.randomization import seed_everything
+
+import json
+import os
+import time
+from typing import Any, Dict, Optional
+
+from openai import OpenAI, RateLimitError
+from pydantic import BaseModel
+
+# Fixed, non-configurable endpoint. This is intentionally not exposed as a
+# constructor field, config value, or input prompt, so it cannot be changed
+# at runtime or by editing the config file.
+OPENAI_BASE_URL = "https://api.openai.com/v1"
+
+
+class OpenAILLM(BaseModel):
+    """LLM wrapper for the OpenAI API.
+
+    Combines:
+    - AIeduLLM's pattern of persisting connection secrets (api_key)
+      to a local config file so the user is only prompted once.
+    - ModelLLM's pattern of loading generation parameters (temperature, seed,
+      max_tokens, etc.) from a separate JSON parameter file.
+    """
+
+    model_name: str = "gpt-5.2"
+    config_path: str = "openai_config.json"
+    api_key: Optional[str] = None
+    model_parameters: Dict[str, Any] = {}
+    client: Any = None
+
+    def model_post_init(self, context) -> None:
+        # --- Config file handling (from AIeduLLM) ---
+        if os.path.exists(self.config_path):
+            with open(self.config_path, "r") as f:
+                config = json.load(f)
+                self.api_key = config.get("api_key")
+        else:
+            self.api_key = input("Enter the OpenAI API key: ")
+
+            config_dict = {"api_key": self.api_key}
+            with open(self.config_path, "w") as f:
+                json.dump(config_dict, f, indent=4)
+
+        if self.api_key is None:
+            raise ValueError("An API key must be set (via config file or input prompt)")
+
+        self.client = OpenAI(api_key=self.api_key, base_url=OPENAI_BASE_URL)
+
+    def load_model_parameters(self, file_path: str) -> None:
+        """Load generation parameters (temperature, seed, max_tokens, etc.)
+        from a JSON file (mirrors ModelLLM.load_model_parameters).
+
+        Args:
+            file_path (str): Path to the json file containing the model parameters
+        """
+        with open(file_path, "r") as f:
+            self.model_parameters = json.load(f)
+
+    def run_single_prompt(self, prompt: str) -> str:
+        """Run a single prompt against the OpenAI API.
+
+        Args:
+            prompt (str): prompt to send to the model
+
+        Returns:
+            str: the model's text response
+        """
+        if self.client is None:
+            raise AttributeError("The OpenAI client is not initialized")
+
+        # Only pass through parameters that were actually loaded, so
+        # OpenAI's own defaults apply to anything left unset.
+        allowed_params = {
+            "temperature",
+            "top_p",
+            "seed",
+            "max_tokens",
+            "presence_penalty",
+            "frequency_penalty",
+            "stop",
+        }
+        call_kwargs = {
+            k: v for k, v in self.model_parameters.items() if k in allowed_params
+        }
+
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=[{"role": "user", "content": prompt}],
+                **call_kwargs,
+            )
+        except RateLimitError:
+            time.sleep(2)  # small fallback, mirrors AIeduLLM's retry behavior
+            return self.run_single_prompt(prompt)
+
+        return response.choices[0].message.content
 
 class AIeduLLM(BaseModel):
     model_name: str = "gpt_4o_aiedu"
