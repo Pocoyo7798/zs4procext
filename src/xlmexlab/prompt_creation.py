@@ -615,3 +615,56 @@ class PromptCreationLipidRatio(BaseModel):
             "answer_schema": {"Format": "\n".join(schema_lines)},
             "conclusion": "Return ONLY the extraction lines. No explanations, headers, or comments.",
         }
+
+
+
+class PromptCreationImagePrompt1(BaseModel):
+
+    def build_extraction_prompt_json(self) -> dict:
+        expertise = (
+            "You are an expert assistant for extracting structured information "
+            "from scientific graphs."
+        )
+
+        initialization = ""
+
+        objective = (
+            "Given an image of a scientific graph, extract the x-axis label, "
+            "all visible x-axis tick labels, the y-axis label, all visible "
+            "y-axis tick labels, and all series names."
+        )
+
+        schema = """X_AXIS: <x-axis label>
+X_TICKS: [tick1, tick2, ...]
+
+Y_AXIS: <y-axis label>
+Y_TICKS: [tick1, tick2, ...]
+
+SERIES:
+- <series 1>
+- <series 2>
+- <series 3>"""
+
+        rules = [
+            "Copy all text exactly as shown.",
+            "Preserve capitalization, symbols, and units.",
+            "List all visible tick labels in order (left-to-right for x, bottom-to-top for y).",
+            "Series names must match the legend or labels exactly.",
+            "If a value cannot be read, write UNKNOWN.",
+            "Do not infer or invent missing information.",
+        ]
+
+        return {
+            "expertise": expertise,
+            "initialization": initialization,
+            "definitions": {},
+            "objective": objective,
+            "answer_schema": {
+                "Format": schema,
+                "Rules": "\n".join(f"- {r}" for r in rules),
+            },
+            "conclusion": (
+                "Return ONLY the requested structure. "
+                "Do not include explanations, markdown, headers, or comments."
+            ),
+        }

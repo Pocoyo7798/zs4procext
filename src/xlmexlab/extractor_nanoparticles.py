@@ -14,7 +14,7 @@ from pydantic import BaseModel, PrivateAttr, validator
 from xlmexlab import parser
 from xlmexlab.llm import ModelLLM, ModelVLM
 from xlmexlab.prompt import PromptFormatter
-from xlmexlab.prompt_creation import PromptCreation, PromptCreationSchedule, PromptCreationLipidComposition, PromptCreationLoadStatus, PromptCreationLipidRatioUnits, PromptCreationFormulationRegistry, PromptCreationCargoCategoryCheck, PromptCreationLipidRatio
+from xlmexlab.prompt_creation import PromptCreation, PromptCreationImagePrompt1, PromptCreationSchedule, PromptCreationLipidComposition, PromptCreationLoadStatus, PromptCreationLipidRatioUnits, PromptCreationFormulationRegistry, PromptCreationCargoCategoryCheck, PromptCreationLipidRatio
 from xlmexlab.parser_nanoparticles import ParserNanoparticle
 from xlmexlab.nanoparticle_paragraph import NORMALIZATION_MAP, GENERIC_TERMS
 from xlmexlab.nanoparticle_paragraph import CARGO_DB, lookup_cargo_category
@@ -37,7 +37,7 @@ class NanoparticlesExtractorParagraph(BaseModel):
     def model_post_init(self, __context: Any) -> None:
         print("\n  [EXTRACTOR] model_post_init starting...")
 
-        # --- LLM model parameters ---
+        # LLM model parameters 
         if self.llm_model_parameters_path is None:
             llm_param_path = str(
                 importlib_resources.files("xlmexlab")
@@ -49,7 +49,7 @@ class NanoparticlesExtractorParagraph(BaseModel):
             llm_param_path = self.llm_model_parameters_path
             print(f"  [EXTRACTOR] Using llm_model_parameters_path: {llm_param_path}")
 
-        # --- Load LLM ---
+        # Load LLM 
         model_name = self.llm_model_name or "Llama2-70B-chat-hf"
         print(f"  [EXTRACTOR] Loading ModelLLM with model_name='{model_name}'...")
         self._llm_model = ModelLLM(model_name=model_name)
@@ -57,7 +57,7 @@ class NanoparticlesExtractorParagraph(BaseModel):
         self._llm_model.vllm_load_model()
         print(f"  [EXTRACTOR] ModelLLM loaded successfully.")
 
-        # --- Parser ---
+        # Parser 
         self._nanoparticles_parser = ParserNanoparticle()
         print(f"  [EXTRACTOR] ParserNanoparticle ready.")
         print(f"  [EXTRACTOR] model_post_init complete.\n")
@@ -356,3 +356,54 @@ class NanoparticlesExtractorParagraph(BaseModel):
         result = self._nanoparticles_parser.parse_lipid_ratio_response(response, lipids)
         print(f"  [EXTRACTOR.extract_lipid_ratio_info] Parsed ratios: {result}")
         return result
+
+class ImageExtractor(BaseModel):
+    prompt_template_path: Optional[str] = None
+    prompt_schema_path: Optional[str] = None
+    vlm_model_name: Optional[str] = None
+    vlm_model_parameters_path: Optional[str] = None
+    _prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
+    _vlm_model: Optional[ModelVLM] = PrivateAttr(default=None)
+    #_image_parser: Optional[ImageParser] = PrivateAttr(default=None)
+
+    def model_post_init(self, __context: Any) -> None:
+        if self.vlm_model_parameters_path is None:
+            vlm_param_path = str(
+                importlib_resources.files("xlmexlab")
+                / "resources/model_parameters"
+                / "vllm_default_params.json"
+            )
+        else:
+            vlm_param_path = self.vlm_model_parameters_path
+
+        
+        self._prompt.model_post_init(self.prompt_template_path)
+        if self.vlm_model_name is None:
+            self._vlm_model = ModelVLM(model_name="Llama2-70B-chat-hf")
+        else:
+            self._vlm_model = ModelVLM(model_name=self.vlm_model_name)
+        self._vlm_model.load_model_parameters(vlm_param_path)
+        self._vlm_model.vllm_load_model()
+        #self._image_parser = ImageParser()
+
+    def extract_image_info(self, image_path: str, scale: float = 1.0):
+
+        self._prompt_creation = PromptCreationImagePrompt1()
+        prompt_dict = self._prompt_creation.build_extraction_prompt_json()
+        self._prompt = PromptFormatter(**prompt_dict)
+        image_name = os.path.basename(image_path)
+
+        prompt = self._prompt.format_prompt("<image>")
+        print(f"\n  [ImageExtractor.extract_image_info] PROMPT SENT TO VLM")
+        print(prompt)
+
+        output = self._vlm_model.run_image_single_prompt_rescale(
+            prompt, image_path, scale=scale
+        )
+        print(f"\n  [ImageExtractor.extract_image_info] VLM RAW RESPONSE")
+        print(output)
+
+        #self._image_parser.parse(output)
+        #parsed_output = self._image_parser.get_data_dict()
+        #print(parsed_output)
+        return {image_name: output}

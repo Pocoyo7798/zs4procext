@@ -2181,6 +2181,7 @@ class ImageExtractor(BaseModel):
             )
         else:
             vlm_param_path = self.vlm_model_parameters_path
+        #SCHEMA LOADING
         if self.prompt_schema_path is None:
             self.prompt_schema_path = str(
                 importlib_resources.files("xlmexlab")
@@ -2190,6 +2191,7 @@ class ImageExtractor(BaseModel):
         with open(self.prompt_schema_path, "r") as f:
             prompt_dict = json.load(f)
         self._prompt = PromptFormatter(**prompt_dict)
+        #VLM loading
         self._prompt.model_post_init(self.prompt_template_path)
         if self.vlm_model_name is None:
             self._vlm_model = ModelVLM(model_name="Llama2-70B-chat-hf")
@@ -2197,6 +2199,7 @@ class ImageExtractor(BaseModel):
             self._vlm_model = ModelVLM(model_name=self.vlm_model_name)
         self._vlm_model.load_model_parameters(vlm_param_path)
         self._vlm_model.vllm_load_model()
+        
         self._image_parser = ImageParser()
 
     def extract_image_info(self, image_path: str, scale: float = 1.0):
