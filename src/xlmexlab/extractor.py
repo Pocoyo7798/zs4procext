@@ -49,7 +49,7 @@ from xlmexlab.actions import (
     Transfer,
     Wash,
 )
-from xlmexlab.llm import ModelLLM, ModelVLM, AIeduLLM
+from xlmexlab.llm import ModelLLM, ModelVLM, AIeduLLM, OpenAILLM
 from xlmexlab.parser import (
     MOLAR_RATIO_REGISTRY,
     ActionsParser,
@@ -87,6 +87,7 @@ class ActionExtractorFromText(BaseModel):
     examples_path:  Optional[str] = None
     post_processing: bool = True
     banned_chemicals: bool = True
+    inference_system: str = "vllm"
     _action_prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
     _chemical_prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
     _wash_chemical_prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
@@ -246,12 +247,15 @@ class ActionExtractorFromText(BaseModel):
         self._action_prompt = PromptFormatter(**action_prompt_dict, examples_path = self.examples_path)
         self._action_prompt.model_post_init(self.action_prompt_template_path)
         #print(self._action_prompt)
-        if self.llm_model_name == "gpt_4o_aiedu":
+        if self.llm_model_name == "gpt_4o_aiedu" and self.inference_system == "iaedu":
             self._llm_model = AIeduLLM()
-        else:
+        elif self.inference_system == "vllm":
             self._llm_model = ModelLLM(model_name=self.llm_model_name)
             self._llm_model.load_model_parameters(llm_param_path)
             self._llm_model.vllm_load_model()
+        elif self.inference_system == "openai":
+            self._llm_model = OpenAILLM(model_name=self.llm_model_name)
+            self._llm_model.load_model_parameters(llm_param_path)
         self._action_parser = ActionsParser(
             type=self.actions_type,
             separators=self._action_prompt._definition_separators,
