@@ -250,7 +250,7 @@ def eval_graphs(
 
     """
 
-    # ---- NEW: Per-image JSON with structured metrics ----
+    # NEW: Per-image JSON with structured metrics
     image_metrics = {}
 
     for plot_name in reference_data.keys():
@@ -261,19 +261,19 @@ def eval_graphs(
         # Compute per-image metrics
         ref_plot = reference_data[plot_name]
 
-        # ---- SERIES ----
+        # SERIES 
         ref_series = evaluator.extract_series({plot_name: ref_plot})
         test_series = evaluator.extract_series({plot_name: test_plot})
         series_TP, series_FP, series_FN, _, _, _ = evaluator.match_references_tests(ref_series, test_series)
         series_metrics = evaluator.evaluate(series_TP, series_FP, series_FN)
 
-        # ---- AXIS ---- (reusing label logic)
+        # AXIS (reusing label logic)
         ref_labels = evaluator.extract_labels({plot_name: ref_plot})
         test_labels = evaluator.extract_labels({plot_name: test_plot})
         axis_TP, axis_FP, axis_FN, _, _, _ = evaluator.match_references_tests(ref_labels, test_labels)
         axis_metrics = evaluator.evaluate(axis_TP, axis_FP, axis_FN)
 
-        # ---- POINTS ----
+        # POINTS
         series_TP, series_FP, series_FN, series_matches, matched_ref_series, matched_test_series = evaluator.match_references_tests(ref_series, test_series)
 
         point_TP, point_FP, point_FN, _ = evaluator.point_matching_accuracy(
@@ -286,7 +286,7 @@ def eval_graphs(
 
         point_metrics = evaluator.evaluate(point_TP, point_FP, point_FN)
 
-        # ---- OVERALL POINTS ----
+        # OVERALL POINTS
         overall_TP, overall_FP, overall_FN = evaluator.overall_point_matching(
             {plot_name: ref_plot},
             {plot_name: test_plot}
