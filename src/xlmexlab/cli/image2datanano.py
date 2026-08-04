@@ -40,7 +40,7 @@ from xlmexlab.prompt import TEMPLATE_REGISTRY
 )
 def image2datanano(
     image_folder: str,
-    output_file_path: str,
+    #output_file_path: str,
     prompt_template_path: Optional[str],
     prompt_schema_path: Optional[str],
     vlm_model_name: str,
