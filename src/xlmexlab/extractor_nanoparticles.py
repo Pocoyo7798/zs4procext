@@ -376,21 +376,23 @@ class ImageExtractor(BaseModel):
         else:
             vlm_param_path = self.vlm_model_parameters_path
 
-        
+        # Build PromptFormatter
+        prompt_creation = PromptCreationImagePrompt1()
+        prompt_dict = prompt_creation.build_extraction_prompt_json()
+        self._prompt = PromptFormatter(**prompt_dict)
+
         self._prompt.model_post_init(self.prompt_template_path)
+
         if self.vlm_model_name is None:
             self._vlm_model = ModelVLM(model_name="Llama2-70B-chat-hf")
         else:
             self._vlm_model = ModelVLM(model_name=self.vlm_model_name)
+
         self._vlm_model.load_model_parameters(vlm_param_path)
         self._vlm_model.vllm_load_model()
         #self._image_parser = ImageParser()
 
     def extract_image_info(self, image_path: str, scale: float = 1.0):
-
-        self._prompt_creation = PromptCreationImagePrompt1()
-        prompt_dict = self._prompt_creation.build_extraction_prompt_json()
-        self._prompt = PromptFormatter(**prompt_dict)
         image_name = os.path.basename(image_path)
 
         prompt = self._prompt.format_prompt("<image>")
