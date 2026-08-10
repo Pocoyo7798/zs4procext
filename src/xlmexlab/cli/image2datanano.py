@@ -75,7 +75,7 @@ def image2datanano(
             print(f"Processing image file: {file_path}")
 
             try:
-                extracted_data = extractor.extract_image_info(file_path, scale=scale)
+                extracted_data = extractor.extract_series_data(file_path, scale=scale)
                 aggregated_data[file] = extracted_data
 
             except Exception as e:
