@@ -893,8 +893,8 @@ class ParserNanoparticle(BaseModel):
 
 
 
-class ImageParserPrompt1(BaseModel):
-    """Parses the raw VLM text output from PromptCreationImagePrompt1
+class ImageParserKeys(BaseModel):
+    """Parses the raw VLM text output from PromptCreationImageKeys
     into structured axis labels, ticks, and series names."""
 
     _data: Dict[str, Any] = PrivateAttr(default_factory=dict)
@@ -926,20 +926,22 @@ class ImageParserPrompt1(BaseModel):
             for item in match.group(1).split(",")
             if item.strip()
         ]
-
+    
     @staticmethod
-    def _extract_series(text: str) -> List[str]:
-        match = re.search(r"SERIES:\s*(.+)", text, re.DOTALL)
+    def _extract_list(text: str, key: str) -> List[str]:
+        match = re.search(rf"{key}:\s*\[(.*?)\]", text, re.DOTALL)
         if not match:
             return []
-        series = []
-        for line in match.group(1).splitlines():
-            line = line.strip()
-            if line.startswith("-"):
-                series.append(line.lstrip("-").strip())
-            elif line == "" and series:
-                break  # stop at first blank line once we've started collecting
-        return series
+
+        content = match.group(1)
+        content = re.sub(r"(?<=\S),(?=\S)", "", content)
+
+        return [
+            item.strip().strip("\"'")
+            for item in content.split(",")
+            if item.strip()
+        ]
+
 
     @staticmethod
     def _extract_points(text: str) -> List[Dict[str, Any]]:
@@ -952,3 +954,25 @@ class ImageParserPrompt1(BaseModel):
             x_raw, y_raw = match.group(1).strip(), match.group(2).strip()
             points.append({"x": x_raw, "y": y_raw})
         return points
+
+class SeriesPointsParser(BaseModel):
+
+    @staticmethod
+    def parse_points(raw_output: str) -> List[List[Any]]:
+        points = []
+        for match in re.finditer(r"\(\s*([^,()]+?)\s*,\s*([^,()]+?)\s*\)", raw_output):
+            x_raw, y_raw = match.group(1).strip(), match.group(2).strip()
+            points.append([
+                SeriesPointsParser._to_float(x_raw),
+                SeriesPointsParser._to_float(y_raw),
+            ])
+        return points
+
+    @staticmethod
+    def _to_float(value: str) -> Any:
+        if value.upper() in {"N/A", "NA", "UNKNOWN"}:
+            return None
+        try:
+            return float(value)
+        except ValueError:
+            return value 

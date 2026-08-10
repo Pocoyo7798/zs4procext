@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 import time
 from typing import List, Optional
 
@@ -11,6 +12,7 @@ from xlmexlab.prompt import TEMPLATE_REGISTRY
 
 @click.command()
 @click.argument("image_folder", type=str)
+@click.argument("images_chosen_folder", type=str)
 #@click.argument("output_file_path", type=str)
 @click.option(
     "--prompt_template_path",
@@ -40,6 +42,7 @@ from xlmexlab.prompt import TEMPLATE_REGISTRY
 )
 def image2datanano(
     image_folder: str,
+    images_chosen_folder: str,
     #output_file_path: str,
     prompt_template_path: Optional[str],
     prompt_schema_path: Optional[str],
@@ -62,7 +65,7 @@ def image2datanano(
         vlm_model_name=vlm_model_name,
         vlm_model_parameters_path=vlm_model_parameters_path,
     )
-
+    os.makedirs(images_chosen_folder, exist_ok=True)
     file_list = os.listdir(image_folder)
     aggregated_data = {}
 
@@ -75,6 +78,12 @@ def image2datanano(
             print(f"Processing image file: {file_path}")
 
             try:
+                if not extractor.is_graph(file_path, scale=scale):
+                    print(f"Skipping {file}: not a graph")
+                    continue
+                shutil.copy(file_path, os.path.join(images_chosen_folder, file))
+                print(f"Copying {file} to chosen folder")
+
                 extracted_data = extractor.extract_series_data(file_path, scale=scale)
                 aggregated_data[file] = extracted_data
 

@@ -616,9 +616,54 @@ class PromptCreationLipidRatio(BaseModel):
             "conclusion": "Return ONLY the extraction lines. No explanations, headers, or comments.",
         }
 
+class PromptCreationIsGraphPrompt(BaseModel):
+
+    def build_is_graph_prompt_json(self) -> dict:
+        expertise = (
+            "You are an expert in identifying scientific graphs and determining whether their primary subject is biodistribution (%ID/g) or tumour volume/size."
+        )
+
+        initialization = ""
+
+        objective = (
+            "Determine whether the image contains a scientific graph about biodistribution (%ID/g) or tumour volume/size."
+        )
+
+        schema = "<YES or NO>"
+
+        rules = [
+            "Answer YES only if the image clearly shows a graph about biodistribution (%ID/g) or tumour volume/size."
+            "Answer NO if the graph is about any other measurement or scientific outcome.",
+            "For biodistribution, look for indicators such as %ID/g, %ID, tissue or organ distribution, tracer accumulation, drug accumulation, or similar measurements.",
+            "For tumour volume/size, look for indicators such as tumour volume, tumour size, tumour growth, tumour burden, mm3, cm3, or similar measurements.",
+            "Do not infer the subject from the experimental context alone.",
+            "Use the axis labels, units, title, legend, and visible graph content to determine the subject.",
+            "If the subject cannot be determined confidently, answer NO.",
+            "Return exactly one word: YES or NO.",
+            "Do not include explanations, punctuation, markdown, or additional text.",
+        ]
+
+        return {
+            "expertise": expertise,
+            "initialization": initialization,
+            "definitions": {
+    "biodistribution": "A graph showing the distribution or accumulation of a substance, drug, tracer, nanoparticle, or other agent in tissues or organs, typically reported as %ID/g, %ID, or a closely related biodistribution measurement.",
+    "tumour_volume_size": "A graph showing tumour volume, tumour size, tumour growth, or changes in tumour dimensions over time or between treatment groups.",
+    "target_graph": "A graph whose primary measured outcome is biodistribution (%ID/g) or tumour volume/size."
+  },
+            "objective": objective,
+            "answer_schema": {
+                "Format": schema,
+                "Rules": "\n".join(f"- {r}" for r in rules),
+            },
+            "conclusion": (
+                "Return ONLY the word YES or NO. "
+                "Do not include explanations, markdown, headers, or comments."
+            ),
+        }
 
 
-class PromptCreationImagePrompt1(BaseModel):
+class PromptCreationImageKeys(BaseModel):
 
     def build_extraction_prompt_json(self) -> dict:
         expertise = (
@@ -701,24 +746,24 @@ class PromptCreationSeriesDataPrompt(BaseModel):
             )
 
         schema = """SERIES: <series name>
-POINTS:
-- (x1, y1)
-- (x2, y2)
-- (x3, y3)"""
+                POINTS:
+                - (x1, y1)
+                - (x2, y2)
+                - (x3, y3)"""
 
         rules = [
-                "Identify every visible data point belonging to the requested series.",
-                "Read points from left to right along the x-axis.",
-                "Determine each x-value using the nearest visible x-axis ticks.",
-                "Determine each y-value using the nearest visible y-axis ticks.",
-                "Interpolate between ticks when the point lies between them.",
-                "Do not infer points that are not visibly present.",
-                "Do not use information from other series.",
-                "Preserve the numerical precision implied by the axis tick labels.",
-                "If a coordinate cannot be determined confidently, use N/A for that coordinate.",
-                "Ensure every x-value has exactly one corresponding y-value.",
-                "Return only valid JSON.",
-                "Do not include reasoning, explanations, markdown, or extra keys.",
+            "Identify every visible data point belonging to the requested series.",
+            "Read points from left to right along the x-axis.",
+            "Determine each x-value using the nearest visible x-axis ticks.",
+            "Determine each y-value using the nearest visible y-axis ticks.",
+            "Interpolate between ticks when the point lies between them.",
+            "Do not infer points that are not visibly present.",
+            "Do not use information from other series.",
+            "Preserve the numerical precision implied by the axis tick labels.",
+            "If a coordinate cannot be determined confidently, use N/A for that coordinate.",
+            "Ensure every x-value has exactly one corresponding y-value.",
+            "Return points ONLY in the format shown: one '(x, y)' pair per line, prefixed with '-'.",
+            "Do not include reasoning, explanations, markdown, or extra text outside the POINTS list.",
         ]
 
         return {

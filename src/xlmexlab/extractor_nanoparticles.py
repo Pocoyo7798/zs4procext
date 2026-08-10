@@ -14,8 +14,8 @@ from pydantic import BaseModel, PrivateAttr, validator
 from xlmexlab import parser
 from xlmexlab.llm import ModelLLM, ModelVLM
 from xlmexlab.prompt import PromptFormatter
-from xlmexlab.prompt_creation import PromptCreation, PromptCreationImagePrompt1, PromptCreationSchedule, PromptCreationLipidComposition, PromptCreationLoadStatus, PromptCreationLipidRatioUnits, PromptCreationFormulationRegistry, PromptCreationCargoCategoryCheck, PromptCreationLipidRatio, PromptCreationSeriesDataPrompt
-from xlmexlab.parser_nanoparticles import ParserNanoparticle, ImageParserPrompt1
+from xlmexlab.prompt_creation import PromptCreation, PromptCreationImageKeys, PromptCreationIsGraphPrompt, PromptCreationSchedule, PromptCreationLipidComposition, PromptCreationLoadStatus, PromptCreationLipidRatioUnits, PromptCreationFormulationRegistry, PromptCreationCargoCategoryCheck, PromptCreationLipidRatio, PromptCreationSeriesDataPrompt
+from xlmexlab.parser_nanoparticles import ParserNanoparticle, ImageParserKeys, SeriesPointsParser
 from xlmexlab.nanoparticle_paragraph import NORMALIZATION_MAP, GENERIC_TERMS
 from xlmexlab.nanoparticle_paragraph import CARGO_DB, lookup_cargo_category
 
@@ -364,8 +364,9 @@ class ImageExtractor(BaseModel):
     vlm_model_parameters_path: Optional[str] = None
     _prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
     _vlm_model: Optional[ModelVLM] = PrivateAttr(default=None)
-    _image_parser: Optional[ImageParserPrompt1] = PrivateAttr(default=None)
+    _image_parser: Optional[ImageParserKeys] = PrivateAttr(default=None)
     _series_prompt_builder: Optional[PromptCreationSeriesDataPrompt] = PrivateAttr(default=None)
+    _is_graph_prompt_builder: Optional[PromptCreationIsGraphPrompt] = PrivateAttr(default=None)
 
     def model_post_init(self, __context: Any) -> None:
         if self.vlm_model_parameters_path is None:
@@ -378,7 +379,7 @@ class ImageExtractor(BaseModel):
             vlm_param_path = self.vlm_model_parameters_path
 
         # Build PromptFormatter
-        prompt_creation = PromptCreationImagePrompt1()
+        prompt_creation = PromptCreationImageKeys()
         prompt_dict = prompt_creation.build_extraction_prompt_json()
         self._prompt = PromptFormatter(**prompt_dict)
 
@@ -392,9 +393,23 @@ class ImageExtractor(BaseModel):
         self._vlm_model.load_model_parameters(vlm_param_path)
         self._vlm_model.vllm_load_model()
         #self._image_parser = ImageParser()
-        self._image_parser = ImageParserPrompt1()
+        self._is_graph_prompt_builder = PromptCreationIsGraphPrompt()
+        self._image_parser = ImageParserKeys()
         self._series_prompt_builder = PromptCreationSeriesDataPrompt()
 
+    def is_graph(self, image_path: str, scale: float = 1.0) -> bool:
+        prompt_dict = self._is_graph_prompt_builder.build_is_graph_prompt_json()
+        formatter = PromptFormatter(**prompt_dict)
+        formatter.model_post_init(self.prompt_template_path)
+        prompt = formatter.format_prompt("<image>")
+
+        output = self._vlm_model.run_image_single_prompt_rescale(
+            prompt, image_path, scale=scale
+        )
+        print(f"\n  [ImageExtractor.is_graph] response: {output!r}")
+
+        return output.strip().upper().startswith("YES")
+    
     def extract_image_info(self, image_path: str, scale: float = 1.0):
         image_name = os.path.basename(image_path)
 
@@ -429,7 +444,11 @@ class ImageExtractor(BaseModel):
         y_ticks = parsed.get("y_ticks", [])
         series_names = parsed.get("series", [])
 
-        series_results = {}
+        result = {
+            "x_axis": x_axis,
+            "y_axis": y_axis,
+        }
+
         for series_name in series_names:
             prompt_dict = self._series_prompt_builder.build_series_prompt_json(
                 x_axis=x_axis,
@@ -442,7 +461,7 @@ class ImageExtractor(BaseModel):
             series_formatter.model_post_init(self.prompt_template_path)
             prompt = series_formatter.format_prompt("<image>")
 
-            print(f"\n[ImageExtractor.extract_series_data] PROMPT FOR SERIES '{series_name}'")
+            print(f"\n  [ImageExtractor.extract_series_data] PROMPT FOR SERIES '{series_name}'")
             print(prompt)
 
             output = self._vlm_model.run_image_single_prompt_rescale(
@@ -450,12 +469,11 @@ class ImageExtractor(BaseModel):
             )
             print(f"\n  [ImageExtractor.extract_series_data] VLM RAW RESPONSE for '{series_name}'")
             print(output)
+            
+            points = SeriesPointsParser.parse_points(output)
+            result[series_name] = points
 
-            series_results[series_name] = output
+            print(f"\n  [ImageExtractor.extract_series_data] "
+            f"Parsed result for '{image_name}': {result}")
 
-        return {
-            "image": image_name,
-            "axes": {"x_axis": x_axis, "x_ticks": x_ticks, "y_axis": y_axis, "y_ticks": y_ticks},
-            "series_names": series_names,
-            "series_data": series_results,
-        }
+        return {image_name: result}
