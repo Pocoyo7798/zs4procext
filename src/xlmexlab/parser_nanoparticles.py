@@ -3,7 +3,7 @@ import re
 from collections import OrderedDict
 from pydantic import BaseModel, PrivateAttr
 import Levenshtein
-from typing import List
+from typing import List, Dict, Any, Optional
 from xlmexlab.nanoparticle_paragraph import CARGO_DB, cargo_map
 
 cargo_list = sorted({
@@ -890,4 +890,65 @@ class ParserNanoparticle(BaseModel):
         if all(r is None for r in ratios):
             return None
         return {"ratios": ratios}
-    
+
+
+
+class ImageParserPrompt1(BaseModel):
+    """Parses the raw VLM text output from PromptCreationImagePrompt1
+    into structured axis labels, ticks, and series names."""
+
+    _data: Dict[str, Any] = PrivateAttr(default_factory=dict)
+
+    def parse(self, raw_output: str) -> None:
+        self._data = {
+            "x_axis": self._extract_field(raw_output, "X_AXIS"),
+            "x_ticks": self._extract_list(raw_output, "X_TICKS"),
+            "y_axis": self._extract_field(raw_output, "Y_AXIS"),
+            "y_ticks": self._extract_list(raw_output, "Y_TICKS"),
+            "series": self._extract_series(raw_output),
+        }
+
+    def get_data_dict(self) -> Dict[str, Any]:
+        return self._data
+
+    @staticmethod
+    def _extract_field(text: str, key: str) -> Optional[str]:
+        match = re.search(rf"{key}:\s*(.+)", text)
+        return match.group(1).strip() if match else None
+
+    @staticmethod
+    def _extract_list(text: str, key: str) -> List[str]:
+        match = re.search(rf"{key}:\s*\[(.*?)\]", text, re.DOTALL)
+        if not match:
+            return []
+        return [
+            item.strip().strip("\"'")
+            for item in match.group(1).split(",")
+            if item.strip()
+        ]
+
+    @staticmethod
+    def _extract_series(text: str) -> List[str]:
+        match = re.search(r"SERIES:\s*(.+)", text, re.DOTALL)
+        if not match:
+            return []
+        series = []
+        for line in match.group(1).splitlines():
+            line = line.strip()
+            if line.startswith("-"):
+                series.append(line.lstrip("-").strip())
+            elif line == "" and series:
+                break  # stop at first blank line once we've started collecting
+        return series
+
+    @staticmethod
+    def _extract_points(text: str) -> List[Dict[str, Any]]:
+        # Only look inside FINAL_ANSWER section, if present
+        final_match = re.search(r"FINAL_ANSWER:\s*(.*)", text, re.DOTALL)
+        section = final_match.group(1) if final_match else text
+
+        points = []
+        for match in re.finditer(r"\(\s*([^,]+?)\s*,\s*([^)]+?)\s*\)", section):
+            x_raw, y_raw = match.group(1).strip(), match.group(2).strip()
+            points.append({"x": x_raw, "y": y_raw})
+        return points

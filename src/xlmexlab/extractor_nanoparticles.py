@@ -14,8 +14,8 @@ from pydantic import BaseModel, PrivateAttr, validator
 from xlmexlab import parser
 from xlmexlab.llm import ModelLLM, ModelVLM
 from xlmexlab.prompt import PromptFormatter
-from xlmexlab.prompt_creation import PromptCreation, PromptCreationImagePrompt1, PromptCreationSchedule, PromptCreationLipidComposition, PromptCreationLoadStatus, PromptCreationLipidRatioUnits, PromptCreationFormulationRegistry, PromptCreationCargoCategoryCheck, PromptCreationLipidRatio
-from xlmexlab.parser_nanoparticles import ParserNanoparticle
+from xlmexlab.prompt_creation import PromptCreation, PromptCreationImagePrompt1, PromptCreationSchedule, PromptCreationLipidComposition, PromptCreationLoadStatus, PromptCreationLipidRatioUnits, PromptCreationFormulationRegistry, PromptCreationCargoCategoryCheck, PromptCreationLipidRatio, PromptCreationSeriesDataPrompt
+from xlmexlab.parser_nanoparticles import ParserNanoparticle, ImageParserPrompt1
 from xlmexlab.nanoparticle_paragraph import NORMALIZATION_MAP, GENERIC_TERMS
 from xlmexlab.nanoparticle_paragraph import CARGO_DB, lookup_cargo_category
 
@@ -364,7 +364,8 @@ class ImageExtractor(BaseModel):
     vlm_model_parameters_path: Optional[str] = None
     _prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
     _vlm_model: Optional[ModelVLM] = PrivateAttr(default=None)
-    #_image_parser: Optional[ImageParser] = PrivateAttr(default=None)
+    _image_parser: Optional[ImageParserPrompt1] = PrivateAttr(default=None)
+    _series_prompt_builder: Optional[PromptCreationSeriesDataPrompt] = PrivateAttr(default=None)
 
     def model_post_init(self, __context: Any) -> None:
         if self.vlm_model_parameters_path is None:
@@ -391,6 +392,8 @@ class ImageExtractor(BaseModel):
         self._vlm_model.load_model_parameters(vlm_param_path)
         self._vlm_model.vllm_load_model()
         #self._image_parser = ImageParser()
+        self._image_parser = ImageParserPrompt1()
+        self._series_prompt_builder = PromptCreationSeriesDataPrompt()
 
     def extract_image_info(self, image_path: str, scale: float = 1.0):
         image_name = os.path.basename(image_path)
@@ -409,3 +412,50 @@ class ImageExtractor(BaseModel):
         #parsed_output = self._image_parser.get_data_dict()
         #print(parsed_output)
         return {image_name: output}
+
+    def extract_series_data(self, image_path: str, scale: float = 1.0) -> Dict[str, Any]:
+        image_name = os.path.basename(image_path)
+
+        # Stage 1: axes, ticks, series names
+        stage1_result = self.extract_image_info(image_path, scale=scale)
+        raw_output = stage1_result[image_name]
+
+        self._image_parser.parse(raw_output)
+        parsed = self._image_parser.get_data_dict()
+
+        x_axis = parsed.get("x_axis")
+        x_ticks = parsed.get("x_ticks", [])
+        y_axis = parsed.get("y_axis")
+        y_ticks = parsed.get("y_ticks", [])
+        series_names = parsed.get("series", [])
+
+        series_results = {}
+        for series_name in series_names:
+            prompt_dict = self._series_prompt_builder.build_series_prompt_json(
+                x_axis=x_axis,
+                x_ticks=x_ticks,
+                y_axis=y_axis,
+                y_ticks=y_ticks,
+                series_name=series_name,
+            )
+            series_formatter = PromptFormatter(**prompt_dict)
+            series_formatter.model_post_init(self.prompt_template_path)
+            prompt = series_formatter.format_prompt("<image>")
+
+            print(f"\n[ImageExtractor.extract_series_data] PROMPT FOR SERIES '{series_name}'")
+            print(prompt)
+
+            output = self._vlm_model.run_image_single_prompt_rescale(
+                prompt, image_path, scale=scale
+            )
+            print(f"\n  [ImageExtractor.extract_series_data] VLM RAW RESPONSE for '{series_name}'")
+            print(output)
+
+            series_results[series_name] = output
+
+        return {
+            "image": image_name,
+            "axes": {"x_axis": x_axis, "x_ticks": x_ticks, "y_axis": y_axis, "y_ticks": y_ticks},
+            "series_names": series_names,
+            "series_data": series_results,
+        }

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, List
 from pydantic import BaseModel
 
 
@@ -652,6 +652,11 @@ SERIES:
             "Series names must match the legend or labels exactly.",
             "If a value cannot be read, write UNKNOWN.",
             "Do not infer or invent missing information.",
+            "Normalize numbers using the numerical convention shown by the graph.", 
+            "If a comma is used as a thousands separator, remove it: 1,100 → 1100, 2,500 → 2500, 10,000 → 10000.", 
+            "If a comma is used as a decimal separator, preserve its numerical meaning: 1,5 → 1.5.", 
+            "Determine whether a comma represents thousands or decimals from the formatting and progression of the other tick labels on the same axis.", 
+            "Do not interpret a thousands separator as a decimal separator.", "Do not interpret a decimal separator as a thousands separator."
         ]
 
         return {
@@ -666,5 +671,65 @@ SERIES:
             "conclusion": (
                 "Return ONLY the requested structure. "
                 "Do not include explanations, markdown, headers, or comments."
+            ),
+        }
+
+
+class PromptCreationSeriesDataPrompt(BaseModel):
+    def build_series_prompt_json(
+        self,
+        x_axis: str,
+        x_ticks: List[str],
+        y_axis: str,
+        y_ticks: List[str],
+        series_name: str,
+    ) -> dict:
+
+        return {
+            "expertise": (
+                "You are an expert in extracting precise numerical data "
+                "from scientific graphs."
+            ),
+
+            "initialization": "",
+
+            "objective": (
+                f'Extract all visible data points belonging ONLY to the series '
+                f'"{series_name}" from the graph. '
+                f'The x-axis is "{x_axis}" with visible ticks {x_ticks}. '
+                f'The y-axis is "{y_axis}" with visible ticks {y_ticks}.'
+            ),
+
+            "definitions": {
+                "data_point": "A pair consisting of one x-value and its corresponding y-value.",
+                "unknown": "Use N/A when a coordinate cannot be determined confidently.",
+            },
+
+            "answer_schema": {
+                "instructions": [
+                    "Identify every visible data point belonging to the requested series.",
+                    "Read points from left to right along the x-axis.",
+                    "Determine each x-value using the nearest visible x-axis ticks.",
+                    "Determine each y-value using the nearest visible y-axis ticks.",
+                    "Interpolate between ticks when the point lies between them.",
+                    "Do not infer points that are not visibly present.",
+                    "Do not use information from other series.",
+                    "Preserve the numerical precision implied by the axis tick labels.",
+                    "If a coordinate cannot be determined confidently, use N/A for that coordinate.",
+                    "Ensure every x-value has exactly one corresponding y-value.",
+                    "Return only valid JSON.",
+                    "Do not include reasoning, explanations, markdown, or extra keys.",
+                ],
+
+                "Format": (
+                    f'{{"{series_name}": '
+                    f'{{"{x_axis}": [x1, x2, ...], '
+                    f'"{y_axis}": [y1, y2, ...]}}}}'
+                ),
+            },
+
+            "conclusion": (
+                "Return only the JSON object. "
+                "Do not include explanations or additional text."
             ),
         }
