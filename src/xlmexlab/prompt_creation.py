@@ -698,7 +698,7 @@ class PromptCreationSeriesDataPrompt(BaseModel):
                 f'"{series_name}" from the graph. '
                 f'The x-axis is "{x_axis}" with visible ticks {x_ticks}. '
                 f'The y-axis is "{y_axis}" with visible ticks {y_ticks}.'
-            ),
+            )
 
         schema = """SERIES: <series name>
 POINTS:
