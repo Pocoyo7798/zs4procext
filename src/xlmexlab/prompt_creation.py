@@ -675,7 +675,9 @@ SERIES:
         }
 
 
+
 class PromptCreationSeriesDataPrompt(BaseModel):
+
     def build_series_prompt_json(
         self,
         x_axis: str,
@@ -684,52 +686,55 @@ class PromptCreationSeriesDataPrompt(BaseModel):
         y_ticks: List[str],
         series_name: str,
     ) -> dict:
+        expertise = (
+            "You are an expert assistant for extracting structured numeric "
+            "data from scientific graphs."
+        )
 
-        return {
-            "expertise": (
-                "You are an expert in extracting precise numerical data "
-                "from scientific graphs."
-            ),
+        initialization = ""
 
-            "initialization": "",
-
-            "objective": (
+        objective = (
                 f'Extract all visible data points belonging ONLY to the series '
                 f'"{series_name}" from the graph. '
                 f'The x-axis is "{x_axis}" with visible ticks {x_ticks}. '
                 f'The y-axis is "{y_axis}" with visible ticks {y_ticks}.'
             ),
 
+        schema = """SERIES: <series name>
+POINTS:
+- (x1, y1)
+- (x2, y2)
+- (x3, y3)"""
+
+        rules = [
+                "Identify every visible data point belonging to the requested series.",
+                "Read points from left to right along the x-axis.",
+                "Determine each x-value using the nearest visible x-axis ticks.",
+                "Determine each y-value using the nearest visible y-axis ticks.",
+                "Interpolate between ticks when the point lies between them.",
+                "Do not infer points that are not visibly present.",
+                "Do not use information from other series.",
+                "Preserve the numerical precision implied by the axis tick labels.",
+                "If a coordinate cannot be determined confidently, use N/A for that coordinate.",
+                "Ensure every x-value has exactly one corresponding y-value.",
+                "Return only valid JSON.",
+                "Do not include reasoning, explanations, markdown, or extra keys.",
+        ]
+
+        return {
+            "expertise": expertise,
+            "initialization": initialization,
             "definitions": {
                 "data_point": "A pair consisting of one x-value and its corresponding y-value.",
                 "unknown": "Use N/A when a coordinate cannot be determined confidently.",
             },
-
+            "objective": objective,
             "answer_schema": {
-                "instructions": [
-                    "Identify every visible data point belonging to the requested series.",
-                    "Read points from left to right along the x-axis.",
-                    "Determine each x-value using the nearest visible x-axis ticks.",
-                    "Determine each y-value using the nearest visible y-axis ticks.",
-                    "Interpolate between ticks when the point lies between them.",
-                    "Do not infer points that are not visibly present.",
-                    "Do not use information from other series.",
-                    "Preserve the numerical precision implied by the axis tick labels.",
-                    "If a coordinate cannot be determined confidently, use N/A for that coordinate.",
-                    "Ensure every x-value has exactly one corresponding y-value.",
-                    "Return only valid JSON.",
-                    "Do not include reasoning, explanations, markdown, or extra keys.",
-                ],
-
-                "Format": (
-                    f'{{"{series_name}": '
-                    f'{{"{x_axis}": [x1, x2, ...], '
-                    f'"{y_axis}": [y1, y2, ...]}}}}'
-                ),
+                "Format": schema,
+                "Rules": "\n".join(f"- {r}" for r in rules),
             },
-
             "conclusion": (
-                "Return only the JSON object. "
-                "Do not include explanations or additional text."
+                "Return ONLY the requested structure. "
+                "Do not include explanations, markdown, headers, or comments."
             ),
-        }
+            }
