@@ -13,7 +13,7 @@ from xlmexlab.prompt import TEMPLATE_REGISTRY
 @click.command()
 @click.argument("image_folder", type=str)
 @click.argument("images_chosen_folder", type=str)
-#@click.argument("output_file_path", type=str)
+@click.argument("output_file_path", type=str)
 @click.option(
     "--prompt_template_path",
     default=None,
@@ -43,7 +43,7 @@ from xlmexlab.prompt import TEMPLATE_REGISTRY
 def image2datanano(
     image_folder: str,
     images_chosen_folder: str,
-    #output_file_path: str,
+    output_file_path: str,
     prompt_template_path: Optional[str],
     prompt_schema_path: Optional[str],
     vlm_model_name: str,
@@ -90,7 +90,9 @@ def image2datanano(
             except Exception as e:
                 print(f"Error processing file {file}: {e}")
 
-
+    with open(output_file_path, "w", encoding="utf-8") as f:
+        json.dump(aggregated_data, f, indent=2, ensure_ascii=False)
+    print(f"Saved results to {output_file_path}")
     elapsed_time = (time.time() - start_time) / 60
     print(f"Process completed in {elapsed_time} minutes")
 
