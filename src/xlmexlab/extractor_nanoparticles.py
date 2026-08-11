@@ -15,7 +15,7 @@ from xlmexlab import parser
 from xlmexlab.llm import ModelLLM, ModelVLM
 from xlmexlab.prompt import PromptFormatter
 from xlmexlab.prompt_creation import PromptCreation, PromptCreationImageKeys, PromptCreationIsGraphPrompt, PromptCreationSchedule, PromptCreationLipidComposition, PromptCreationLoadStatus, PromptCreationLipidRatioUnits, PromptCreationFormulationRegistry, PromptCreationCargoCategoryCheck, PromptCreationLipidRatio, PromptCreationSeriesDataPrompt
-from xlmexlab.parser_nanoparticles import ParserNanoparticle, ImageParserKeys, SeriesPointsParser
+from xlmexlab.parser_nanoparticles import ParserNanoparticle, ImageParserKeys, SeriesPointsParser, RelativePointsParser, RelativePointsInterpolator
 from xlmexlab.nanoparticle_paragraph import NORMALIZATION_MAP, GENERIC_TERMS
 from xlmexlab.nanoparticle_paragraph import CARGO_DB, lookup_cargo_category
 
@@ -478,10 +478,11 @@ class ImageExtractor(BaseModel):
             print(f"\n  [ImageExtractor.extract_series_data] VLM RAW RESPONSE for '{series_name}'")
             print(output)
 
-            points = SeriesPointsParser.parse_points(output)
-            result[series_name] = points
+            raw_points = RelativePointsParser.parse_relative_points(output)
+            final_points = [
+                RelativePointsInterpolator.interpolate_point(p) for p in raw_points
+            ]
 
-            print(f"\n  [ImageExtractor.extract_series_data] "
-                  f"Parsed result for '{image_name}': {result}")
+            result[series_name] = final_points
 
         return {image_name: result}

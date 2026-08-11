@@ -735,42 +735,39 @@ class PromptCreationSeriesDataPrompt(BaseModel):
         series_line: str
     ) -> dict:
         expertise = (
-            "You are an expert in extracting data points from scientific graphs. "
-            "Your task is to visually locate plotted data points in an image."
+            "You are an expert in precisely locating data points on scientific graphs using their axis tick marks as reference points."
         )
 
         initialization = ""
 
-        objective = (
-            f'Extract ONLY the visible data points belonging to the series '
-            f'"{series_name}". '
-            f'The target series is identified by: '
-            f'color={series_color}, marker={series_marker}, '
-            f'line style={series_line}. '
-            f'Use these visual properties to distinguish it from all other series.'
+        objective = objective = (
+            f'Locate all visible data points belonging ONLY to the serie "{series_name}". '
+            f'This serie is visually identified as: color={series_color}, '
+            f'marker={series_marker}, line style={series_line}. '
+            f'Focus ONLY on this serie. '
+            f'The x-axis is "{x_axis}" with visible ticks {x_ticks}. '
+            f'The y-axis is "{y_axis}" with visible ticks {y_ticks}.'
+            f'For each point, report which two consecutive ticks it falls '
+            f'between (on the x-axis and on the y-axis), and how far between '
+            f'them it is, as a fraction from 0.0 (exactly at the earlier tick) '
+            f'to 1.0 (exactly at the later tick). If the point falls exactly '
+            f'on a tick, use that tick as both x_tick_before and x_tick_after '
+            f'(or y_tick_before/y_tick_after) with fraction 0.0.'
         )
 
-        schema = """SERIES: <series name>
-        POINTS:
-        - (x_pixel, y_pixel)
-        - (x_pixel, y_pixel)
-        - (x_pixel, y_pixel)"""
+        schema = """POINTS:
+- x_tick_before=<tick>, x_tick_after=<tick>, x_fraction=<0.0-1.0>, y_tick_before=<tick>, y_tick_after=<tick>, y_fraction=<0.0-1.0>
+- x_tick_before=<tick>, x_tick_after=<tick>, x_fraction=<0.0-1.0>, y_tick_before=<tick>, y_tick_after=<tick>, y_fraction=<0.0-1.0>"""
 
         rules = [
-            "Identify the requested series using its color, marker, and line style.",
-            "Extract ONLY points belonging to the requested series.",
-            "Return the center pixel coordinate of every visible marker.",
-            "Do not extract points from other series.",
-            "Do not invent points.",
-            "Do not create points along a line when no marker is visible.",
-            "Return points from left to right.",
-            "Use integer pixel coordinates.",
-            "The image coordinate origin (0, 0) is at the top-left corner.",
-            "Pixel x increases from left to right.",
-            "Pixel y increases from top to bottom.",
-            "If a marker cannot be localized reliably, omit it.",
-            "Return ONLY the requested structure.",
-            "Do not provide reasoning or explanations.",
+            "Identify every visible data point belonging to the requested series ONLY.",
+            "Read points from left to right along the x-axis.",
+            "Always report the two nearest visible ticks surrounding each point, in the exact tick label text as given.",
+            "The fraction must be a decimal between 0.0 and 1.0 representing the visual position between the two ticks.",
+            "If the point lies exactly on a tick, set both before/after ticks to that tick and fraction to 0.0.",
+            "Do not attempt to calculate or state the underlying data value — only report ticks and fractions.",
+            "If a point cannot be confidently located, use N/A for all its fields.",
+            "Return points ONLY in the format shown, one point per line prefixed with '-'.",
         ]
 
         return {

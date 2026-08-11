@@ -993,3 +993,63 @@ class SeriesPointsParser(BaseModel):
             return float(value)
         except ValueError:
             return value 
+
+class RelativePointsParser(BaseModel):
+
+    @staticmethod
+    def parse_relative_points(raw_output: str) -> List[Dict[str, str]]:
+        points = []
+        pattern = re.compile(
+            r"x_tick_before=\s*([^,]+?)\s*,\s*"
+            r"x_tick_after=\s*([^,]+?)\s*,\s*"
+            r"x_fraction=\s*([^,]+?)\s*,\s*"
+            r"y_tick_before=\s*([^,]+?)\s*,\s*"
+            r"y_tick_after=\s*([^,]+?)\s*,\s*"
+            r"y_fraction=\s*([^\n]+?)\s*$",
+            re.MULTILINE,
+        )
+        for match in pattern.finditer(raw_output):
+            points.append({
+                "x_tick_before": match.group(1).strip(),
+                "x_tick_after": match.group(2).strip(),
+                "x_fraction": match.group(3).strip(),
+                "y_tick_before": match.group(4).strip(),
+                "y_tick_after": match.group(5).strip(),
+                "y_fraction": match.group(6).strip(),
+            })
+        return points
+
+class RelativePointsInterpolator(BaseModel):
+
+    @staticmethod
+    def interpolate_point(raw_point: Dict[str, str]) -> List[Any]:
+        x = RelativePointsInterpolator._interpolate_axis(
+            raw_point["x_tick_before"], raw_point["x_tick_after"], raw_point["x_fraction"]
+        )
+        y = RelativePointsInterpolator._interpolate_axis(
+            raw_point["y_tick_before"], raw_point["y_tick_after"], raw_point["y_fraction"]
+        )
+        return [x, y]
+
+    @staticmethod
+    def _interpolate_axis(tick_before: str, tick_after: str, fraction_raw: str) -> Any:
+        # se algum campo for N/A, não dá para calcular
+        if "N/A" in (tick_before, tick_after, fraction_raw):
+            return None
+
+        tick_before_val = RelativePointsInterpolator._to_float(tick_before)
+        tick_after_val = RelativePointsInterpolator._to_float(tick_after)
+        fraction_val = RelativePointsInterpolator._to_float(fraction_raw)
+
+        # se as ticks não forem numéricas (eixo categórico), não há como interpolar
+        if tick_before_val is None or tick_after_val is None or fraction_val is None:
+            return tick_before if tick_before == tick_after else f"{tick_before}->{tick_after}"
+
+        return tick_before_val + fraction_val * (tick_after_val - tick_before_val)
+
+    @staticmethod
+    def _to_float(value: str) -> Optional[float]:
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
