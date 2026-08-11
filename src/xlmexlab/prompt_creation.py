@@ -741,33 +741,30 @@ class PromptCreationSeriesDataPrompt(BaseModel):
         initialization = ""
 
         objective = objective = (
-            f'Locate all visible data points belonging ONLY to the serie "{series_name}". '
-            f'This serie is visually identified as: color={series_color}, '
+            f'Extract all visible data points belonging ONLY to the series "{series_name}". '
+            f'This series is visually identified in the legend as: color={series_color}, '
             f'marker={series_marker}, line style={series_line}. '
-            f'Focus ONLY on this serie. '
+            f'Use this visual identification focus ONLY on this serie.'
             f'The x-axis is "{x_axis}" with visible ticks {x_ticks}. '
             f'The y-axis is "{y_axis}" with visible ticks {y_ticks}.'
-            f'For each point, report which two consecutive ticks it falls '
-            f'between (on the x-axis and on the y-axis), and how far between '
-            f'them it is, as a fraction from 0.0 (exactly at the earlier tick) '
-            f'to 1.0 (exactly at the later tick). If the point falls exactly '
-            f'on a tick, use that tick as both x_tick_before and x_tick_after '
-            f'(or y_tick_before/y_tick_after) with fraction 0.0.'
         )
 
-        schema = """POINTS:
-- x_tick_before=<tick>, x_tick_after=<tick>, x_fraction=<0.0-1.0>, y_tick_before=<tick>, y_tick_after=<tick>, y_fraction=<0.0-1.0>
-- x_tick_before=<tick>, x_tick_after=<tick>, x_fraction=<0.0-1.0>, y_tick_before=<tick>, y_tick_after=<tick>, y_fraction=<0.0-1.0>"""
+        schema = """SERIES: <series name>
+                POINTS:
+                - (x1, y1)
+                - (x2, y2)
+                - (x3, y3)"""
 
         rules = [
-            "Identify every visible data point belonging to the requested series ONLY.",
-            "Read points from left to right along the x-axis.",
-            "Always report the two nearest visible ticks surrounding each point, in the exact tick label text as given.",
-            "The fraction must be a decimal between 0.0 and 1.0 representing the visual position between the two ticks.",
-            "If the point lies exactly on a tick, set both before/after ticks to that tick and fraction to 0.0.",
-            "Do not attempt to calculate or state the underlying data value — only report ticks and fractions.",
-            "If a point cannot be confidently located, use N/A for all its fields.",
-            "Return points ONLY in the format shown, one point per line prefixed with '-'.",
+            "1. Start by focusing only on the requested series.",
+            "2. Read points from left to right along the x-axis.",
+            "3. Determine each x-value using the nearest visible x-axis ticks.",
+            "4. Determine each y-value using the nearest visible y-axis ticks.",
+            "5. When the point lies between ticks, estimate values with maximum PRECISION.",
+            "6. Do not infer points that are not visibly present.",
+            "7. If a coordinate cannot be determined confidently, use N/A for that coordinate.",
+            "8. Ensure every x-value has exactly one corresponding y-value.",
+            "9. Return points ONLY in the format shown: one '(x, y)' pair per line, prefixed with '-'.",
         ]
 
         return {
@@ -784,6 +781,6 @@ class PromptCreationSeriesDataPrompt(BaseModel):
             },
             "conclusion": (
                 "Return ONLY the requested structure. "
-                "Do not include explanations, markdown, headers, or comments."
+                "Do not include reasoning, explanations, markdown, or extra text outside the POINTS list."
             ),
             }
