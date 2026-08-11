@@ -431,7 +431,7 @@ class ImageExtractor(BaseModel):
     def extract_series_data(self, image_path: str, scale: float = 1.0) -> Dict[str, Any]:
         image_name = os.path.basename(image_path)
 
-        # Stage 1: axes, ticks, series names
+        # Stage 1: axes, ticks, series (name + visual identity)
         stage1_result = self.extract_image_info(image_path, scale=scale)
         raw_output = stage1_result[image_name]
 
@@ -442,20 +442,28 @@ class ImageExtractor(BaseModel):
         x_ticks = parsed.get("x_ticks", [])
         y_axis = parsed.get("y_axis")
         y_ticks = parsed.get("y_ticks", [])
-        series_names = parsed.get("series", [])
+        series_list = parsed.get("series", [])  # lista de dicts: {"name":..., "color":..., "marker":..., "line":...}
 
         result = {
             "x_axis": x_axis,
             "y_axis": y_axis,
         }
 
-        for series_name in series_names:
+        for series_info in series_list:
+            series_name = series_info.get("name", "UNKNOWN")
+            series_color = series_info.get("color", "UNKNOWN")
+            series_marker = series_info.get("marker", "UNKNOWN")
+            series_line = series_info.get("line", "UNKNOWN")
+
             prompt_dict = self._series_prompt_builder.build_series_prompt_json(
                 x_axis=x_axis,
                 x_ticks=x_ticks,
                 y_axis=y_axis,
                 y_ticks=y_ticks,
                 series_name=series_name,
+                series_color=series_color,
+                series_marker=series_marker,
+                series_line=series_line,
             )
             series_formatter = PromptFormatter(**prompt_dict)
             series_formatter.model_post_init(self.prompt_template_path)
@@ -469,11 +477,11 @@ class ImageExtractor(BaseModel):
             )
             print(f"\n  [ImageExtractor.extract_series_data] VLM RAW RESPONSE for '{series_name}'")
             print(output)
-            
+
             points = SeriesPointsParser.parse_points(output)
             result[series_name] = points
 
             print(f"\n  [ImageExtractor.extract_series_data] "
-            f"Parsed result for '{image_name}': {result}")
+                f"Parsed result for '{image_name}': {result}")
 
         return {image_name: result}
