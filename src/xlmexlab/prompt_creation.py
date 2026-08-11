@@ -735,40 +735,42 @@ class PromptCreationSeriesDataPrompt(BaseModel):
         series_line: str
     ) -> dict:
         expertise = (
-            "You are an expert assistant for extracting structured numeric "
-            "data from scientific graphs."
+            "You are an expert in extracting data points from scientific graphs. "
+            "Your task is to visually locate plotted data points in an image."
         )
 
         initialization = ""
 
-        objective = objective = (
-            f'Extract all visible data points belonging ONLY to the series "{series_name}". '
-            f'This series is visually identified in the legend as: color={series_color}, '
-            f'marker={series_marker}, line style={series_line}. '
-            f'Use this visual identification to distinguish it from all other series in the image. '
-            f'The x-axis is "{x_axis}" with visible ticks {x_ticks}. '
-            f'The y-axis is "{y_axis}" with visible ticks {y_ticks}.'
+        objective = (
+            f'Extract ONLY the visible data points belonging to the series '
+            f'"{series_name}". '
+            f'The target series is identified by: '
+            f'color={series_color}, marker={series_marker}, '
+            f'line style={series_line}. '
+            f'Use these visual properties to distinguish it from all other series.'
         )
 
         schema = """SERIES: <series name>
-                POINTS:
-                - (x1, y1)
-                - (x2, y2)
-                - (x3, y3)"""
+        POINTS:
+        - (x_pixel, y_pixel)
+        - (x_pixel, y_pixel)
+        - (x_pixel, y_pixel)"""
 
         rules = [
-            "Identify every visible data point belonging to the requested series.",
-            "Read points from left to right along the x-axis.",
-            "Determine each x-value using the nearest visible x-axis ticks.",
-            "Determine each y-value using the nearest visible y-axis ticks.",
-            "Interpolate between ticks when the point lies between them.",
-            "Do not infer points that are not visibly present.",
-            "Do not use information from other series.",
-            "Preserve the numerical precision implied by the axis tick labels.",
-            "If a coordinate cannot be determined confidently, use N/A for that coordinate.",
-            "Ensure every x-value has exactly one corresponding y-value.",
-            "Return points ONLY in the format shown: one '(x, y)' pair per line, prefixed with '-'.",
-            "Do not include reasoning, explanations, markdown, or extra text outside the POINTS list.",
+            "Identify the requested series using its color, marker, and line style.",
+            "Extract ONLY points belonging to the requested series.",
+            "Return the center pixel coordinate of every visible marker.",
+            "Do not extract points from other series.",
+            "Do not invent points.",
+            "Do not create points along a line when no marker is visible.",
+            "Return points from left to right.",
+            "Use integer pixel coordinates.",
+            "The image coordinate origin (0, 0) is at the top-left corner.",
+            "Pixel x increases from left to right.",
+            "Pixel y increases from top to bottom.",
+            "If a marker cannot be localized reliably, omit it.",
+            "Return ONLY the requested structure.",
+            "Do not provide reasoning or explanations.",
         ]
 
         return {
