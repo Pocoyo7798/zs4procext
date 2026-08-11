@@ -686,15 +686,15 @@ Y_AXIS: <y-axis label>
 Y_TICKS: [tick1, tick2, ...]
 
 SERIES:
-- <series 1>
-- <series 2>
-- <series 3>"""
+- name: <series 1 name> | color: <color> | marker: <marker shape, or 'none' for bars> | line: <solid/dashed/dotted/none>
+- name: <series 2 name> | color: <color> | marker: <marker shape, or 'none' for bars> | line: <solid/dashed/dotted/none>"""
 
         rules = [
             "Copy all text exactly as shown.",
             "Preserve capitalization, symbols, and units.",
             "List all visible tick labels in order (left-to-right for x, bottom-to-top for y).",
             "Series names must match the legend or labels exactly.",
+            "For each series, identify its visual appearance exactly as shown in the legend: color, marker shape (circle, square, triangle, none, etc.), and line style (solid, dashed, dotted, none).",
             "If a value cannot be read, write UNKNOWN.",
             "Do not infer or invent missing information.",
             "Normalize numbers using the numerical convention shown by the graph.", 
@@ -730,6 +730,9 @@ class PromptCreationSeriesDataPrompt(BaseModel):
         y_axis: str,
         y_ticks: List[str],
         series_name: str,
+        series_color: str,
+        series_marker: str,
+        series_line: str
     ) -> dict:
         expertise = (
             "You are an expert assistant for extracting structured numeric "
@@ -738,12 +741,14 @@ class PromptCreationSeriesDataPrompt(BaseModel):
 
         initialization = ""
 
-        objective = (
-                f'Extract all visible data points belonging ONLY to the series '
-                f'"{series_name}" from the graph. '
-                f'The x-axis is "{x_axis}" with visible ticks {x_ticks}. '
-                f'The y-axis is "{y_axis}" with visible ticks {y_ticks}.'
-            )
+        objective = objective = (
+            f'Extract all visible data points belonging ONLY to the series "{series_name}". '
+            f'This series is visually identified in the legend as: color={series_color}, '
+            f'marker={series_marker}, line style={series_line}. '
+            f'Use this visual identification to distinguish it from all other series in the image. '
+            f'The x-axis is "{x_axis}" with visible ticks {x_ticks}. '
+            f'The y-axis is "{y_axis}" with visible ticks {y_ticks}.'
+        )
 
         schema = """SERIES: <series name>
                 POINTS:

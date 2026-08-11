@@ -916,20 +916,35 @@ class ImageParserKeys(BaseModel):
         match = re.search(rf"{key}:\s*(.+)", text)
         return match.group(1).strip() if match else None
 
+
     @staticmethod
-    def _extract_series(text: str) -> List[str]:
+    def _extract_series(text: str) -> List[Dict[str, str]]:
         match = re.search(r"SERIES:\s*(.+)", text, re.DOTALL)
         if not match:
             return []
+
         series = []
+
         for line in match.group(1).splitlines():
             line = line.strip()
-            if line.startswith("-"):
-                series.append(line.lstrip("-").strip())
-            elif line == "" and series:
-                break  # stop at first blank line once we've started collecting
+
+            if not line.startswith("-"):
+                if line == "" and series:
+                    break
+                continue
+
+            line = line.lstrip("-").strip()
+
+            parsed = {}
+            for p in line.split("|"):
+                if ":" in p:
+                    k, v = p.split(":", 1)
+                    parsed[k.strip().lower()] = v.strip()
+
+            series.append(parsed)
+
         return series
-    
+        
     @staticmethod
     def _extract_list(text: str, key: str) -> List[str]:
         match = re.search(rf"{key}:\s*\[(.*?)\]", text, re.DOTALL)
