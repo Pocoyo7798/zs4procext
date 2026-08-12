@@ -1415,8 +1415,8 @@ particl(?:e|es)\s+size
 
 FORMULATION_CODE_PATTERN = re.compile(
     r"\b("
-    r"[A-Za-z0-9]{2,6}[-_@][A-Za-z0-9]{1,8}(?:[-_][A-Za-z0-9]{1,4})?"   # TSL-LUP, Lip-DOX, NP@PTX01
-    r"|[A-Z][a-z]{1,4}[-_]?\d{1,3}"                                 # F1, Lip2, Form12
+    r"[A-Za-z0-9]{2,6}\s*[-*@]\s*[A-Za-z0-9]{1,8}(?:\s*[-*]\s*[A-Za-z0-9]{1,4})?"
+    r"|[A-Z][a-z]{1,4}\s*[-_]?\s*\d{1,3}"
     r")\b"
 )
 
@@ -2098,16 +2098,25 @@ class NanoparticleExtractor(BaseModel):
     def harvest_formulation_candidates(self, text: str) -> list[str]:
         """Cheap, high-recall scan for possible formulation codes/abbreviations."""
         found = FORMULATION_CODE_PATTERN.findall(text)
+
         candidates = []
         seen = set()
+
         for tok in found:
-            key = tok.upper()
+            # Remove spaces inside the formulation code
+            cleaned_tok = tok.replace(" ", "")
+
+            key = cleaned_tok.upper()
+
             if key in FORMULATION_CODE_STOPLIST:
                 continue
+
             if key in seen:
                 continue
+
             seen.add(key)
-            candidates.append(tok)
+            candidates.append(cleaned_tok)
+
         return candidates
 
 

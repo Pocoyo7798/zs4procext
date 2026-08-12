@@ -25,11 +25,11 @@ PARAM_META: dict[str, dict] = {
     "size_nm": {
         "description": "Nanoparticle diameter or size explicitly measured in the study",
         "unit_hint": "nm",
-        "specific_format": "size_nm | <value> | <unit> | <drug_name> | <size_type>",
+        "specific_format": "size_nm | <value> | <unit> | <formulation> | <size_type>",
         "field_rules": {
             "<value>": "Numeric size exactly as reported (include ranges , intervals and deviations).",
             "<unit>": "Unit exactly as written in text.",
-            "<drug_name>": (
+            "<formulation>": (
                 "Identify the formulation associated to the reported size."
                 "If no formulation name is specified, write 'not extractable'."
             ),
@@ -53,10 +53,10 @@ PARAM_META: dict[str, dict] = {
     "bioconjugation_nature": {
         "description": "Bioconjugation nature",
         "unit_hint": "-",
-        "specific_format": "bioconjugation_nature | <nature> | <drug_name>",
+        "specific_format": "bioconjugation_nature | <nature> | <formulation>",
         "field_rules": {
             "<nature>": "If its refered if the bioconjagation nature is elestrostatic or covalent. ",
-            "<drug_name>": (
+            "<forumulation>": (
                 "Identify the formulation associated to the reported nature."
                 "If no formulation name is specified, write 'not extractable'."
             ),
@@ -100,7 +100,7 @@ PARAM_META: dict[str, dict] = {
         "unit_hint": "%",
         "specific_format": "encapsulation_efficiency_pct | <value> | <unit> | <drug_name>",
         "field_rules": {
-            "<value>": "Numeric EE (Encapsulation Efficiency) exactly as reported (include the standard deviation if available).",
+            "<value>": "ONLY the numeric EE (Encapsulation Efficiency) exactly as reported (include the standard deviation if available).",
             "<unit>": "Percentage or unit as written.",
             "<drug_name>": "Drug or formulation if explicitly mentioned.",
         },
@@ -148,11 +148,11 @@ PARAM_META: dict[str, dict] = {
     "dose_group": {
         "description": "Administered treatment doses from the AUTHORS' OWN experiment only",
         "unit_hint": "as reported",
-        "specific_format": "dose_group | <value> | <unit> | <drug_name>",
+        "specific_format": "dose_group | <value> | <unit> | <formulation>",
         "field_rules": {
             "<value>": "Numeric only, exactly as reported. Do NOT include units or route.",
             "<unit>": "Dose unit exactly as written. Valid formats: mg/kg, μg/kg, mg/animal, μg, mg, g, etc.",
-            "<drug_name>": "Drug actually administered in this study.",
+            "<formulation>": "Formulation actually administered in this study.",
         },
         "exclude": [
             "theoretical doses",
@@ -162,11 +162,11 @@ PARAM_META: dict[str, dict] = {
     "tumor_size_or_volume": {
         "description": "Tumor size or volume",
         "unit_hint": "mm, cm, mm³, mL or as reported",
-        "specific_format": "tumor_ size_or_volume | <value> | <unit> | <drug_name> | <state> | <comparasion>",
+        "specific_format": "tumor_ size_or_volume | <value> | <unit> | <formulation> | <state> | <comparasion>",
         "field_rules": {
             "<value>": "Numeric reduction exactly as reported.",
             "<unit>": "mm, cm, mm³, mL or as reported.",
-            "<drug_name>": "Drug/formulation or control, if not stated left it 'unknown'.",
+            "<formulation>": "Drug/formulation or control, if not stated left it 'unknown'.",
             "<state>": "Time associated to the volume or if its control, if not stated left it 'unknown'.",
             "<comparison>": "One of: 'absolute', 'increase', 'decrease'. Use 'increase' or 'decrease' when the value represents a relative change. Use 'absolute' when the reported value is the measured tumor size or volume.",
         },
@@ -178,11 +178,11 @@ PARAM_META: dict[str, dict] = {
     "tumor_reduction": {
         "description": "Tumor size reduction/ regression",
         "unit_hint": "%",
-        "specific_format": "tumor_reduction | <value> | <unit> | <drug_name>",
+        "specific_format": "tumor_reduction | <value> | <unit> | <formulation>",
         "field_rules": {
             "<value>": "Numeric reduction exactly as reported.",
             "<unit>": "Percentage.",
-            "<drug_name>": "Drug or formulation associated to the reduction if explicitly written, if not just left it 'unknown'.",
+            "<formulation>": "Drug or formulation associated to the reduction if explicitly written, if not just left it 'unknown'.",
         },
         "exclude": [
             "predicted inhibition",
@@ -405,7 +405,9 @@ class PromptCreationLipidComposition(BaseModel):
             "- If none remain, return exactly:",
             "none",
             "Phase 3:"
-            "Return ONLY the missing lipid names (or 'none'). No explanations, headers, or comments.",
+            "Return ONLY the missing lipid names (or 'none'). No explanations, headers, or comments."
+            "Phase 4:"
+            "Re-check if all components in the list are lipids, and return one lipid per line.",
         ])
 
         return {

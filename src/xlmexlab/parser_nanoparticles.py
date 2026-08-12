@@ -213,7 +213,7 @@ PARAM_META = {
 
     "size_nm": {
         "fields": [
-            "parameter_name", "value", "unit", "drug_name", "size_type", 
+            "parameter_name", "value", "unit", "formulation", "size_type", 
         ],
     },
 
@@ -225,7 +225,7 @@ PARAM_META = {
 
     "bioconjugation_nature": {
         "fields": [
-            "bioconjugation_nature", "nature", "drug_name"
+            "bioconjugation_nature", "nature", "formulation"
         ],
     },
 
@@ -237,7 +237,7 @@ PARAM_META = {
 
     "encapsulation_efficiency_pct": {
         "fields": [
-            "parameter_name", "value", "unit", "drug_name"
+            "parameter_name", "value", "unit", "formulation"
         ],
     },
 
@@ -261,19 +261,19 @@ PARAM_META = {
 
     "dose_group": {
         "fields": [
-            "parameter_name", "value", "unit", "drug_name", "schedule",
+            "parameter_name", "value", "unit", "formulation", "schedule",
         ],
     },
 
     "tumor_reduction": {
         "fields": [
-            "parameter_name", "value", "unit", "drug_name",
+            "parameter_name", "value", "unit", "formulation",
         ],
     },
 
     "tumor_size_or_volume": {
         "fields": [
-            "parameter_name", "value", "unit", "drug_name", "state", "comparasion",
+            "parameter_name", "value", "unit", "formulation", "state", "comparasion",
         ],
     },
 
