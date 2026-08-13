@@ -14,35 +14,31 @@ from xlmexlab.prompt import TEMPLATE_REGISTRY
 @click.argument("image_folder", type=str)
 @click.argument("images_chosen_folder", type=str)
 @click.argument("output_file_path", type=str)
-@click.option("--prompt_template_path", default=None, help="Path to the file containing the structure of the prompt")
-@click.option("--prompt_schema_path", default=None, help="Path to the file containing the schema of the prompt")
-@click.option("--vlm_model_name", default=None, help="Name of the VLM used to process the figures")
-@click.option("--vlm_model_parameters_path", default=None, help="Parameters of the VLM (vllm inference only).")
-@click.option("--scale", default=1.0, type=float, help="Scale factor to reduce image resolution (e.g., 0.5 for 50%).")
 @click.option(
-    "--use_verification_model",
-    is_flag=True,
-    default=False,
-    help="Use a separate VLM checkpoint to verify and correct extracted series points. "
-         "If not set, the same model as the main extraction is reused for verification.",
+    "--prompt_template_path",
+    default=None,
+    help="Path to the file containing the structure of the prompt",
 )
 @click.option(
-    "--verification_vlm_model_name",
+    "--prompt_schema_path",
     default=None,
-    help="Name/path of the VLM checkpoint used for verification/correction. "
-         "Only used if --use_verification_model is set. Defaults to --vlm_model_name if omitted.",
+    help="Path to the file containing the schema of the prompt",
 )
 @click.option(
-    "--verification_prompt_template_path",
+    "--vlm_model_name",
     default=None,
-    help="Prompt template path for the verification step. "
-         "Defaults to --prompt_template_path if omitted.",
+    help="Name of the VLM used to process the figures",
 )
 @click.option(
-    "--verification_vlm_model_parameters_path",
+    "--vlm_model_parameters_path",
     default=None,
-    help="Model parameters path for the verification VLM (vllm inference only). "
-         "Defaults to --vlm_model_parameters_path if omitted.",
+    help="Parameters of the VLM used to process the figures, (only in case of vllm inference).",
+)
+@click.option(
+    "--scale",
+    default=1.0,
+    type=float,
+    help="Scale factor to reduce image resolution (e.g., 0.5 for 50%).",
 )
 def image2datanano(
     image_folder: str,
@@ -53,10 +49,6 @@ def image2datanano(
     vlm_model_name: str,
     vlm_model_parameters_path: Optional[str],
     scale: float,
-    use_verification_model: bool,
-    verification_vlm_model_name: Optional[str],
-    verification_prompt_template_path: Optional[str],
-    verification_vlm_model_parameters_path: Optional[str],
 ):
     start_time = time.time()
 
@@ -67,22 +59,11 @@ def image2datanano(
         except KeyError:
             pass
 
-    if use_verification_model and verification_prompt_template_path is None and verification_vlm_model_name is not None:
-        try:
-            v_name = verification_vlm_model_name.split("/")[-1]
-            verification_prompt_template_path = TEMPLATE_REGISTRY[v_name]
-        except KeyError:
-            pass
-
     extractor = ImageExtractor(
         prompt_template_path=prompt_template_path,
         prompt_schema_path=prompt_schema_path,
         vlm_model_name=vlm_model_name,
         vlm_model_parameters_path=vlm_model_parameters_path,
-        use_verification_model=use_verification_model,
-        verification_vlm_model_name=verification_vlm_model_name,
-        verification_prompt_template_path=verification_prompt_template_path,
-        verification_vlm_model_parameters_path=verification_vlm_model_parameters_path,
     )
     os.makedirs(images_chosen_folder, exist_ok=True)
     file_list = os.listdir(image_folder)
@@ -104,7 +85,7 @@ def image2datanano(
                 print(f"Copying {file} to chosen folder")
 
                 extracted_data = extractor.extract_series_data(file_path, scale=scale)
-                aggregated_data[file] = extracted_data[file]
+                aggregated_data[file] = extracted_data
 
             except Exception as e:
                 print(f"Error processing file {file}: {e}")

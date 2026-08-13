@@ -362,20 +362,11 @@ class ImageExtractor(BaseModel):
     prompt_schema_path: Optional[str] = None
     vlm_model_name: Optional[str] = None
     vlm_model_parameters_path: Optional[str] = None
-
-    # --- novos campos para o modelo de VERIFICAÇÃO ---
-    use_verification_model: bool = False
-    verification_vlm_model_name: Optional[str] = None
-    verification_prompt_template_path: Optional[str] = None
-    verification_vlm_model_parameters_path: Optional[str] = None
-
     _prompt: Optional[PromptFormatter] = PrivateAttr(default=None)
     _vlm_model: Optional[ModelVLM] = PrivateAttr(default=None)
-    _verification_vlm_model: Optional[ModelVLM] = PrivateAttr(default=None)  # <-- novo
     _image_parser: Optional[ImageParserKeys] = PrivateAttr(default=None)
     _series_prompt_builder: Optional[PromptCreationSeriesDataPrompt] = PrivateAttr(default=None)
     _is_graph_prompt_builder: Optional[PromptCreationIsGraphPrompt] = PrivateAttr(default=None)
-    _verify_prompt_builder: Optional[PromptCreationVerifySeriesPrompt] = PrivateAttr(default=None)  # <-- novo
 
     def model_post_init(self, __context: Any) -> None:
         if self.vlm_model_parameters_path is None:
@@ -387,10 +378,11 @@ class ImageExtractor(BaseModel):
         else:
             vlm_param_path = self.vlm_model_parameters_path
 
-        # Build PromptFormatter (stage 1)
+        # Build PromptFormatter
         prompt_creation = PromptCreationImageKeys()
         prompt_dict = prompt_creation.build_extraction_prompt_json()
         self._prompt = PromptFormatter(**prompt_dict)
+
         self._prompt.model_post_init(self.prompt_template_path)
 
         if self.vlm_model_name is None:
@@ -400,28 +392,11 @@ class ImageExtractor(BaseModel):
 
         self._vlm_model.load_model_parameters(vlm_param_path)
         self._vlm_model.vllm_load_model()
-
+        #self._image_parser = ImageParser()
         self._is_graph_prompt_builder = PromptCreationIsGraphPrompt()
         self._image_parser = ImageParserKeys()
         self._series_prompt_builder = PromptCreationSeriesDataPrompt()
         self._verify_prompt_builder = PromptCreationVerifySeriesPrompt()
-
-        # --- carregamento condicional do modelo de VERIFICAÇÃO ---
-        if self.use_verification_model:
-            verification_model_name = self.verification_vlm_model_name or self.vlm_model_name
-            verification_param_path = self.verification_vlm_model_parameters_path or vlm_param_path
-
-            if self.verification_prompt_template_path is None:
-                self.verification_prompt_template_path = self.prompt_template_path
-
-            print(f"\n  [ImageExtractor] Loading SEPARATE model for verification: {verification_model_name}")
-            self._verification_vlm_model = ModelVLM(model_name=verification_model_name)
-            self._verification_vlm_model.load_model_parameters(verification_param_path)
-            self._verification_vlm_model.vllm_load_model()
-        else:
-            # reutiliza o mesmo modelo/template principal para verificar
-            self._verification_vlm_model = self._vlm_model
-            self.verification_prompt_template_path = self.prompt_template_path
 
     def is_graph(self, image_path: str, scale: float = 1.0) -> bool:
         prompt_dict = self._is_graph_prompt_builder.build_is_graph_prompt_json()
@@ -435,7 +410,7 @@ class ImageExtractor(BaseModel):
         print(f"\n  [ImageExtractor.is_graph] response: {output!r}")
 
         return output.strip().upper().startswith("YES")
-
+    
     def extract_image_info(self, image_path: str, scale: float = 1.0):
         image_name = os.path.basename(image_path)
 
@@ -449,12 +424,15 @@ class ImageExtractor(BaseModel):
         print(f"\n  [ImageExtractor.extract_image_info] VLM RAW RESPONSE")
         print(output)
 
+        #self._image_parser.parse(output)
+        #parsed_output = self._image_parser.get_data_dict()
+        #print(parsed_output)
         return {image_name: output}
 
     def extract_series_data(self, image_path: str, scale: float = 1.0) -> Dict[str, Any]:
         image_name = os.path.basename(image_path)
 
-        # Stage 1: axes, ticks, series (sempre com o modelo principal)
+        # Stage 1: axes, ticks, series (name + visual identity)
         stage1_result = self.extract_image_info(image_path, scale=scale)
         raw_output = stage1_result[image_name]
 
@@ -465,7 +443,7 @@ class ImageExtractor(BaseModel):
         x_ticks = parsed.get("x_ticks", [])
         y_axis = parsed.get("y_axis")
         y_ticks = parsed.get("y_ticks", [])
-        series_list = parsed.get("series", [])
+        series_list = parsed.get("series", [])  # lista de dicts: {"name":..., "color":..., "marker":..., "line":...}
 
         result = {
             "x_axis": x_axis,
@@ -478,7 +456,6 @@ class ImageExtractor(BaseModel):
             series_marker = series_info.get("marker", "UNKNOWN")
             series_line = series_info.get("line", "UNKNOWN")
 
-            # --- extração inicial, SEMPRE com o modelo principal ---
             prompt_dict = self._series_prompt_builder.build_series_prompt_json(
                 x_axis=x_axis,
                 x_ticks=x_ticks,
@@ -504,7 +481,7 @@ class ImageExtractor(BaseModel):
 
             points = SeriesPointsParser.parse_points(output)
 
-            # --- verificação/correção, com o modelo de verificação (separado ou o mesmo) ---
+            # --- passo de verificação ---
             verify_dict = self._verify_prompt_builder.build_verify_prompt_json(
                 series_name=series_name,
                 series_color=series_color,
@@ -513,22 +490,15 @@ class ImageExtractor(BaseModel):
                 extracted_points=points,
             )
             verify_formatter = PromptFormatter(**verify_dict)
-            verify_formatter.model_post_init(self.verification_prompt_template_path)
+            verify_formatter.model_post_init(self.prompt_template_path)
             verify_prompt = verify_formatter.format_prompt("<image>")
 
-            print(f"\n  [ImageExtractor.extract_series_data] VERIFY PROMPT FOR SERIES '{series_name}'")
-            print(verify_prompt)
-
-            verify_output = self._verification_vlm_model.run_image_single_prompt_rescale(
+            verify_output = self._vlm_model.run_image_single_prompt_rescale(
                 verify_prompt, image_path, scale=scale
             )
-            print(f"\n  [ImageExtractor.extract_series_data] VERIFY RESPONSE for '{series_name}'")
-            print(verify_output)
+            print(f"\n  [verify] '{series_name}' verification response:\n{verify_output}")
 
             corrected_points = SeriesPointsParser.parse_points(verify_output)
             result[series_name] = corrected_points
-
-            print(f"\n  [ImageExtractor.extract_series_data] "
-                  f"Parsed result for '{image_name}': {result}")
 
         return {image_name: result}
