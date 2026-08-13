@@ -14,7 +14,7 @@ from pydantic import BaseModel, PrivateAttr, validator
 from xlmexlab import parser
 from xlmexlab.llm import ModelLLM, ModelVLM
 from xlmexlab.prompt import PromptFormatter
-from xlmexlab.prompt_creation import PromptCreation, PromptCreationImageKeys, PromptCreationIsGraphPrompt, PromptCreationSchedule, PromptCreationLipidComposition, PromptCreationLoadStatus, PromptCreationLipidRatioUnits, PromptCreationFormulationRegistry, PromptCreationCargoCategoryCheck, PromptCreationLipidRatio, PromptCreationSeriesDataPrompt
+from xlmexlab.prompt_creation import PromptCreation, PromptCreationImageKeys, PromptCreationIsGraphPrompt, PromptCreationSchedule, PromptCreationLipidComposition, PromptCreationLoadStatus, PromptCreationLipidRatioUnits, PromptCreationFormulationRegistry, PromptCreationCargoCategoryCheck, PromptCreationLipidRatio, PromptCreationSeriesDataPrompt, PromptCreationVerifySeriesPrompt
 from xlmexlab.parser_nanoparticles import ParserNanoparticle, ImageParserKeys, SeriesPointsParser
 from xlmexlab.nanoparticle_paragraph import NORMALIZATION_MAP, GENERIC_TERMS
 from xlmexlab.nanoparticle_paragraph import CARGO_DB, lookup_cargo_category
