@@ -243,7 +243,7 @@ PARAM_META = {
 
     "ic50": {
         "fields": [
-            "parameter_name", "value", "unit", "condition"
+            "parameter_name", "value", "unit", "formulation", "cell_line"
         ],
     },
 
@@ -465,13 +465,14 @@ class ParserNanoparticle(BaseModel):
         processed = []
         for item in entries:
 
-            cond = item.get("condition") or ""
+            cond = item.get("formulation") or ""
             #cargo = self.extract_cargos(cond) or "unknown"
 
             processed.append({
                 "value": item.get("value"),
                 "unit": item.get("unit"),
                 "cargo/formulation": cond,
+                "cell_line": item.get("cell_line"),
             })
         return processed
     

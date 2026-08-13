@@ -112,11 +112,12 @@ PARAM_META: dict[str, dict] = {
     "ic50": {
         "description": "Half-maximal inhibitory concentration",
         "unit_hint": "uM, nM, mg/mL, etc.",
-        "specific_format": "ic50 | <value> | <unit> | <drug_name>",
+        "specific_format": "ic50 | <value> | <unit> | <formulation> | <cell_line>",
         "field_rules": {
             "<value>": "Numeric IC50 exactly as reported.",
             "<unit>": "Unit exactly as written.",
-            "<drug_name>": " Formulation code/ drug name only.",
+            "<formulation>": " Formulation code/ drug name only.",
+            "<cell_line>": "Cell line used in the experiment if not stated, write 'not extractable'.",
         },
         "exclude": [],
     },
