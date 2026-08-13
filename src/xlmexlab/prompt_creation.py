@@ -786,3 +786,66 @@ class PromptCreationSeriesDataPrompt(BaseModel):
                 "Do not include reasoning, explanations, markdown, or extra text outside the POINTS list."
             ),
             }
+
+
+class PromptCreationVerifySeriesPrompt(BaseModel):
+
+    def build_verify_prompt_json(
+        self,
+        series_name: str,
+        series_color: str,
+        series_marker: str,
+        series_line: str,
+        extracted_points: List[Any],
+    ) -> dict:
+        expertise = (
+            "You are an expert assistant for verifying and correcting previously "
+            "extracted data points from a scientific graph."
+        )
+
+        objective = (
+            f'You previously extracted these points for series "{series_name}" '
+            f'(visually identified by color={series_color}, marker={series_marker}, '
+            f'line style={series_line}): {extracted_points}. '
+            f'Do NOT assume these points are correct. Carefully re-examine the image '
+            f'and perform the following checks: '
+            f'1. Count the number of visible markers belonging to this series in the '
+            f'image, and compare it to the number of points listed above — flag if '
+            f'they do not match. '
+            f'2. For each listed point, re-check its position against the nearest '
+            f'axis ticks and look for any point whose x or y value could be read '
+            f'more precisely, or that was assigned to the wrong series. '
+            f'3. Provide the corrected, complete list of points for this series only.'
+        )
+
+        schema = """POINT_COUNT_CHECK: <matches / does not match, with brief note>
+POINTS:
+- (x1, y1)
+- (x2, y2)"""
+
+        rules = [
+            "Actively look for errors — do not simply repeat the previous points unchanged unless verified correct.",
+            "Recount visible markers for this series directly from the image, not from the list given.",
+            "Correct any point that is imprecise, misread, or misassigned to this series.",
+            "Add any missing points that are visible but were not in the original list.",
+            "Remove any point that does not actually belong to this series.",
+            "Preserve the numerical precision implied by the axis tick labels.",
+            "If a coordinate cannot be determined confidently, use N/A for that coordinate.",
+            "Return points ONLY in the format shown: one '(x, y)' pair per line, prefixed with '-'.",
+            "Do not include reasoning or explanations outside the POINT_COUNT_CHECK line.",
+        ]
+
+        return {
+            "expertise": expertise,
+            "initialization": "",
+            "definitions": {},
+            "objective": objective,
+            "answer_schema": {
+                "Format": schema,
+                "Rules": "\n".join(f"- {r}" for r in rules),
+            },
+            "conclusion": (
+                "Return ONLY the requested structure. "
+                "Do not include explanations, markdown, headers, or extra comments."
+            ),
+        }
