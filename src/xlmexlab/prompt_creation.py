@@ -532,7 +532,8 @@ class PromptCreationFormulationRegistry(BaseModel):
             "method name, unit, or unrelated abbreviation), SKIP it — do not output a line for it.",
             "- Use 'none' for drug_name if no cargo is stated for that code.",
             "- Use 'unknown' for load status only if the text genuinely does not state it.",
-            "- One line per valid formulation code.",
+            "- One line per valid formulation code."
+            "-If no valid formulation codes remain after filtering, answer exactly: 'none' (without quotes).",
         ]
         return {
             "expertise": expertise,
@@ -800,40 +801,33 @@ class PromptCreationVerifySeriesPrompt(BaseModel):
         extracted_points: List[Any],
     ) -> dict:
         expertise = (
-            "You are an expert assistant for verifying and correcting previously "
-            "extracted data points from a scientific graph."
+            "You are a scientific graph data verifier. "
+            "The image is the source of truth."
         )
 
         objective = (
-            f'You previously extracted these points for series "{series_name}" '
-            f'(visually identified by color={series_color}, marker={series_marker}, '
-            f'line style={series_line}): {extracted_points}. '
-            f'Do NOT assume these points are correct. Carefully re-examine the image '
-            f'and perform the following checks: '
-            f'1. Count the number of visible markers belonging to this series in the '
-            f'image, and compare it to the number of points listed above — flag if '
-            f'they do not match. '
-            f'2. For each listed point, re-check its position against the nearest '
-            f'axis ticks and look for any point whose x or y value could be read '
-            f'more precisely, or that was assigned to the wrong series. '
-            f'3. Provide the corrected, complete list of points for this series only.'
+            f'Verify series "{series_name}" '
+            f'(color={series_color}, marker={series_marker}, line={series_line}). '
+            f"Previous extraction: {extracted_points}. "
+            "Independently inspect the image and return the complete corrected point list."
         )
 
-        schema = """POINT_COUNT_CHECK: <matches / does not match, with brief note>
-POINTS:
-- (x1, y1)
-- (x2, y2)"""
+        schema = """POINT_COUNT_CHECK: <matches / does not match — brief note>
+
+        POINTS:
+        - (x, y)
+        - (x, y)"""
 
         rules = [
-            "Actively look for errors — do not simply repeat the previous points unchanged unless verified correct.",
-            "Recount visible markers for this series directly from the image, not from the list given.",
-            "Correct any point that is imprecise, misread, or misassigned to this series.",
-            "Add any missing points that are visible but were not in the original list.",
-            "Remove any point that does not actually belong to this series.",
-            "Preserve the numerical precision implied by the axis tick labels.",
-            "If a coordinate cannot be determined confidently, use N/A for that coordinate.",
-            "Return points ONLY in the format shown: one '(x, y)' pair per line, prefixed with '-'.",
-            "Do not include reasoning or explanations outside the POINT_COUNT_CHECK line.",
+            "Count the series markers directly from the image.",
+            "Verify every previous point against its marker and the axis ticks.",
+            "Correct inaccurate coordinates.",
+            "Add visible missing markers.",
+            "Remove points that do not belong to this series.",
+            "Do not infer points that are not visibly supported by the graph.",
+            "Use N/A when a coordinate cannot be read reliably.",
+            "Use only the numerical precision supported by the axes.",
+            "Return only the requested schema; no reasoning or extra text.",
         ]
 
         return {
