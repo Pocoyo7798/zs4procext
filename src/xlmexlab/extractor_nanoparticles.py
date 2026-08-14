@@ -480,25 +480,56 @@ class ImageExtractor(BaseModel):
             print(output)
 
             points = SeriesPointsParser.parse_points(output)
+            result[series_name] = points
 
-            # --- passo de verificação ---
-            verify_dict = self._verify_prompt_builder.build_verify_prompt_json(
-                series_name=series_name,
-                series_color=series_color,
-                series_marker=series_marker,
-                series_line=series_line,
-                extracted_points=points,
-            )
-            verify_formatter = PromptFormatter(**verify_dict)
-            verify_formatter.model_post_init(self.prompt_template_path)
-            verify_prompt = verify_formatter.format_prompt("<image>")
-
-            verify_output = self._vlm_model.run_image_single_prompt_rescale(
-                verify_prompt, image_path, scale=scale
-            )
-            print(f"\n  [verify] '{series_name}' verification response:\n{verify_output}")
-
-            corrected_points = SeriesPointsParser.parse_points(verify_output)
-            result[series_name] = corrected_points
+            print(f"\n  [ImageExtractor.extract_series_data] "
+                f"Parsed result for '{image_name}': {result}")
 
         return {image_name: result}
+
+class SeriesVerifier:
+    def __init__(
+        self,
+        vlm_model_name: str,
+        vlm_model_parameters_path: Optional[str],
+        prompt_template_path: Optional[str],
+    ):
+        self.vlm_model_name = vlm_model_name
+        self.prompt_template_path = prompt_template_path
+        self._verify_prompt_builder = PromptCreationVerifySeriesPrompt()
+
+        self._vlm_model = ModelVLM(model_name=vlm_model_name)
+        self._vlm_model.load_model_parameters(vlm_model_parameters_path)
+        self._vlm_model.vllm_load_model()
+
+    def verify_series(
+        self,
+        image_path: str,
+        series_name: str,
+        extracted_points: List[Any],
+        series_color: str = "UNKNOWN",
+        series_marker: str = "UNKNOWN",
+        series_line: str = "UNKNOWN",
+        scale: float = 1.0,
+    ) -> List[Any]:
+        verify_dict = self._verify_prompt_builder.build_verify_prompt_json(
+            series_name=series_name,
+            series_color=series_color,
+            series_marker=series_marker,
+            series_line=series_line,
+            extracted_points=extracted_points,
+        )
+        formatter = PromptFormatter(**verify_dict)
+        formatter.model_post_init(self.prompt_template_path)
+        prompt = formatter.format_prompt("<image>")
+
+        print(f"\n  [SeriesVerifier] VERIFY PROMPT for '{series_name}'")
+        print(prompt)
+
+        output = self._vlm_model.run_image_single_prompt_rescale(
+            prompt, image_path, scale=scale
+        )
+        print(f"\n  [SeriesVerifier] VERIFY RESPONSE for '{series_name}'")
+        print(output)
+
+        return SeriesPointsParser.parse_points(output)
