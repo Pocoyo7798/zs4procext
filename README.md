@@ -2,6 +2,7 @@
 [![PyPI - License](https://img.shields.io/pypi/l/langchain-core?style=flat-square)](https://opensource.org/licenses/MIT)
 [![GitHub star chart](https://img.shields.io/github/stars/Pocoyo7798/xlmexlab?style=flat-square)](https://star-history.com/#Pocoyo7798/xlmexlab)
 [![Open Issues](https://img.shields.io/github/issues-raw/Pocoyo7798/xlmexlab?style=flat-square)](https://github.com/Pocoyo7798/xlmexlab/issues)
+[![DOI](https://zenodo.org/badge/730789396.svg)](https://doi.org/10.5281/zenodo.22079419)
 
 xlmexlab is tool built to create and run LLM and VLM based extraction pipelines. It allows you to create loops of prompt - model response - parsing for a Q&A aproach for data extraction, accelariting multiple model comparison and model optimization.
 ## **Getting Started**
